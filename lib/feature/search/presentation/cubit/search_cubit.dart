@@ -13,6 +13,9 @@ class SearchCubit extends Cubit<SearchState> {
       // Simulate loading delay
       await Future.delayed(const Duration(milliseconds: 300));
 
+      // Check if cubit is still open before continuing
+      if (isClosed) return;
+
       // Mock data for search history
       final searchHistory = [
         'Thịt gà VFOOD',
@@ -55,7 +58,9 @@ class SearchCubit extends Cubit<SearchState> {
         selectedBottomNavIndex: 0,
       ));
     } catch (e) {
-      emit(SearchError('Failed to load search data: $e'));
+      if (!isClosed) {
+        emit(SearchError('Failed to load search data: $e'));
+      }
     }
   }
 

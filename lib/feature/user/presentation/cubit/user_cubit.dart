@@ -1,31 +1,76 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:online_market_app/feature/user/presentation/cubit/user_state.dart';
+import '../../../../core/services/auth/auth_service.dart';
+import '../../../../core/error/app_exception.dart';
+import '../../../../core/utils/app_logger.dart';
 
 /// Cubit quản lý state cho User/Account Screen
 class UserCubit extends Cubit<UserState> {
-  UserCubit() : super(const UserState());
+  final AuthService _authService;
 
-  /// Load thông tin user
-  void loadUserData({
-    String? userName,
-    String? userImage,
+  UserCubit({AuthService? authService})
+      : _authService = authService ?? AuthService(),
+        super(const UserState());
+
+  /// Load thông tin user từ API
+  Future<void> loadUserData({
     int? pendingOrders,
     int? processingOrders,
     int? shippingOrders,
     int? completedOrders,
-  }) {
+  }) async {
     emit(state.copyWith(isLoading: true));
 
-    // Simulate loading data - in real app, this would fetch from API/repository
-    emit(state.copyWith(
-      userName: userName ?? 'Lê Thị Tuyết',
-      userImage: userImage ?? 'assets/img/user_profile_image.png',
-      pendingOrders: pendingOrders ?? 1,
-      processingOrders: processingOrders ?? 0,
-      shippingOrders: shippingOrders ?? 3,
-      completedOrders: completedOrders ?? 1,
-      isLoading: false,
-    ));
+    try {
+      // Gọi API để lấy thông tin người dùng
+      final user = await _authService.getCurrentUser();
+
+      // Check if cubit is still open before emitting
+      if (!isClosed) {
+        AppLogger.info('👤 [USER] Loaded user: ${user.tenNguoiDung}');
+
+        // Cập nhật state với thông tin người dùng thực
+        emit(state.copyWith(
+          userName: user.tenNguoiDung,
+          userImage: 'assets/img/user_profile_image.png', // Sử dụng ảnh mặc định
+          pendingOrders: pendingOrders ?? 1,
+          processingOrders: processingOrders ?? 0,
+          shippingOrders: shippingOrders ?? 3,
+          completedOrders: completedOrders ?? 1,
+          isLoading: false,
+          errorMessage: null,
+        ));
+      }
+    } on UnauthorizedException catch (e) {
+      // Token hết hạn - logout và yêu cầu đăng nhập lại
+      AppLogger.warning('❌ [USER] Unauthorized: ${e.message}');
+      await _authService.logout();
+      if (!isClosed) {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+          requiresLogin: true, // Thêm flag để UI xử lý
+        ));
+      }
+    } on NetworkException catch (e) {
+      // Lỗi mạng
+      AppLogger.error('🌐 [USER] Network error: ${e.message}');
+      if (!isClosed) {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: e.message,
+        ));
+      }
+    } catch (e) {
+      // Lỗi khác
+      AppLogger.error('💥 [USER] Error: ${e.toString()}');
+      if (!isClosed) {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: 'Không thể tải thông tin người dùng',
+        ));
+      }
+    }
   }
 
   /// Navigate to Favorites screen
@@ -64,9 +109,19 @@ class UserCubit extends Cubit<UserState> {
   }
 
   /// Logout
-  void logout() {
-    // Implement logout logic
-    emit(const UserState());
+  Future<void> logout() async {
+    try {
+      // Gọi API logout và xóa token
+      await _authService.logout();
+      AppLogger.info('🚪 [USER] Logout successful');
+      
+      // Reset state
+      emit(const UserState());
+    } catch (e) {
+      AppLogger.error('💥 [USER] Logout error: ${e.toString()}');
+      // Vẫn reset state ngay cả khi có lỗi
+      emit(const UserState());
+    }
   }
 
   /// Navigate to order status screen

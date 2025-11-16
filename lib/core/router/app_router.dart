@@ -8,6 +8,11 @@ import '../../feature/product/presentation/screen/product_screen.dart';
 import '../../feature/productdetail/presentation/screen/productdetail_screen.dart';
 import '../../feature/menudetail/presentation/screen/menudetail_screen.dart';
 import '../../feature/user/presentation/screen/user_screen.dart';
+import '../../feature/review/presentation/screen/review_page.dart';
+import '../../feature/cart/presentation/screen/cart_page.dart';
+import '../../feature/payment/presentation/screen/payment_page.dart';
+import '../../feature/order/presentation/order_detail/screen/order_detail_page.dart';
+import '../../feature/order/presentation/order/screen/order_page.dart';
 
 /// Quản lý navigation và routing của ứng dụng
 /// Sử dụng onGenerateRoute để tạo route động
@@ -65,10 +70,36 @@ class AppRouter {
           const UserScreen(),
         );
 
+      case RouteName.reviews:
+        return _buildRoute(
+          settings,
+          const ReviewPage(),
+        );
+
       case RouteName.cart:
         return _buildRoute(
           settings,
-          const _PlaceholderScreen(title: 'Cart Screen'),
+          const CartPage(),
+        );
+
+      case RouteName.checkout:
+        return _buildRoute(
+          settings,
+          const PaymentPage(),
+        );
+
+      case RouteName.orderDetail:
+        return _buildRoute(
+          settings,
+          OrderDetailPage(
+            orderId: settings.arguments as String?,
+          ),
+        );
+
+      case RouteName.orderList:
+        return _buildRoute(
+          settings,
+          const OrderPage(),
         );
 
       case RouteName.profile:
@@ -147,11 +178,9 @@ class AppRouter {
 /// Placeholder screen for development
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
-  final String? subtitle;
 
   const _PlaceholderScreen({
     required this.title,
-    this.subtitle,
   });
 
   @override
@@ -174,13 +203,6 @@ class _PlaceholderScreen extends StatelessWidget {
               title,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                subtitle!,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => AppRouter.goBack(context),

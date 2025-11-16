@@ -1,17 +1,23 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import '../../../../core/services/auth/auth_service.dart';
+import '../../../../core/error/app_exception.dart';
 
 part 'signup_state.dart';
 
 /// SignUp Cubit quản lý logic nghiệp vụ của màn hình đăng ký
 /// 
 /// Chức năng chính:
-/// - Xử lý đăng ký với tên, số điện thoại, email và mật khẩu
+/// - Xử lý đăng ký với email (username), mật khẩu và tên người dùng
 /// - Validate input
 /// - Quản lý trạng thái hiển thị mật khẩu
 /// - Xử lý lỗi và hiển thị thông báo
 class SignUpCubit extends Cubit<SignUpState> {
-  SignUpCubit() : super(SignUpInitial());
+  final AuthService _authService;
+
+  SignUpCubit({AuthService? authService})
+      : _authService = authService ?? AuthService(),
+        super(SignUpInitial());
 
   bool _isPasswordVisible = false;
 
@@ -52,19 +58,36 @@ class SignUpCubit extends Cubit<SignUpState> {
     return null;
   }
 
-  /// Validate email
-  String? validateEmail(String? email) {
-    if (email == null || email.isEmpty) {
-      return 'Vui lòng nhập email';
+  /// Validate email hoặc username
+  String? validateEmail(String? input) {
+    if (input == null || input.isEmpty) {
+      return 'Vui lòng nhập tên đăng nhập hoặc email';
     }
     
-    // Simple email regex
-    final emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-    );
+    // Cho phép cả username và email
+    // Username: ít nhất 3 ký tự, chỉ chứa chữ, số, gạch dưới, dấu chấm
+    // Email: phải có @ và domain
     
-    if (!emailRegex.hasMatch(email)) {
-      return 'Email không hợp lệ';
+    if (input.length < 3) {
+      return 'Tên đăng nhập phải có ít nhất 3 ký tự';
+    }
+    
+    // Nếu có @, kiểm tra định dạng email
+    if (input.contains('@')) {
+      final emailRegex = RegExp(
+        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+      );
+      
+      if (!emailRegex.hasMatch(input)) {
+        return 'Email không hợp lệ';
+      }
+    } else {
+      // Nếu không có @, kiểm tra định dạng username
+      final usernameRegex = RegExp(r'^[a-zA-Z0-9._]+$');
+      
+      if (!usernameRegex.hasMatch(input)) {
+        return 'Tên đăng nhập chỉ chứa chữ, số, dấu chấm và gạch dưới';
+      }
     }
     
     return null;
@@ -84,50 +107,85 @@ class SignUpCubit extends Cubit<SignUpState> {
   }
 
   /// Xử lý đăng ký
-  Future<void> signUp({
-    required String name,
-    required String phone,
-    required String email,
+  /// 
+  /// Tham số:
+  /// - username: Tên đăng nhập (email)
+  /// - password: Mật khẩu
+  /// - fullName: Tên đầy đủ của người dùng
+  /// - role: Vai trò (mặc định: 'nguoi_mua')
+  Future<bool> signUp({
+    required String username,
     required String password,
+    required String fullName,
+    String role = 'nguoi_mua',
   }) async {
     // Validate inputs
-    final nameError = validateName(name);
-    final phoneError = validatePhone(phone);
-    final emailError = validateEmail(email);
+    final usernameError = validateEmail(username);
     final passwordError = validatePassword(password);
+    final nameError = validateName(fullName);
 
-    if (nameError != null || phoneError != null || emailError != null || passwordError != null) {
+    if (usernameError != null || passwordError != null || nameError != null) {
       emit(SignUpValidationError(
         nameError: nameError,
-        phoneError: phoneError,
-        emailError: emailError,
+        phoneError: null,
+        emailError: usernameError,
         passwordError: passwordError,
       ));
-      return;
+      return false;
     }
 
     try {
       emit(SignUpLoading());
 
-      // TODO: Implement actual signup API call
-      // Example:
-      // final response = await authRepository.signUp(
-      //   name: name,
-      //   phone: phone,
-      //   email: email,
-      //   password: password,
-      // );
+      // Gọi API đăng ký
+      final response = await _authService.register(
+        username: username,
+        password: password,
+        fullName: fullName,
+        role: role,
+      );
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Mock signup logic - Replace with actual implementation
-      // For demo, always succeed
-      emit(const SignUpSuccess());
+      // Check if cubit is still open before emitting success
+      if (!isClosed) {
+        // Đăng ký thành công
+        emit(SignUpSuccess(
+          message: 'Đăng ký thành công! Chào mừng ${response.data.tenDangNhap}',
+        ));
+      }
+      
+      return true;
+    } on ConflictException catch (e) {
+      // Username đã tồn tại
+      if (!isClosed) {
+        emit(SignUpFailure(errorMessage: e.message));
+      }
+      return false;
+    } on ValidationException catch (e) {
+      // Dữ liệu không hợp lệ
+      if (!isClosed) {
+        emit(SignUpFailure(errorMessage: e.message));
+      }
+      return false;
+    } on NetworkException catch (e) {
+      // Lỗi mạng
+      if (!isClosed) {
+        emit(SignUpFailure(errorMessage: e.message));
+      }
+      return false;
+    } on ServerException catch (e) {
+      // Lỗi server
+      if (!isClosed) {
+        emit(SignUpFailure(errorMessage: e.message));
+      }
+      return false;
     } catch (e) {
-      emit(SignUpFailure(
-        errorMessage: 'Đã có lỗi xảy ra: ${e.toString()}',
-      ));
+      // Lỗi không xác định
+      if (!isClosed) {
+        emit(SignUpFailure(
+          errorMessage: 'Đã có lỗi xảy ra: ${e.toString()}',
+        ));
+      }
+      return false;
     }
   }
 

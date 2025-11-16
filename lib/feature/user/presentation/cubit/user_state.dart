@@ -10,6 +10,7 @@ class UserState extends Equatable {
   final int completedOrders;
   final bool isLoading;
   final String? errorMessage;
+  final bool requiresLogin;
 
   const UserState({
     this.userName = '',
@@ -20,6 +21,7 @@ class UserState extends Equatable {
     this.completedOrders = 0,
     this.isLoading = false,
     this.errorMessage,
+    this.requiresLogin = false,
   });
 
   UserState copyWith({
@@ -31,6 +33,7 @@ class UserState extends Equatable {
     int? completedOrders,
     bool? isLoading,
     String? errorMessage,
+    bool? requiresLogin,
   }) {
     return UserState(
       userName: userName ?? this.userName,
@@ -41,6 +44,7 @@ class UserState extends Equatable {
       completedOrders: completedOrders ?? this.completedOrders,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
+      requiresLogin: requiresLogin ?? this.requiresLogin,
     );
   }
 
@@ -54,5 +58,6 @@ class UserState extends Equatable {
         completedOrders,
         isLoading,
         errorMessage,
+        requiresLogin,
       ];
 }

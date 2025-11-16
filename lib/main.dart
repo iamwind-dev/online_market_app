@@ -21,9 +21,9 @@ void main() async {
   await initDependencies();
 
   // Log app startup
-  AppLogger.info('🎉 Starting ${AppConfig.appName}...');
-  AppLogger.info('📱 Environment: ${AppConfig.environment}');
-  AppLogger.info('🌐 Base URL: ${AppConfig.baseUrl}');
+  AppLogger.info('Starting ${AppConfig.appName}...');
+  AppLogger.info('Environment: ${AppConfig.environment}');
+  AppLogger.info('Base URL: ${AppConfig.baseUrl}');
 
   runApp(const MyApp());
 }

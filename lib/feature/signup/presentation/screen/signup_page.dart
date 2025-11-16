@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/signup_cubit.dart';
+import '../../../../core/dependency/injection.dart';
+import '../../../../core/services/auth/auth_service.dart';
 
 /// Màn hình đăng ký
 /// 
@@ -17,7 +19,7 @@ class SignUpPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => SignUpCubit(),
+      create: (context) => SignUpCubit(authService: getIt<AuthService>()),
       child: const SignUpView(),
     );
   }
@@ -60,8 +62,8 @@ class _SignUpViewState extends State<SignUpView> {
             ),
           );
           
-          // TODO: Navigate to Login or Home screen
-          // Navigator.of(context).pushReplacementNamed(LoginPage.routeName);
+          // Navigate to Product/Home screen after successful registration
+          Navigator.of(context).pushReplacementNamed('/login');
         } else if (state is SignUpFailure) {
           // Show error message
           ScaffoldMessenger.of(context).showSnackBar(
@@ -265,7 +267,7 @@ class _SignUpViewState extends State<SignUpView> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    hintText: 'Email*',
+                    hintText: 'Tên đăng nhập hoặc Email*',
                     hintStyle: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 17,
@@ -435,64 +437,6 @@ class _SignUpViewState extends State<SignUpView> {
     );
   }
 
-  /// Build phone field
-  Widget _buildPhoneField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFDCF9E4).withOpacity(0.5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF0272BA),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Icon
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Icon(
-              Icons.phone_outlined,
-              color: Colors.grey[600],
-              size: 24,
-            ),
-          ),
-          
-          // Text field
-          Expanded(
-            child: TextFormField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                hintText: 'STK',
-                hintStyle: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 17,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF5E5C5C),
-                ),
-                border: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                errorBorder: InputBorder.none,
-                focusedErrorBorder: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 0,
-                  vertical: 14,
-                ),
-              ),
-              validator: (value) {
-                return context.read<SignUpCubit>().validatePhone(value);
-              },
-            ),
-          ),
-          
-          const SizedBox(width: 16),
-        ],
-      ),
-    );
-  }
-
   /// Build signup button
   Widget _buildSignUpButton() {
     return BlocBuilder<SignUpCubit, SignUpState>(
@@ -504,14 +448,14 @@ class _SignUpViewState extends State<SignUpView> {
           child: ElevatedButton(
             onPressed: isLoading
                 ? null
-                : () {
+                : () async {
                     if (_formKey.currentState!.validate()) {
-                      context.read<SignUpCubit>().signUp(
-                            name: _nameController.text.trim(),
-                            phone: _phoneController.text.trim(),
-                            email: _emailController.text.trim(),
-                            password: _passwordController.text,
-                          );
+                      await context.read<SignUpCubit>().signUp(
+                        username: _emailController.text.trim(),
+                        password: _passwordController.text,
+                        fullName: _nameController.text.trim(),
+                        role: 'nguoi_mua',
+                      );
                     }
                   },
             style: ElevatedButton.styleFrom(
@@ -562,7 +506,6 @@ class _SignUpViewState extends State<SignUpView> {
           ),
           GestureDetector(
             onTap: () {
-              // Navigate back to Login page
               Navigator.of(context).pop();
             },
             child: const Text(

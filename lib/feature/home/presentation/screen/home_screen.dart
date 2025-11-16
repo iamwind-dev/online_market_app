@@ -291,7 +291,6 @@ class _HomeView extends StatelessWidget {
   /// Seller Banner Section
   Widget _buildSellerBanner(BuildContext context) {
     return Container(
-      height: 161,
       decoration: BoxDecoration(
         color: const Color(0xFF00B40F).withOpacity(0.2),
         borderRadius: BorderRadius.circular(18),
@@ -299,26 +298,27 @@ class _HomeView extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           const Text(
             'Mở gian hàng của bạn ngay hôm nay - Bán cùng DNGo!',
             style: TextStyle(
               fontFamily: 'Fraunces',
               fontWeight: FontWeight.w700,
-              fontSize: 20,
+              fontSize: 18,
               color: Color(0xFF517907),
-              height: 1.5,
+              height: 1.4,
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
             child: InkWell(
               onTap: () => context.read<HomeCubit>().navigateToSellerRegistration(),
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
                 decoration: BoxDecoration(
                   color: const Color(0xFF00B40F),
                   borderRadius: BorderRadius.circular(20),
@@ -328,7 +328,7 @@ class _HomeView extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.w700,
-                    fontSize: 18,
+                    fontSize: 14,
                     color: Colors.white,
                   ),
                 ),

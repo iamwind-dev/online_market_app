@@ -17,7 +17,7 @@ class SharedBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 80,
+      height: 90,
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -38,45 +38,25 @@ class SharedBottomNavigation extends StatelessWidget {
             index: 0,
             currentIndex: currentIndex,
             route: RouteName.home,
+            isImage: false,
           ),
           _buildNavItem(
             context,
-            iconData: Icons.card_giftcard,
-            label: 'Sản phẩm',
+            icon: 'assets/img/mon_an_icon.png',
+            label: 'Món ăn',
             index: 1,
             currentIndex: currentIndex,
             route: RouteName.productList,
+            isImage: true,
           ),
           // Logo App ở giữa (không điều hướng)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/img/logo.png',
-                  width: 75,
-                  height: 60,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 45,
-                      height: 45,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00B40F),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.shopping_cart,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
+          _buildNavItem(
+            context,
+            icon: 'assets/img/user_personas_presentation-26cd3a.png',
+            label: '',
+            index: 2,
+            currentIndex: currentIndex,
+            isCenter: true,
           ),
           _buildNavItem(
             context,
@@ -84,6 +64,7 @@ class SharedBottomNavigation extends StatelessWidget {
             label: 'Thông báo',
             index: 3,
             currentIndex: currentIndex,
+            isImage: false,
           ),
           _buildNavItem(
             context,
@@ -92,6 +73,7 @@ class SharedBottomNavigation extends StatelessWidget {
             index: 4,
             currentIndex: currentIndex,
             route: RouteName.user,
+            isImage: false,
           ),
         ],
       ),
@@ -101,17 +83,21 @@ class SharedBottomNavigation extends StatelessWidget {
   /// Bottom Navigation Item
   Widget _buildNavItem(
     BuildContext context, {
-    String? icon,
-    IconData? iconData,
+    required String icon,
     required String label,
     required int index,
     required int currentIndex,
     String? route,
-    bool showBadge = false,
+    bool isImage = false,
+    bool isCenter = false,
   }) {
     final isSelected = index == currentIndex;
+    
     return InkWell(
       onTap: () {
+        // Nếu là center item, không làm gì
+        if (isCenter) return;
+        
         // Nếu đã được chọn, không làm gì
         if (isSelected) return;
         
@@ -130,56 +116,52 @@ class SharedBottomNavigation extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                if (icon != null)
-                  SvgPicture.asset(
-                    icon,
-                    width: 28,
-                    height: 28,
-                    colorFilter: ColorFilter.mode(
-                      isSelected ? const Color(0xFF00B40F) : Colors.black,
-                      BlendMode.srcIn,
-                    ),
-                  )
-                else if (iconData != null)
-                  Icon(
-                    iconData,
-                    size: 28,
-                    color: isSelected ? const Color(0xFF00B40F) : Colors.black,
+            if (isCenter)
+              Container(
+                width: 58,
+                height: 67,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  image: DecorationImage(
+                    image: AssetImage(icon),
+                    fit: BoxFit.cover,
                   ),
-                if (showBadge && index == 2)
-                  Positioned(
-                    right: -4,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
+                ),
+              )
+            else ...[
+              isImage
+                  ? Image.asset(
+                      icon,
+                      width: 30,
+                      height: 30,
+                      color: isSelected ? const Color(0xFF00B40F) : null,
+                    )
+                  : SvgPicture.asset(
+                      icon,
+                      width: 30,
+                      height: 30,
+                      colorFilter: ColorFilter.mode(
+                        isSelected ? const Color(0xFF00B40F) : const Color(0xFF000000),
+                        BlendMode.srcIn,
                       ),
                     ),
+              if (label.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    fontSize: 12,
+                    height: 1.33,
+                    color: isSelected ? const Color(0xFF00B40F) : const Color(0xFF000000),
                   ),
+                ),
               ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? const Color(0xFF00B40F) : Colors.black,
-              ),
-            ),
+            ],
           ],
         ),
       ),

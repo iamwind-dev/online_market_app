@@ -13,6 +13,9 @@ class SearchResultCubit extends Cubit<SearchResultState> {
       // Simulate loading delay
       await Future.delayed(const Duration(milliseconds: 300));
 
+      // Check if cubit is still open before continuing
+      if (isClosed) return;
+
       // Mock data for search results
       final products = [
         const SearchResultProduct(
@@ -75,7 +78,9 @@ class SearchResultCubit extends Cubit<SearchResultState> {
         selectedBottomNavIndex: 0,
       ));
     } catch (e) {
-      emit(SearchResultError('Failed to load search results: $e'));
+      if (!isClosed) {
+        emit(SearchResultError('Failed to load search results: $e'));
+      }
     }
   }
 

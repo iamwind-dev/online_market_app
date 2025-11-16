@@ -23,6 +23,7 @@ class AppConfig {
   static const String authRegisterEndpoint = '/auth/register';
   static const String authLogoutEndpoint = '/auth/logout';
   static const String authRefreshEndpoint = '/auth/refresh';
+  static const String authMeEndpoint = '/auth/me';
 
   static const int connectTimeout = 30000; // 30 seconds
   static const int receiveTimeout = 30000; // 30 seconds
@@ -69,4 +70,5 @@ class AppConfig {
   static String get fullAuthRegisterUrl => '$baseUrl$authRegisterEndpoint';
   static String get fullAuthLogoutUrl => '$baseUrl$authLogoutEndpoint';
   static String get fullAuthRefreshUrl => '$baseUrl$authRefreshEndpoint';
+  static String get fullAuthMeUrl => '$baseUrl$authMeEndpoint';
 }

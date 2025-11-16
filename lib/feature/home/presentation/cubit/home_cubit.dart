@@ -6,13 +6,23 @@ class HomeCubit extends Cubit<HomeState> {
   HomeCubit() : super(const HomeInitial());
 
   /// Initialize home screen with default data
-  void loadHomeData() {
+  Future<void> loadHomeData() async {
     emit(const HomeLoading());
     
-    // Simulate loading data (in a real app, this would fetch from repository)
-    Future.delayed(const Duration(milliseconds: 500), () {
-      emit(const HomeLoaded());
-    });
+    try {
+      // Simulate loading data (in a real app, this would fetch from repository)
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Only emit if cubit is not closed
+      if (!isClosed) {
+        emit(const HomeLoaded());
+      }
+    } catch (e) {
+      // Only emit if cubit is not closed
+      if (!isClosed) {
+        emit(HomeError(e.toString()));
+      }
+    }
   }
 
   /// Update selected market

@@ -111,3 +111,13 @@ class PermissionDeniedException extends AppException {
           statusCode: 403,
         );
 }
+
+/// Exception khi có conflict (409) - ví dụ: username đã tồn tại
+class ConflictException extends AppException {
+  ConflictException({
+    String? message,
+  }) : super(
+          message: message ?? 'Dữ liệu đã tồn tại',
+          statusCode: 409,
+        );
+}

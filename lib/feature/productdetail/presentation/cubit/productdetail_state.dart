@@ -16,6 +16,17 @@ class ProductDetailState extends Equatable {
   final bool isFavorite;
   final bool isLoading;
   final String? errorMessage;
+  
+  // Thông tin chi tiết món ăn từ API
+  final String? doKho;
+  final int? khoangThoiGian;
+  final int? khauPhanTieuChuan;
+  final int? calories;
+  final String? cachThucHien;
+  final String? soChe;
+  final String? cachDung;
+  final List<NguyenLieuInfo>? nguyenLieu;
+  final List<DanhMucInfo>? danhMuc;
 
   const ProductDetailState({
     this.productName = '',
@@ -32,6 +43,15 @@ class ProductDetailState extends Equatable {
     this.isFavorite = false,
     this.isLoading = false,
     this.errorMessage,
+    this.doKho,
+    this.khoangThoiGian,
+    this.khauPhanTieuChuan,
+    this.calories,
+    this.cachThucHien,
+    this.soChe,
+    this.cachDung,
+    this.nguyenLieu,
+    this.danhMuc,
   });
 
   ProductDetailState copyWith({
@@ -49,6 +69,15 @@ class ProductDetailState extends Equatable {
     bool? isFavorite,
     bool? isLoading,
     String? errorMessage,
+    String? doKho,
+    int? khoangThoiGian,
+    int? khauPhanTieuChuan,
+    int? calories,
+    String? cachThucHien,
+    String? soChe,
+    String? cachDung,
+    List<NguyenLieuInfo>? nguyenLieu,
+    List<DanhMucInfo>? danhMuc,
   }) {
     return ProductDetailState(
       productName: productName ?? this.productName,
@@ -65,6 +94,15 @@ class ProductDetailState extends Equatable {
       isFavorite: isFavorite ?? this.isFavorite,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
+      doKho: doKho ?? this.doKho,
+      khoangThoiGian: khoangThoiGian ?? this.khoangThoiGian,
+      khauPhanTieuChuan: khauPhanTieuChuan ?? this.khauPhanTieuChuan,
+      calories: calories ?? this.calories,
+      cachThucHien: cachThucHien ?? this.cachThucHien,
+      soChe: soChe ?? this.soChe,
+      cachDung: cachDung ?? this.cachDung,
+      nguyenLieu: nguyenLieu ?? this.nguyenLieu,
+      danhMuc: danhMuc ?? this.danhMuc,
     );
   }
 
@@ -84,7 +122,42 @@ class ProductDetailState extends Equatable {
         isFavorite,
         isLoading,
         errorMessage,
+        doKho,
+        khoangThoiGian,
+        khauPhanTieuChuan,
+        calories,
+        cachThucHien,
+        soChe,
+        cachDung,
+        nguyenLieu,
+        danhMuc,
       ];
+}
+
+/// Model cho thông tin nguyên liệu
+class NguyenLieuInfo extends Equatable {
+  final String ten;
+  final String dinhLuong;
+  final String? donVi;
+
+  const NguyenLieuInfo({
+    required this.ten,
+    required this.dinhLuong,
+    this.donVi,
+  });
+
+  @override
+  List<Object?> get props => [ten, dinhLuong, donVi];
+}
+
+/// Model cho thông tin danh mục
+class DanhMucInfo extends Equatable {
+  final String ten;
+
+  const DanhMucInfo({required this.ten});
+
+  @override
+  List<Object?> get props => [ten];
 }
 
 /// Model cho Review

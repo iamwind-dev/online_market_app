@@ -121,46 +121,57 @@ class LoginCubit extends Cubit<LoginState> {
         password: password,
       );
 
-      if (AppConfig.enableApiLogging) {
-        AppLogger.info('🎉 [LOGIN] Login thành công!');
-      }
+      // Check if cubit is still open before emitting success
+      if (!isClosed) {
+        if (AppConfig.enableApiLogging) {
+          AppLogger.info('🎉 [LOGIN] Login thành công!');
+        }
 
-      // Login successful
-      emit(const LoginSuccess(
-        message: '✅ Đăng nhập thành công!',
-      ));
+        // Login successful
+        emit(const LoginSuccess(
+          message: '✅ Đăng nhập thành công!',
+        ));
+      }
     } on UnauthorizedException catch (e) {
       // Wrong credentials
       if (AppConfig.enableApiLogging) {
         AppLogger.error('🔒 [LOGIN] Unauthorized: ${e.message}');
       }
-      emit(LoginFailure(
-        errorMessage: '❌ ${e.message}',
-      ));
+      if (!isClosed) {
+        emit(LoginFailure(
+          errorMessage: '❌ ${e.message}',
+        ));
+      }
     } on NetworkException catch (e) {
       // Network error
       if (AppConfig.enableApiLogging) {
         AppLogger.error('🌐 [LOGIN] Network error: ${e.message}');
       }
-      emit(LoginFailure(
-        errorMessage: '❌ Lỗi kết nối: ${e.message}',
-      ));
+      if (!isClosed) {
+        emit(LoginFailure(
+          errorMessage: '❌ Lỗi kết nối: ${e.message}',
+        ));
+      }
     } on AppException catch (e) {
       // Other app exceptions
       if (AppConfig.enableApiLogging) {
         AppLogger.error('⚠️ [LOGIN] App exception: ${e.message}');
       }
-      emit(LoginFailure(
-        errorMessage: '❌ ${e.message}',
-      ));
+      if (!isClosed) {
+        emit(LoginFailure(
+          errorMessage: '❌ ${e.message}',
+        ));
+      }
     } catch (e) {
       // Unknown error
       if (AppConfig.enableApiLogging) {
         AppLogger.error('💥 [LOGIN] Unknown error: ${e.toString()}');
       }
-      emit(LoginFailure(
-        errorMessage: '❌ Đã có lỗi xảy ra: ${e.toString()}',
-      ));
+      if (!isClosed) {
+        emit(LoginFailure(
+          errorMessage: '❌ Đã có lỗi xảy ra: ${e.toString()}',
+        ));
+      }
     }
   }
 
@@ -182,11 +193,15 @@ class LoginCubit extends Cubit<LoginState> {
       // TODO: Implement Google Sign-In
       await Future.delayed(const Duration(seconds: 2));
 
-      emit(const LoginSuccess(message: 'Đăng nhập Google thành công!'));
+      if (!isClosed) {
+        emit(const LoginSuccess(message: 'Đăng nhập Google thành công!'));
+      }
     } catch (e) {
-      emit(LoginFailure(
-        errorMessage: 'Đăng nhập Google thất bại: ${e.toString()}',
-      ));
+      if (!isClosed) {
+        emit(LoginFailure(
+          errorMessage: 'Đăng nhập Google thất bại: ${e.toString()}',
+        ));
+      }
     }
   }
 
@@ -198,11 +213,15 @@ class LoginCubit extends Cubit<LoginState> {
       // TODO: Implement Facebook Sign-In
       await Future.delayed(const Duration(seconds: 2));
 
-      emit(const LoginSuccess(message: 'Đăng nhập Facebook thành công!'));
+      if (!isClosed) {
+        emit(const LoginSuccess(message: 'Đăng nhập Facebook thành công!'));
+      }
     } catch (e) {
-      emit(LoginFailure(
-        errorMessage: 'Đăng nhập Facebook thất bại: ${e.toString()}',
-      ));
+      if (!isClosed) {
+        emit(LoginFailure(
+          errorMessage: 'Đăng nhập Facebook thất bại: ${e.toString()}',
+        ));
+      }
     }
   }
 

@@ -1,44 +1,77 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:online_market_app/feature/productdetail/presentation/cubit/productdetail_state.dart';
+import 'package:online_market_app/core/services/mon_an_service.dart';
+import 'package:online_market_app/core/dependency/injection.dart';
 
 /// Cubit quản lý state cho ProductDetail
 class ProductDetailCubit extends Cubit<ProductDetailState> {
+  final MonAnService _monAnService = getIt<MonAnService>();
+
   ProductDetailCubit() : super(const ProductDetailState());
 
-  /// Load thông tin chi tiết sản phẩm
-  void loadProductDetails({
-    String? productName,
-    String? productImage,
-    String? price,
-    String? priceUnit,
-    double? rating,
-    int? soldCount,
-    String? shopName,
-    String? category,
-  }) {
+  /// Load thông tin chi tiết món ăn từ API
+  /// 
+  /// [maMonAn] - Mã món ăn từ ProductScreen (bắt buộc)
+  /// 
+  /// Gọi API: GET /api/buyer/mon-an/{ma_mon_an}
+  /// Response: { "success": true, "detail": {...} }
+  Future<void> loadProductDetails(String maMonAn) async {
     emit(state.copyWith(isLoading: true));
 
-    // Simulate loading data
-    emit(state.copyWith(
-      productName: productName ??
-          'Đùi gà công nghiệp Đông Tảo VLT, 1 kg tươi ngon, chất lượng',
-      productImage: productImage ?? 'assets/img/productdetail_main_image.png',
-      price: price ?? '116.000',
-      priceUnit: priceUnit ?? 'đ/ Ký',
-      rating: rating ?? 4.8,
-      soldCount: soldCount ?? 59,
-      shopName: shopName ?? 'Gian hàng cô Hồng - Chợ Bắc Mỹ An',
-      category: category ?? 'Gà',
-      description: 'Tên Sản Phẩm: Đùi gà công nghiệp Đông Tảo\nDanh mục: Gà\nGiá: 116.000 đồng/ Ký',
-      reviews: const [
-        Review(stars: 5, count: 10, percentage: 0.8),
-        Review(stars: 4, count: 2, percentage: 0.2),
-        Review(stars: 3, count: 0, percentage: 0.0),
-        Review(stars: 2, count: 0, percentage: 0.0),
-        Review(stars: 1, count: 0, percentage: 0.0),
-      ],
-      isLoading: false,
-    ));
+    try {
+      // Gọi API để lấy chi tiết món ăn
+      final detail = await _monAnService.getMonAnDetail(maMonAn);
+      
+      // Check if cubit is still open before continuing
+      if (isClosed) return;
+      
+      // Chuyển đổi nguyên liệu từ model sang state info
+      final nguyenLieuList = detail.nguyenLieu?.map((nl) {
+        return NguyenLieuInfo(
+          ten: nl.tenNguyenLieu ?? 'N/A',
+          dinhLuong: nl.dinhLuong ?? '',
+          donVi: nl.donViGoc,
+        );
+      }).toList();
+      
+      // Chuyển đổi danh mục từ model sang state info
+      final danhMucList = detail.danhMuc?.map((dm) {
+        return DanhMucInfo(ten: dm.tenDanhMuc ?? 'N/A');
+      }).toList();
+      
+      // Cập nhật state với thông tin từ API
+      emit(state.copyWith(
+        productName: detail.tenMonAn,
+        productImage: detail.hinhAnh.isNotEmpty 
+            ? detail.hinhAnh 
+            : 'assets/img/productdetail_main_image.png',
+        doKho: detail.doKho,
+        khoangThoiGian: detail.khoangThoiGian,
+        khauPhanTieuChuan: detail.khauPhanTieuChuan,
+        calories: detail.calories,
+        cachThucHien: detail.cachThucHien,
+        soChe: detail.soChe,
+        cachDung: detail.cachDung,
+        nguyenLieu: nguyenLieuList,
+        danhMuc: danhMucList,
+        category: danhMucList?.first.ten ?? 'Chưa phân loại',
+        shopName: 'Công thức món ăn',
+        rating: 4.5,
+        soldCount: detail.soNguyenLieu ?? 0,
+        price: detail.calories?.toString() ?? 'N/A',
+        priceUnit: 'Cal',
+        isLoading: false,
+        errorMessage: null,
+      ));
+    } catch (e) {
+      // Nếu lỗi, hiển thị thông báo lỗi
+      if (!isClosed) {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: 'Lỗi khi tải thông tin món ăn: $e',
+        ));
+      }
+    }
   }
 
   /// Toggle favorite status

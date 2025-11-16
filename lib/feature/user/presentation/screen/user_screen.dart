@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/user_cubit.dart';
 import '../cubit/user_state.dart';
 import '../../../../core/widgets/shared_bottom_navigation.dart';
+import '../../../../core/dependency/injection.dart';
+import '../../../../core/services/auth/auth_service.dart';
 
 class UserScreen extends StatelessWidget {
   const UserScreen({super.key});
@@ -10,8 +12,8 @@ class UserScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => UserCubit()..loadUserData(),
-      child: const _UserView(),
+      create: (context) => UserCubit(authService: getIt<AuthService>())..loadUserData(),
+      child: const _UserView(), // Bỏ AuthGuard để tránh check 2 lần
     );
   }
 }
@@ -23,7 +25,34 @@ class _UserView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: BlocBuilder<UserCubit, UserState>(
+      body: BlocConsumer<UserCubit, UserState>(
+        listener: (context, state) {
+          // Chuyển hướng đến trang login nếu phiên đăng nhập hết hạn
+          if (state.requiresLogin) {
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              '/login',
+              (route) => false,
+            );
+            return;
+          }
+          
+          // Hiển thị lỗi nếu có
+          if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.errorMessage!),
+                backgroundColor: Colors.red,
+                action: SnackBarAction(
+                  label: 'Đóng',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  },
+                ),
+              ),
+            );
+          }
+        },
         builder: (context, state) {
           if (state.isLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -356,19 +385,29 @@ class _UserView extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Đăng xuất'),
         content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Hủy'),
           ),
           TextButton(
-            onPressed: () {
-              context.read<UserCubit>().logout();
-              Navigator.pop(context);
-              // Navigate to login screen
+            onPressed: () async {
+              // Đóng dialog trước
+              Navigator.pop(dialogContext);
+              
+              // Gọi logout từ cubit
+              await context.read<UserCubit>().logout();
+              
+              // Navigate về màn hình login
+              if (context.mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/login',
+                  (route) => false,
+                );
+              }
             },
             child: const Text('Đăng xuất'),
           ),

@@ -2,15 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/productdetail_cubit.dart';
 import '../cubit/productdetail_state.dart';
-import '../../../../core/widgets/product_card.dart';
+import '../../../../core/widgets/ingredient_card.dart';
 
 class ProductDetailScreen extends StatelessWidget {
-  const ProductDetailScreen({super.key});
+  final String? maMonAn; // Mã món ăn từ ProductScreen
+
+  const ProductDetailScreen({
+    super.key,
+    this.maMonAn,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Lấy maMonAn từ route arguments nếu không truyền trực tiếp
+    final String finalMaMonAn = maMonAn ?? 
+        (ModalRoute.of(context)?.settings.arguments as String?) ?? 
+        '';
+
     return BlocProvider(
-      create: (context) => ProductDetailCubit()..loadProductDetails(),
+      create: (context) => ProductDetailCubit()
+        ..loadProductDetails(finalMaMonAn),
       child: const _ProductDetailView(),
     );
   }
@@ -139,20 +150,54 @@ class _ProductDetailView extends StatelessWidget {
   }
 
   Widget _buildProductImage(ProductDetailState state) {
-    return Image.asset(
-      state.productImage,
-      width: double.infinity,
-      height: 308,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return Container(
-          width: double.infinity,
-          height: 308,
-          color: Colors.grey[300],
-          child: const Icon(Icons.image, size: 80),
-        );
-      },
-    );
+    // Kiểm tra xem productImage có phải URL không
+    final bool isUrl = state.productImage.startsWith('http://') || 
+                       state.productImage.startsWith('https://');
+    
+    if (isUrl) {
+      // Nếu là URL, dùng Image.network()
+      return Image.network(
+        state.productImage,
+        width: double.infinity,
+        height: 308,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: double.infinity,
+            height: 308,
+            color: Colors.grey[200],
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: double.infinity,
+            height: 308,
+            color: Colors.grey[300],
+            child: const Icon(Icons.image, size: 80),
+          );
+        },
+      );
+    } else {
+      // Nếu là asset, dùng Image.asset()
+      return Image.asset(
+        state.productImage,
+        width: double.infinity,
+        height: 308,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: double.infinity,
+            height: 308,
+            color: Colors.grey[300],
+            child: const Icon(Icons.image, size: 80),
+          );
+        },
+      );
+    }
   }
 
   Widget _buildPriceSection(ProductDetailState state) {
@@ -252,14 +297,184 @@ class _ProductDetailView extends StatelessWidget {
   Widget _buildProductInfo(ProductDetailState state) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Text(
-        state.description,
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-          height: 1.33,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Thông tin cơ bản
+          if (state.doKho != null)
+            _buildInfoRow('Độ khó', state.doKho!),
+          if (state.khoangThoiGian != null)
+            _buildInfoRow('Thời gian nấu', '${state.khoangThoiGian} phút'),
+          if (state.khauPhanTieuChuan != null)
+            _buildInfoRow('Khẩu phần', '${state.khauPhanTieuChuan} người'),
+          if (state.calories != null)
+            _buildInfoRow('Calories', '${state.calories} Cal'),
+          
+          const SizedBox(height: 12),
+          
+          // Nguyên liệu
+          if (state.nguyenLieu != null && state.nguyenLieu!.isNotEmpty) ...[
+            const Text(
+              'Nguyên liệu:',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                height: 1.21,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...state.nguyenLieu!.map((nl) {
+              return IngredientCard(
+                tenNguyenLieu: nl.ten,
+                dinhLuong: nl.dinhLuong,
+                donViGoc: nl.donVi,
+              );
+            }).toList(),
+            const SizedBox(height: 12),
+          ],
+          
+          // Số chế
+          if (state.soChe != null && state.soChe!.isNotEmpty) ...[
+            const Text(
+              'Số chế:',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                height: 1.21,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              state.soChe!,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 1.33,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          
+          // Cách thực hiện
+          if (state.cachThucHien != null && state.cachThucHien!.isNotEmpty) ...[
+            const Text(
+              'Cách thực hiện:',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                height: 1.21,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              state.cachThucHien!,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 1.33,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          
+          // Cách dùng
+          if (state.cachDung != null && state.cachDung!.isNotEmpty) ...[
+            const Text(
+              'Cách dùng:',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                height: 1.21,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              state.cachDung!,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 1.33,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          
+          // Danh mục
+          if (state.danhMuc != null && state.danhMuc!.isNotEmpty) ...[
+            const Text(
+              'Danh mục:',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                height: 1.21,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: state.danhMuc!.map((dm) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    dm.ten,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF2F8000),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                height: 1.33,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 1.33,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -291,9 +506,9 @@ class _ProductDetailView extends StatelessWidget {
 
   Widget _buildRelatedProductsTitle() {
     return const Padding(
-      padding: EdgeInsets.fromLTRB(84, 10, 84, 20),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, 12),
       child: Text(
-        'Sản phẩm có thể bạn thích',
+        'Nguyên liệu cần mua',
         style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 17,
@@ -306,52 +521,26 @@ class _ProductDetailView extends StatelessWidget {
   }
 
   Widget _buildRelatedProducts(BuildContext context) {
-    final relatedProducts = [
-      {
-        'name': 'Cá diêu hồng',
-        'price': '165.000đ',
-        'sold': '120 lượt bán',
-        'image': 'assets/img/product_mm_logo.png'
-      },
-      {
-        'name': 'Cá chẽt tươi',
-        'price': '145.000đ',
-        'sold': '85 lượt bán',
-        'image': 'assets/img/product_mm_logo.png'
-      },
-    ];
+    return BlocBuilder<ProductDetailCubit, ProductDetailState>(
+      builder: (context, state) {
+        // Nếu không có nguyên liệu, không hiển thị gì
+        if (state.nguyenLieu == null || state.nguyenLieu!.isEmpty) {
+          return const SizedBox.shrink();
+        }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.74,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-        ),
-        itemCount: relatedProducts.length,
-        itemBuilder: (context, index) {
-          final product = relatedProducts[index];
-          return ProductCard(
-            title: product['name'] as String,
-            price: product['price'] as String,
-            soldCount: product['sold'] as String,
-            imagePath: product['image'] as String,
-            onFavoriteTap: () {
-              // Toggle favorite
-            },
-            onAddToCart: () {
-              // Add to cart
-            },
-            onBuyNow: () {
-              // Buy now
-            },
-          );
-        },
-      ),
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: state.nguyenLieu!.map((nl) {
+              return IngredientCard(
+                tenNguyenLieu: nl.ten,
+                dinhLuong: nl.dinhLuong,
+                donViGoc: nl.donVi,
+              );
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 
