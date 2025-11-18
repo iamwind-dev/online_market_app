@@ -21,6 +21,8 @@ class RouteName {
   static const String productSearch = '/product-search';
   static const String productFilter = '/product-filter';
   static const String menuDetail = '/menu-detail';
+  static const String search = '/search';
+  static const String categoryProducts = '/category-products';
 
   // Category Routes
   static const String categoryList = '/categories';

@@ -24,7 +24,7 @@ class ProductCubit extends Cubit<ProductState> {
       // Check if cubit is still open before continuing
       if (isClosed) return;
       
-      // 2. Fetch danh sách món ăn từ API
+      // 2. Fetch danh sách món ăn từ API (trang 1)
       final monAnList = await _monAnService.getMonAnList(page: 1, limit: 12);
       
       // Check if cubit is still open before continuing
@@ -40,6 +40,8 @@ class ProductCubit extends Cubit<ProductState> {
       emit(ProductLoaded(
         categories: categories,
         monAnList: monAnWithImages,
+        currentPage: 1,
+        hasMore: monAnList.length >= 12, // Nếu trả về đủ 12 món thì còn data
       ));
     } on UnauthorizedException {
       // Token hết hạn - logout và yêu cầu đăng nhập lại
@@ -58,26 +60,81 @@ class ProductCubit extends Cubit<ProductState> {
     }
   }
 
-  /// Fetch ảnh cho danh sách món ăn
+  /// Load thêm món ăn (pagination)
+  Future<void> loadMoreProducts() async {
+    // Chỉ load khi đang ở state ProductLoaded và không đang load
+    if (state is! ProductLoaded) return;
+    
+    final currentState = state as ProductLoaded;
+    
+    // Nếu không còn data hoặc đang load thì return
+    if (!currentState.hasMore || currentState.isLoadingMore) return;
+    
+    // Emit state đang load more
+    emit(currentState.copyWith(isLoadingMore: true));
+    
+    try {
+      // Fetch trang tiếp theo
+      final nextPage = currentState.currentPage + 1;
+      final newMonAnList = await _monAnService.getMonAnList(
+        page: nextPage,
+        limit: 12,
+      );
+      
+      // Check if cubit is still open
+      if (isClosed) return;
+      
+      // Fetch ảnh cho món ăn mới
+      final newMonAnWithImages = await _fetchMonAnImages(newMonAnList);
+      
+      // Check if cubit is still open
+      if (isClosed) return;
+      
+      // Merge danh sách cũ với danh sách mới
+      final updatedList = [...currentState.monAnList, ...newMonAnWithImages];
+      
+      // Emit state mới với dữ liệu đã merge
+      emit(currentState.copyWith(
+        monAnList: updatedList,
+        currentPage: nextPage,
+        hasMore: newMonAnList.length >= 12, // Còn data nếu trả về đủ 12 món
+        isLoadingMore: false,
+      ));
+    } catch (e) {
+      // Nếu lỗi, chỉ tắt loading indicator
+      if (!isClosed && state is ProductLoaded) {
+        emit((state as ProductLoaded).copyWith(isLoadingMore: false));
+      }
+      print('Lỗi khi load thêm món ăn: $e');
+    }
+  }
+
+  /// Fetch chi tiết (ảnh, thời gian nấu, độ khó, khẩu phần) cho danh sách món ăn
   /// 
-  /// Gọi API detail cho từng món để lấy URL ảnh
+  /// Gọi API detail cho từng món để lấy URL ảnh và thông tin chi tiết
   Future<List<MonAnWithImage>> _fetchMonAnImages(List<MonAnModel> monAnList) async {
     final result = <MonAnWithImage>[];
     
     for (final monAn in monAnList) {
       try {
-        // Gọi API detail để lấy ảnh
+        // Gọi API detail để lấy ảnh và thông tin chi tiết
         final detail = await _monAnService.getMonAnDetail(monAn.maMonAn);
         result.add(MonAnWithImage(
           monAn: monAn,
           imageUrl: detail.hinhAnh,
+          cookTime: detail.khoangThoiGian ?? 40, // khoang_thoi_gian
+          difficulty: detail.doKho ?? 'Dễ', // do_kho
+          servings: detail.khauPhanTieuChuan ?? 4, // khau_phan_tieu_chuan
         ));
       } catch (e) {
-        // Nếu lỗi, dùng ảnh mặc định hoặc bỏ qua
-        print('Lỗi khi lấy ảnh cho món ${monAn.maMonAn}: $e');
+        // Nếu lỗi, dùng giá trị mặc định
+        print('Lỗi khi lấy chi tiết cho món ${monAn.maMonAn}: $e');
         result.add(MonAnWithImage(
           monAn: monAn,
-          imageUrl: '', // Ảnh mặc định hoặc để trống
+          imageUrl: '',
+          cookTime: 40,
+          difficulty: 'Dễ',
+          servings: 4,
         ));
       }
     }

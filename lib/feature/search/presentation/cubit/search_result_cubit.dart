@@ -1,86 +1,146 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:online_market_app/core/dependency/injection.dart';
+import 'package:online_market_app/core/services/mon_an_service.dart';
+import 'package:online_market_app/core/services/auth/auth_service.dart';
+import 'package:online_market_app/core/error/exceptions.dart';
+import 'package:online_market_app/core/models/mon_an_model.dart';
 import 'search_result_state.dart';
 
 /// Cubit for managing SearchResult screen state and business logic
 class SearchResultCubit extends Cubit<SearchResultState> {
+  final MonAnService _monAnService = getIt<MonAnService>();
+  
   SearchResultCubit() : super(SearchResultInitial());
 
-  /// Load search results with products
-  Future<void> loadSearchResults({String query = 'Cá'}) async {
+  /// Load search results with products from API
+  Future<void> loadSearchResults({String query = ''}) async {
     emit(SearchResultLoading());
 
     try {
-      // Simulate loading delay
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Fetch danh sách món ăn từ API với search query
+      final monAnList = await _monAnService.getMonAnList(
+        page: 1,
+        limit: 12,
+        search: query,
+        sort: 'ten_mon_an',
+        order: 'asc',
+      );
 
       // Check if cubit is still open before continuing
       if (isClosed) return;
 
-      // Mock data for search results
-      final products = [
-        const SearchResultProduct(
-          name: 'Cá diêu hồng',
-          price: '94,000 ₫ / Ký',
-          salesCount: '106 lượt bán',
-          shopName: 'Cô Hồng',
-          imagePath: 'assets/img/search_result_product_1.png',
-          isHighlighted: false,
-        ),
-        const SearchResultProduct(
-          name: 'Cá chét tươi',
-          price: '80,000 ₫ / Ký',
-          salesCount: '16 lượt bán',
-          shopName: 'Cô Sen',
-          imagePath: 'assets/img/search_result_product_1.png',
-          isHighlighted: false,
-        ),
-        const SearchResultProduct(
-          name: 'Cá cờ gòn, 500g',
-          price: '91,000 ₫ / Gói',
-          salesCount: '186 lượt bán',
-          shopName: 'Cô Như',
-          imagePath: 'assets/img/search_result_product_1.png',
-          isHighlighted: false,
-        ),
-        const SearchResultProduct(
-          name: 'Đầu cá hồi nhập khẩu, 300g..',
-          price: '59,000 ₫ / Ký',
-          salesCount: '196 lượt bán',
-          shopName: 'Cô Nhi',
-          imagePath: 'assets/img/search_result_product_2.png',
-          isHighlighted: false,
-        ),
-        const SearchResultProduct(
-          name: 'Xúc xích Bò BBQ – San Mi...',
-          price: '47.000đ',
-          salesCount: '106 lượt bán',
-          shopName: 'Cô Hồng',
-          imagePath: 'assets/img/search_result_product_1.png',
-          badge: 'Đang bán chạy',
-          isHighlighted: true,
-        ),
-        const SearchResultProduct(
-          name: 'Xúc Xích Bò Chorizo Premi...',
-          price: '63.000đ',
-          salesCount: '56 lượt bán',
-          shopName: 'Cô Sen',
-          imagePath: 'assets/img/search_result_product_2.png',
-          badge: 'Đang bán chạy',
-          isHighlighted: true,
-        ),
-      ];
+      // Fetch chi tiết (ảnh) cho từng món ăn
+      final monAnWithImages = await _fetchMonAnImages(monAnList);
+
+      // Check if cubit is still open before emitting final state
+      if (isClosed) return;
 
       emit(SearchResultLoaded(
         searchQuery: query,
         selectedMarket: 'MM, ĐÀ NẴNG',
         selectedLocation: 'Chợ Bắc Mỹ An',
-        products: products,
+        monAnList: monAnWithImages,
+        currentPage: 1,
+        hasMore: monAnList.length >= 12,
         selectedBottomNavIndex: 0,
       ));
+    } on UnauthorizedException {
+      // Token hết hạn - logout và yêu cầu đăng nhập lại
+      final authService = getIt<AuthService>();
+      await authService.logout();
+      if (!isClosed) {
+        emit(const SearchResultError(
+          'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+          requiresLogin: true,
+        ));
+      }
     } catch (e) {
       if (!isClosed) {
-        emit(SearchResultError('Failed to load search results: $e'));
+        emit(SearchResultError('Lỗi khi tìm kiếm: $e'));
       }
+    }
+  }
+
+  /// Fetch chi tiết (ảnh, thời gian nấu, độ khó, khẩu phần) cho danh sách món ăn
+  Future<List<MonAnWithImage>> _fetchMonAnImages(List<MonAnModel> monAnList) async {
+    final result = <MonAnWithImage>[];
+
+    for (final monAn in monAnList) {
+      try {
+        // Gọi API detail để lấy ảnh và thông tin chi tiết
+        final detail = await _monAnService.getMonAnDetail(monAn.maMonAn);
+        result.add(MonAnWithImage(
+          monAn: monAn,
+          imageUrl: detail.hinhAnh,
+          cookTime: detail.khoangThoiGian ?? 40, // khoang_thoi_gian
+          difficulty: detail.doKho ?? 'Dễ', // do_kho
+          servings: detail.khauPhanTieuChuan ?? 4, // khau_phan_tieu_chuan
+        ));
+      } catch (e) {
+        // Nếu lỗi, dùng giá trị mặc định
+        print('Lỗi khi lấy chi tiết cho món ${monAn.maMonAn}: $e');
+        result.add(MonAnWithImage(
+          monAn: monAn,
+          imageUrl: '',
+          cookTime: 40,
+          difficulty: 'Dễ',
+          servings: 4,
+        ));
+      }
+    }
+
+    return result;
+  }
+
+  /// Load thêm món ăn (pagination)
+  Future<void> loadMoreResults() async {
+    // Chỉ load khi đang ở state SearchResultLoaded và không đang load
+    if (state is! SearchResultLoaded) return;
+
+    final currentState = state as SearchResultLoaded;
+
+    // Nếu không còn data hoặc đang load thì return
+    if (!currentState.hasMore || currentState.isLoadingMore) return;
+
+    // Emit state đang load more
+    emit(currentState.copyWith(isLoadingMore: true));
+
+    try {
+      // Fetch trang tiếp theo
+      final nextPage = currentState.currentPage + 1;
+      final newMonAnList = await _monAnService.getMonAnList(
+        page: nextPage,
+        limit: 12,
+        search: currentState.searchQuery,
+        sort: 'ten_mon_an',
+        order: 'asc',
+      );
+
+      // Check if cubit is still open
+      if (isClosed) return;
+
+      // Fetch ảnh cho món ăn mới
+      final newMonAnWithImages = await _fetchMonAnImages(newMonAnList);
+
+      // Check if cubit is still open
+      if (isClosed) return;
+
+      // Merge danh sách cũ với danh sách mới
+      final updatedList = [...currentState.monAnList, ...newMonAnWithImages];
+
+      // Emit state mới với dữ liệu đã merge
+      emit(currentState.copyWith(
+        monAnList: updatedList,
+        currentPage: nextPage,
+        hasMore: newMonAnList.length >= 12,
+        isLoadingMore: false,
+      ));
+    } catch (e) {
+      // Nếu lỗi, chỉ tắt loading indicator
+      if (!isClosed && state is SearchResultLoaded) {
+        emit((state as SearchResultLoaded).copyWith(isLoadingMore: false));
+      }
+      print('Lỗi khi load thêm kết quả: $e');
     }
   }
 

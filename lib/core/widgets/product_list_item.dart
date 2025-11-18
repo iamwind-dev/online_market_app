@@ -5,18 +5,18 @@ import 'package:flutter_svg/flutter_svg.dart';
 class ProductListItem extends StatelessWidget {
   final String productName;
   final String imagePath;
-  final String servings;
-  final String difficulty;
-  final String cookTime;
+  final int? servings; // Số khẩu phần (vd: 4)
+  final String? difficulty; // Độ khó (vd: 'Dễ', 'Trung bình', 'Khó')
+  final int? cookTime; // Thời gian nấu (phút)
   final VoidCallback? onViewDetail;
 
   const ProductListItem({
     super.key,
     required this.productName,
     required this.imagePath,
-    this.servings = '4 Người',
-    this.difficulty = 'Dễ',
-    this.cookTime = '40 Phút',
+    this.servings,
+    this.difficulty,
+    this.cookTime,
     this.onViewDetail,
   });
 
@@ -88,7 +88,7 @@ class ProductListItem extends StatelessWidget {
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  servings,
+                                  '${servings ?? 4} Người',
                                   style: const TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 12,
@@ -125,7 +125,7 @@ class ProductListItem extends StatelessWidget {
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  difficulty,
+                                  difficulty ?? 'Dễ',
                                   style: const TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 12,
@@ -162,7 +162,7 @@ class ProductListItem extends StatelessWidget {
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  cookTime,
+                                  '${cookTime ?? 40} Phút',
                                   style: const TextStyle(
                                     fontFamily: 'Roboto',
                                     fontSize: 12,

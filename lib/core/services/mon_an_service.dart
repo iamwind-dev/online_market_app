@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/mon_an_model.dart';
 import '../models/mon_an_detail_model.dart';
+import '../models/mon_an_response.dart';
 import '../error/exceptions.dart';
 import 'package:logger/logger.dart';
 
@@ -16,22 +17,28 @@ class MonAnService {
 
   MonAnService({Dio? dio}) : _dio = dio ?? Dio();
 
-  /// Lấy danh sách món ăn từ API
+  /// Lấy danh sách món ăn từ API (trả về response với metadata)
   /// 
   /// [page] - Trang hiện tại (mặc định: 1)
   /// [limit] - Số lượng món ăn trên 1 trang (mặc định: 12)
   /// [maDanhMuc] - Mã danh mục để lọc (tùy chọn)
+  /// [search] - Từ khóa tìm kiếm (tùy chọn)
+  /// [sort] - Trường để sắp xếp (tùy chọn, vd: 'ten_mon_an')
+  /// [order] - Thứ tự sắp xếp (tùy chọn, 'asc' hoặc 'desc')
   /// 
-  /// Trả về: List<MonAnModel> - Danh sách món ăn
+  /// Trả về: MonAnResponse - Danh sách món ăn + metadata (total, hasNext, etc)
   /// 
   /// Throws:
   /// - UnauthorizedException: Nếu token không hợp lệ hoặc hết hạn
   /// - NetworkException: Nếu có lỗi kết nối
   /// - ServerException: Nếu server trả về lỗi
-  Future<List<MonAnModel>> getMonAnList({
+  Future<MonAnResponse> getMonAnListWithMeta({
     int page = 1,
     int limit = 12,
     String? maDanhMuc,
+    String? search,
+    String? sort,
+    String? order,
   }) async {
     try {
       // 1. Lấy token từ SharedPreferences
@@ -53,7 +60,131 @@ class MonAnService {
         'limit': limit.toString(),
       };
       if (maDanhMuc != null && maDanhMuc.isNotEmpty) {
-        queryParams['ma_danh_muc'] = maDanhMuc;
+        queryParams['ma_danh_muc_mon_an'] = maDanhMuc;
+      }
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+      if (sort != null && sort.isNotEmpty) {
+        queryParams['sort'] = sort;
+      }
+      if (order != null && order.isNotEmpty) {
+        queryParams['order'] = order;
+      }
+
+      // 4. Gửi GET request
+      final url = '$_baseUrl$_endpointList';
+      _logger.i('Gọi API: GET $url?page=$page&limit=$limit');
+
+      final response = await _dio.get(
+        url,
+        queryParameters: queryParams,
+        options: Options(headers: headers),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          _logger.e('Timeout khi gọi API món ăn');
+          throw NetworkException('Kết nối bị timeout, vui lòng thử lại');
+        },
+      );
+
+      // 5. Kiểm tra status code
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // 6. Parse response
+        final data = response.data as Map<String, dynamic>;
+        final monAnResponse = MonAnResponse.fromJson(data);
+
+        _logger.i('API trả về ${monAnResponse.data.length} món ăn (trang ${monAnResponse.meta.page}/${(monAnResponse.meta.total / monAnResponse.meta.limit).ceil()})');
+
+        return monAnResponse;
+      } else if (response.statusCode == 401) {
+        _logger.e('Token không hợp lệ hoặc hết hạn');
+        throw UnauthorizedException('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+      } else {
+        _logger.e('Lỗi server: ${response.statusCode}');
+        throw ServerException('Lỗi server: ${response.statusCode}');
+      }
+    } on UnauthorizedException {
+      _logger.e('UnauthorizedException khi lấy danh sách món ăn');
+      rethrow;
+    } on NetworkException {
+      _logger.e('NetworkException khi lấy danh sách món ăn');
+      rethrow;
+    } on ServerException {
+      _logger.e('ServerException khi lấy danh sách món ăn');
+      rethrow;
+    } on DioException catch (e) {
+      _logger.e('DioException: ${e.message}');
+
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkException('Kết nối bị timeout, vui lòng thử lại');
+      } else if (e.type == DioExceptionType.unknown) {
+        throw NetworkException('Lỗi kết nối mạng, vui lòng kiểm tra kết nối');
+      } else if (e.response?.statusCode == 401) {
+        throw UnauthorizedException('Token không hợp lệ, vui lòng đăng nhập lại');
+      } else {
+        throw ServerException('Lỗi server: ${e.message}');
+      }
+    } catch (e) {
+      _logger.e('Lỗi không xác định: $e');
+      throw ServerException('Có lỗi xảy ra, vui lòng thử lại');
+    }
+  }
+
+  /// Lấy danh sách món ăn từ API (chỉ trả về danh sách, không có metadata)
+  /// 
+  /// [page] - Trang hiện tại (mặc định: 1)
+  /// [limit] - Số lượng món ăn trên 1 trang (mặc định: 12)
+  /// [maDanhMuc] - Mã danh mục để lọc (tùy chọn)
+  /// [search] - Từ khóa tìm kiếm (tùy chọn)
+  /// [sort] - Trường để sắp xếp (tùy chọn, vd: 'ten_mon_an')
+  /// [order] - Thứ tự sắp xếp (tùy chọn, 'asc' hoặc 'desc')
+  /// 
+  /// Trả về: List<MonAnModel> - Danh sách món ăn
+  /// 
+  /// Throws:
+  /// - UnauthorizedException: Nếu token không hợp lệ hoặc hết hạn
+  /// - NetworkException: Nếu có lỗi kết nối
+  /// - ServerException: Nếu server trả về lỗi
+  Future<List<MonAnModel>> getMonAnList({
+    int page = 1,
+    int limit = 12,
+    String? maDanhMuc,
+    String? search,
+    String? sort,
+    String? order,
+  }) async {
+    try {
+      // 1. Lấy token từ SharedPreferences
+      final token = await _getToken();
+      if (token == null || token.isEmpty) {
+        _logger.e('Token không tìm thấy');
+        throw UnauthorizedException('Vui lòng đăng nhập lại');
+      }
+
+      // 2. Chuẩn bị headers với Bearer token
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      // 3. Chuẩn bị query parameters
+      final queryParams = {
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (maDanhMuc != null && maDanhMuc.isNotEmpty) {
+        queryParams['ma_danh_muc_mon_an'] = maDanhMuc;
+      }
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+      if (sort != null && sort.isNotEmpty) {
+        queryParams['sort'] = sort;
+      }
+      if (order != null && order.isNotEmpty) {
+        queryParams['order'] = order;
       }
 
       // 4. Gửi GET request

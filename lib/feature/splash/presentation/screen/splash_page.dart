@@ -33,13 +33,13 @@ class SplashView extends StatelessWidget {
     return BlocListener<SplashCubit, SplashState>(
       listener: (context, state) {
         if (state is SplashAuthenticated) {
-          // TODO: Navigate to Home screen
-          // Navigator.of(context).pushReplacementNamed(HomePage.routeName);
-          _navigateToHome(context);
+          // TODO: Navigate to Login screen
+          // Navigator.of(context).pushReplacementNamed(LoginPage.routeName);
+          _navigateToLogin(context);
         } else if (state is SplashUnauthenticated) {
           // TODO: Navigate to Onboarding or Login screen
           // Navigator.of(context).pushReplacementNamed(OnboardingPage.routeName);
-          _navigateToOnboarding(context);
+          _navigateToLogin(context);
         } else if (state is SplashError) {
           // Show error dialog
           _showErrorDialog(context, state.message);
@@ -148,21 +148,8 @@ class SplashView extends StatelessWidget {
     );
   }
 
-  /// Navigate to Home screen
-  void _navigateToHome(BuildContext context) {
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (context.mounted) {
-        AppRouter.navigateAndRemoveUntil(
-          context,
-          RouteName.home,
-        );
-      }
-    });
-  }
-
-  /// Navigate to Onboarding screen
-  void _navigateToOnboarding(BuildContext context) {
-    // Navigate to Login screen
+  /// Navigate to Login screen
+  void _navigateToLogin(BuildContext context) {
     Future.delayed(const Duration(milliseconds: 300), () {
       if (context.mounted) {
         AppRouter.navigateAndRemoveUntil(

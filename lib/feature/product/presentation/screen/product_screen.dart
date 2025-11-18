@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/widgets/shared_bottom_navigation.dart';
 import '../../../../core/widgets/product_list_item.dart';
+import '../../../../core/config/route_name.dart';
+import '../../../../core/router/app_router.dart';
 import '../cubit/product_cubit.dart';
 import '../cubit/product_state.dart';
 
@@ -18,8 +20,44 @@ class ProductScreen extends StatelessWidget {
   }
 }
 
-class ProductView extends StatelessWidget {
+class ProductView extends StatefulWidget {
   const ProductView({super.key});
+
+  @override
+  State<ProductView> createState() => _ProductViewState();
+}
+
+class _ProductViewState extends State<ProductView> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Lắng nghe scroll để load more
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Xử lý khi scroll đến cuối danh sách
+  void _onScroll() {
+    if (_isBottom) {
+      context.read<ProductCubit>().loadMoreProducts();
+    }
+  }
+
+  /// Kiểm tra đã scroll đến cuối chưa
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    // Load khi còn cách đáy 200px
+    return currentScroll >= (maxScroll - 200);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,52 +96,47 @@ class ProductView extends StatelessWidget {
 
   /// Header với location selector
   Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.location_on,
-            size: 25,
-            color: Color(0xFF008EDB),
-          ),
-          const SizedBox(width: 5),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'MM, ĐÀ NẴNG',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF008EDB),
-                    height: 1.22,
-                  ),
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    child: Row(
+      children: [
+        const Icon(
+          Icons.location_on,
+          size: 20,
+          color: Color(0xFF008EDB),
+        ),
+        const SizedBox(width: 6),
+
+        // Text "Chọn chợ" + dropdown icon LIỀN NHAU
+        GestureDetector(
+          onTap: () {
+            // mở bottom sheet chọn chợ
+          },
+          child: Row(
+            children: const [
+              Text(
+                "Chọn chợ",
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF008EDB),
                 ),
-                Text(
-                  'Chợ Bắc Mỹ An',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF008EDB),
-                    height: 1.69,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              SizedBox(width: 3),
+              Icon(
+                Icons.keyboard_arrow_down,
+                size: 18,
+                color: Color(0xFF008EDB),
+              ),
+            ],
           ),
-          Icon(
-            Icons.keyboard_arrow_down,
-            color: Color(0xFF008EDB),
-            size: 16,
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
 
   /// Search section với back button, search bar và filter
   Widget _buildSearchSection(BuildContext context) {
@@ -122,50 +155,59 @@ class ProductView extends StatelessWidget {
           
           // Search bar
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: const Color(0xFF5E5C5C)),
-                borderRadius: BorderRadius.circular(9998),
-              ),
-              child: Row(
-                children: [
-                  SvgPicture.asset(
-                    'assets/img/Search.svg',
-                    width: 16,
-                    height: 16,
-                    colorFilter: const ColorFilter.mode(
-                      Color(0xFF008EDB),
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Expanded(
-                    child: Text(
-                      '      ',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 16,
-                        color: Color(0xFFB3B3B3),
+            child: GestureDetector(
+              onTap: () {
+                // Navigate to search screen
+                AppRouter.navigateTo(context, RouteName.search);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFF5E5C5C)),
+                  borderRadius: BorderRadius.circular(9998),
+                ),
+                child: Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/img/Search.svg',
+                      width: 16,
+                      height: 16,
+                      colorFilter: const ColorFilter.mode(
+                        Color(0xFF008EDB),
+                        BlendMode.srcIn,
                       ),
                     ),
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Text(
+                        'Tìm kiếm món ăn...',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          color: Color(0xFFB3B3B3),
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                    onTap: () {
+                      print("Clear search tapped"); 
+                      // Tùy bạn: clear text, reset state, ...
+                    },
+                    child: const Icon(
+                      Icons.close,
+                      size: 18,
+                      color: Color(0xFF8A8A8A),
+                    ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
           const SizedBox(width: 14),
           
           // Add button
-          const Text(
-            '+',
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 25,
-              color: Color(0xFFB3B3B3),
-            ),
-          ),
           const SizedBox(width: 14),
           
           // Filter button
@@ -207,7 +249,20 @@ class ProductView extends StatelessWidget {
                 
                 return GestureDetector(
                   onTap: () {
-                    context.read<ProductCubit>().selectCategory(category.maDanhMucMonAn);
+                    // Debug: Print category info
+                    print('🔍 [CATEGORY] Bấm vào danh mục');
+                    print('   Mã danh mục: ${category.maDanhMucMonAn}');
+                    print('   Tên danh mục: ${category.tenDanhMucMonAn}');
+                    
+                    // Navigate to category product screen
+                    AppRouter.navigateTo(
+                      context,
+                      RouteName.categoryProducts,
+                      arguments: {
+                        'categoryId': category.maDanhMucMonAn,
+                        'categoryName': category.tenDanhMucMonAn,
+                      },
+                    );
                   },
                   child: Container(
                     margin: const EdgeInsets.only(right: 16),
@@ -312,9 +367,20 @@ class ProductView extends StatelessWidget {
           return Container(
             color: const Color(0xFFFFFFFF),
             child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 28),
-              itemCount: monAnList.length,
+              itemCount: monAnList.length + (state.isLoadingMore ? 1 : 0),
               itemBuilder: (context, index) {
+                // Hiển thị loading indicator ở cuối danh sách
+                if (index >= monAnList.length) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
                 final monAnWithImage = monAnList[index];
                 final monAn = monAnWithImage.monAn;
                 final imageUrl = monAnWithImage.imageUrl;
@@ -324,10 +390,14 @@ class ProductView extends StatelessWidget {
                   imagePath: imageUrl.isNotEmpty 
                       ? imageUrl 
                       : 'assets/img/product_default.png', // Fallback nếu không có ảnh
+                  servings: monAnWithImage.servings,
+                  difficulty: monAnWithImage.difficulty,
+                  cookTime: monAnWithImage.cookTime,
                   onViewDetail: () {
                     // Navigate to product detail screen với maMonAn
-                    Navigator.of(context).pushNamed(
-                      '/product-detail',
+                    AppRouter.navigateTo(
+                      context,
+                      RouteName.productDetail,
                       arguments: monAn.maMonAn,
                     );
                   },

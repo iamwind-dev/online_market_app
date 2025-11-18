@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../../core/models/mon_an_model.dart';
 
 /// Base state class for SearchResult feature
 abstract class SearchResultState extends Equatable {
@@ -19,31 +20,43 @@ class SearchResultLoaded extends SearchResultState {
   final String searchQuery;
   final String selectedMarket;
   final String selectedLocation;
-  final List<SearchResultProduct> products;
+  final List<MonAnWithImage> monAnList; // Danh sách món ăn từ API
   final int selectedBottomNavIndex;
+  final int currentPage; // Trang hiện tại
+  final bool hasMore; // Còn dữ liệu để load không
+  final bool isLoadingMore; // Đang load thêm dữ liệu
 
   const SearchResultLoaded({
     this.searchQuery = '',
     this.selectedMarket = 'MM, ĐÀ NẴNG',
     this.selectedLocation = 'Chợ Bắc Mỹ An',
-    this.products = const [],
+    this.monAnList = const [],
     this.selectedBottomNavIndex = 0,
+    this.currentPage = 1,
+    this.hasMore = true,
+    this.isLoadingMore = false,
   });
 
   SearchResultLoaded copyWith({
     String? searchQuery,
     String? selectedMarket,
     String? selectedLocation,
-    List<SearchResultProduct>? products,
+    List<MonAnWithImage>? monAnList,
     int? selectedBottomNavIndex,
+    int? currentPage,
+    bool? hasMore,
+    bool? isLoadingMore,
   }) {
     return SearchResultLoaded(
       searchQuery: searchQuery ?? this.searchQuery,
       selectedMarket: selectedMarket ?? this.selectedMarket,
       selectedLocation: selectedLocation ?? this.selectedLocation,
-      products: products ?? this.products,
+      monAnList: monAnList ?? this.monAnList,
       selectedBottomNavIndex:
           selectedBottomNavIndex ?? this.selectedBottomNavIndex,
+      currentPage: currentPage ?? this.currentPage,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 
@@ -52,19 +65,40 @@ class SearchResultLoaded extends SearchResultState {
         searchQuery,
         selectedMarket,
         selectedLocation,
-        products,
+        monAnList,
         selectedBottomNavIndex,
+        currentPage,
+        hasMore,
+        isLoadingMore,
       ];
 }
 
 /// State when an error occurs
 class SearchResultError extends SearchResultState {
   final String message;
+  final bool requiresLogin;
 
-  const SearchResultError(this.message);
+  const SearchResultError(this.message, {this.requiresLogin = false});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, requiresLogin];
+}
+
+/// Model kết hợp món ăn với URL ảnh và thông tin chi tiết
+class MonAnWithImage {
+  final MonAnModel monAn;
+  final String imageUrl;
+  final int? cookTime; // Thời gian nấu (phút) - từ khoang_thoi_gian
+  final String? difficulty; // Độ khó - từ do_kho
+  final int? servings; // Số khẩu phần - từ khau_phan_tieu_chuan
+
+  MonAnWithImage({
+    required this.monAn,
+    required this.imageUrl,
+    this.cookTime,
+    this.difficulty,
+    this.servings,
+  });
 }
 
 /// Model for search result product

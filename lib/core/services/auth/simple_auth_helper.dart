@@ -34,8 +34,8 @@ class SimpleAuthHelper {
 /// - Không throw exception, tất cả lỗi được xử lý nội bộ
 /// 
 /// Returns:
-/// - Future<void> - Hoàn thành khi xử lý xong (thành công hoặc thất bại)
-Future<void> logIn(BuildContext context, String username, String password) async {
+/// - Future<bool> - true nếu đăng nhập thành công, false nếu thất bại
+Future<bool> logIn(BuildContext context, String username, String password) async {
   print('[LOGIN] 🔐 Bắt đầu đăng nhập - username: $username');
   
   try {
@@ -101,6 +101,8 @@ Future<void> logIn(BuildContext context, String username, String password) async
           );
         }
         
+        return true; // ✅ Đăng nhập thành công
+        
       } catch (e) {
         print('[LOGIN] ❌ Error parsing response: $e');
         if (context.mounted) {
@@ -113,6 +115,7 @@ Future<void> logIn(BuildContext context, String username, String password) async
             ),
           );
         }
+        return false; // ❌ Lỗi parse response
       }
       
     } else if (response.statusCode == 401 || response.statusCode == 403) {
@@ -130,6 +133,8 @@ Future<void> logIn(BuildContext context, String username, String password) async
         );
       }
       
+      return false; // ❌ Sai mật khẩu
+      
     } else {
       // ❌ OTHER ERROR
       print('[LOGIN] ❌ Server error: ${response.statusCode}');
@@ -144,6 +149,8 @@ Future<void> logIn(BuildContext context, String username, String password) async
           ),
         );
       }
+      
+      return false; // ❌ Lỗi server
     }
     
   } on TimeoutException catch (e) {
@@ -162,6 +169,8 @@ Future<void> logIn(BuildContext context, String username, String password) async
       );
     }
     
+    return false; // ❌ Timeout
+    
   } on SocketException catch (e) {
     // 🌐 NETWORK ERROR (No internet, DNS resolution failed, etc.)
     print('[LOGIN] 🌐 Network error: SocketException - ${e.message}');
@@ -176,6 +185,8 @@ Future<void> logIn(BuildContext context, String username, String password) async
         ),
       );
     }
+    
+    return false; // ❌ Network error
     
   } on http.ClientException catch (e) {
     // 🔌 HTTP CLIENT ERROR
@@ -192,6 +203,8 @@ Future<void> logIn(BuildContext context, String username, String password) async
       );
     }
     
+    return false; // ❌ HTTP client error
+    
   } catch (e) {
     // 💥 UNKNOWN ERROR
     print('[LOGIN] 💥 Unexpected error: $e');
@@ -206,6 +219,8 @@ Future<void> logIn(BuildContext context, String username, String password) async
         ),
       );
     }
+    
+    return false; // ❌ Unknown error
   }
 }
 

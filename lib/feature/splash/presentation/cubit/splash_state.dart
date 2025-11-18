@@ -16,7 +16,7 @@ class SplashLoading extends SplashState {}
 
 /// State người dùng đã đăng nhập
 /// 
-/// Sau state này, ứng dụng sẽ điều hướng đến màn hình Home
+/// Sau state này, ứng dụng sẽ điều hướng đến màn hình Login
 class SplashAuthenticated extends SplashState {}
 
 /// State người dùng chưa đăng nhập

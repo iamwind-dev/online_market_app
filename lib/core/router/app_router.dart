@@ -13,6 +13,8 @@ import '../../feature/cart/presentation/screen/cart_page.dart';
 import '../../feature/payment/presentation/screen/payment_page.dart';
 import '../../feature/order/presentation/order_detail/screen/order_detail_page.dart';
 import '../../feature/order/presentation/order/screen/order_page.dart';
+import '../../feature/search/presentation/screen/search_screen.dart';
+import '../../feature/product/presentation/screen/category_product_screen.dart';
 
 /// Quản lý navigation và routing của ứng dụng
 /// Sử dụng onGenerateRoute để tạo route động
@@ -100,6 +102,22 @@ class AppRouter {
         return _buildRoute(
           settings,
           const OrderPage(),
+        );
+
+      case RouteName.search:
+        return _buildRoute(
+          settings,
+          const SearchScreen(),
+        );
+
+      case RouteName.categoryProducts:
+        final args = settings.arguments as Map<String, String>?;
+        return _buildRoute(
+          settings,
+          CategoryProductScreen(
+            categoryId: args?['categoryId'] ?? '',
+            categoryName: args?['categoryName'] ?? 'Danh mục',
+          ),
         );
 
       case RouteName.profile:

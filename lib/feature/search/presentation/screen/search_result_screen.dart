@@ -4,7 +4,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../cubit/search_result_cubit.dart';
 import '../cubit/search_result_state.dart';
 import '../../../../core/widgets/shared_bottom_navigation.dart';
-import '../../../../core/widgets/product_card.dart';
+import '../../../../core/widgets/product_list_item.dart';
+import '../../../../core/config/route_name.dart';
+import '../../../../core/router/app_router.dart';
 
 /// Search result screen displaying search results in a grid
 class SearchResultScreen extends StatelessWidget {
@@ -32,17 +34,37 @@ class _SearchResultScreenView extends StatefulWidget {
 
 class _SearchResultScreenViewState extends State<_SearchResultScreenView> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _searchController.text = widget.searchQuery;
+    // Lắng nghe scroll để load more
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Xử lý khi scroll đến cuối danh sách
+  void _onScroll() {
+    if (_isBottom) {
+      context.read<SearchResultCubit>().loadMoreResults();
+    }
+  }
+
+  /// Kiểm tra đã scroll đến cuối chưa
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    // Load khi còn cách đáy 200px
+    return currentScroll >= (maxScroll - 200);
   }
 
   @override
@@ -259,65 +281,61 @@ class _SearchResultScreenViewState extends State<_SearchResultScreenView> {
     );
   }
 
-  /// Build product grid
+  /// Build product list
   Widget _buildProductGrid(BuildContext context, SearchResultLoaded state) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.only(left: 13, right: 13, top: 10, bottom: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(left: 5, bottom: 15),
-              child: Text(
-                'Hiển thị kết quả tìm kiếm ',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w300,
-                  fontSize: 12,
-                  height: 1.0,
-                  color: Color(0xFF000000),
-                ),
-              ),
-            ),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 18,
-                mainAxisSpacing: 17,
-                childAspectRatio: 173 / 233,
-              ),
-              itemCount: state.products.length,
-              itemBuilder: (context, index) {
-                final product = state.products[index];
-                return _buildProductCard(context, product);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    final monAnList = state.monAnList;
 
-  /// Build individual product card
-  Widget _buildProductCard(BuildContext context, SearchResultProduct product) {
-    final cubit = context.read<SearchResultCubit>();
-    
-    return ProductCard(
-      title: product.name,
-      price: product.price,
-      soldCount: product.salesCount,
-      imagePath: product.imagePath,
-      onFavoriteTap: () {
-        // Handle favorite tap
-      },
-      onAddToCart: () {
-        cubit.quickAddItem(product.name);
-      },
-      onBuyNow: () {
-        cubit.navigateToProductDetail(product);
+    if (monAnList.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Text(
+            'Không tìm thấy món ăn nào',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      itemCount: monAnList.length + (state.isLoadingMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        // Hiển thị loading indicator ở cuối danh sách
+        if (index >= monAnList.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        final monAnWithImage = monAnList[index];
+        final monAn = monAnWithImage.monAn;
+        final imageUrl = monAnWithImage.imageUrl;
+
+        return ProductListItem(
+          productName: monAn.tenMonAn,
+          imagePath: imageUrl.isNotEmpty 
+              ? imageUrl 
+              : 'assets/img/product_default.png',
+          servings: monAnWithImage.servings,
+          difficulty: monAnWithImage.difficulty,
+          cookTime: monAnWithImage.cookTime,
+          onViewDetail: () {
+            // Navigate to product detail screen với maMonAn
+            AppRouter.navigateTo(
+              context,
+              RouteName.productDetail,
+              arguments: monAn.maMonAn,
+            );
+          },
+        );
       },
     );
   }

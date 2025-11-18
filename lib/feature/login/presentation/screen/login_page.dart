@@ -384,14 +384,14 @@ class _LoginViewState extends State<LoginView> {
                 : () async {
                     if (_formKey.currentState!.validate()) {
                       // Sử dụng simple auth helper - tất cả error handling tự động
-                      await logIn(
+                      final success = await logIn(
                         context,
                         _emailController.text.trim(),
                         _passwordController.text,
                       );
                       
-                      // Check success và navigate to home
-                      if (await isLoggedIn() && mounted) {
+                      // Chỉ navigate khi đăng nhập thành công
+                      if (success && mounted) {
                         AppRouter.navigateAndRemoveUntil(
                           context,
                           RouteName.home,
