@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:online_market_app/feature/menudetail/presentation/cubit/menudetail_state.dart';
+import 'package:DNGO/feature/menudetail/presentation/cubit/menudetail_state.dart';
 
 /// Cubit for managing menu detail screen state
 class MenuDetailCubit extends Cubit<MenuDetailState> {

@@ -24,18 +24,30 @@ class IngredientLoaded extends IngredientState {
   final String searchQuery;
   final List<Category> categories;
   final List<Category> additionalCategories;
+  final List<Shop> shops;
   final List<Product> products;
   final List<String> shopNames;
   final int selectedBottomNavIndex;
+  final int cartItemCount;
+  
+  // Pagination fields
+  final int currentPage;
+  final bool hasMoreProducts;
+  final bool isLoadingMore;
 
   const IngredientLoaded({
     this.selectedMarket = 'CHỢ BẮC MỸ AN',
     this.searchQuery = '',
     this.categories = const [],
     this.additionalCategories = const [],
+    this.shops = const [],
     this.products = const [],
     this.shopNames = const [],
     this.selectedBottomNavIndex = 1,
+    this.cartItemCount = 0,
+    this.currentPage = 1,
+    this.hasMoreProducts = true,
+    this.isLoadingMore = false,
   });
 
   IngredientLoaded copyWith({
@@ -43,18 +55,28 @@ class IngredientLoaded extends IngredientState {
     String? searchQuery,
     List<Category>? categories,
     List<Category>? additionalCategories,
+    List<Shop>? shops,
     List<Product>? products,
     List<String>? shopNames,
     int? selectedBottomNavIndex,
+    int? cartItemCount,
+    int? currentPage,
+    bool? hasMoreProducts,
+    bool? isLoadingMore,
   }) {
     return IngredientLoaded(
       selectedMarket: selectedMarket ?? this.selectedMarket,
       searchQuery: searchQuery ?? this.searchQuery,
       categories: categories ?? this.categories,
       additionalCategories: additionalCategories ?? this.additionalCategories,
+      shops: shops ?? this.shops,
       products: products ?? this.products,
       shopNames: shopNames ?? this.shopNames,
       selectedBottomNavIndex: selectedBottomNavIndex ?? this.selectedBottomNavIndex,
+      cartItemCount: cartItemCount ?? this.cartItemCount,
+      currentPage: currentPage ?? this.currentPage,
+      hasMoreProducts: hasMoreProducts ?? this.hasMoreProducts,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 
@@ -64,9 +86,14 @@ class IngredientLoaded extends IngredientState {
         searchQuery,
         categories,
         additionalCategories,
+        shops,
         products,
         shopNames,
         selectedBottomNavIndex,
+        cartItemCount,
+        currentPage,
+        hasMoreProducts,
+        isLoadingMore,
       ];
 }
 
@@ -96,6 +123,7 @@ class Category extends Equatable {
 
 /// Product model
 class Product extends Equatable {
+  final String? maNguyenLieu; // Thêm mã nguyên liệu
   final String name;
   final String price;
   final String imagePath;
@@ -105,6 +133,7 @@ class Product extends Equatable {
   final String? originalPrice;
 
   const Product({
+    this.maNguyenLieu,
     required this.name,
     required this.price,
     required this.imagePath,
@@ -116,6 +145,7 @@ class Product extends Equatable {
 
   @override
   List<Object?> get props => [
+        maNguyenLieu,
         name,
         price,
         imagePath,
@@ -124,4 +154,22 @@ class Product extends Equatable {
         hasDiscount,
         originalPrice,
       ];
+}
+
+/// Shop model
+class Shop extends Equatable {
+  final String name;
+  final String? imagePath;
+  final String? rating;
+  final String? distance;
+
+  const Shop({
+    required this.name,
+    this.imagePath,
+    this.rating,
+    this.distance,
+  });
+
+  @override
+  List<Object?> get props => [name, imagePath, rating, distance];
 }

@@ -5,6 +5,9 @@ import '../services/auth/auth_service.dart';
 import '../services/category_service.dart';
 import '../services/mon_an_service.dart';
 import '../services/nguyen_lieu_service.dart';
+import '../services/gian_hang_service.dart';
+import '../services/danh_muc_nguyen_lieu_service.dart';
+import '../services/navigation_state_service.dart';
 import '../utils/app_logger.dart';
 
 /// Dependency Injection Container
@@ -51,6 +54,24 @@ Future<void> initDependencies() async {
     () => NguyenLieuService(),
   );
   AppLogger.info('✅ NguyenLieuService registered');
+
+  // GianHang Service - Singleton
+  getIt.registerLazySingleton<GianHangService>(
+    () => GianHangService(),
+  );
+  AppLogger.info('✅ GianHangService registered');
+
+  // DanhMucNguyenLieu Service - Singleton
+  getIt.registerLazySingleton<DanhMucNguyenLieuService>(
+    () => DanhMucNguyenLieuService(),
+  );
+  AppLogger.info('✅ DanhMucNguyenLieuService registered');
+
+  // NavigationState Service - Singleton
+  getIt.registerLazySingleton<NavigationStateService>(
+    () => NavigationStateService(getIt<LocalStorageService>().prefs),
+  );
+  AppLogger.info('✅ NavigationStateService registered');
 
   // ==================== Repositories ====================
   // Register repositories here when created

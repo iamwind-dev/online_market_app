@@ -11,6 +11,7 @@ class UserState extends Equatable {
   final bool isLoading;
   final String? errorMessage;
   final bool requiresLogin;
+  final int selectedBottomNavIndex;
 
   const UserState({
     this.userName = '',
@@ -22,6 +23,7 @@ class UserState extends Equatable {
     this.isLoading = false,
     this.errorMessage,
     this.requiresLogin = false,
+    this.selectedBottomNavIndex = 4, // 4 = Tài khoản tab
   });
 
   UserState copyWith({
@@ -34,6 +36,7 @@ class UserState extends Equatable {
     bool? isLoading,
     String? errorMessage,
     bool? requiresLogin,
+    int? selectedBottomNavIndex,
   }) {
     return UserState(
       userName: userName ?? this.userName,
@@ -45,6 +48,7 @@ class UserState extends Equatable {
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
       requiresLogin: requiresLogin ?? this.requiresLogin,
+      selectedBottomNavIndex: selectedBottomNavIndex ?? this.selectedBottomNavIndex,
     );
   }
 
@@ -59,5 +63,6 @@ class UserState extends Equatable {
         isLoading,
         errorMessage,
         requiresLogin,
+        selectedBottomNavIndex,
       ];
 }

@@ -66,7 +66,14 @@ class _UserView extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: const SharedBottomNavigation(currentIndex: 4),
+      bottomNavigationBar: BlocBuilder<UserCubit, UserState>(
+        builder: (context, state) {
+          return SharedBottomNavigation(
+            currentIndex: state.selectedBottomNavIndex,
+            onTap: (index) => context.read<UserCubit>().changeBottomNavIndex(index),
+          );
+        },
+      ),
     );
   }
 

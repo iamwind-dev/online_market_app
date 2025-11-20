@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:online_market_app/feature/user/presentation/cubit/user_state.dart';
+import 'package:DNGO/feature/user/presentation/cubit/user_state.dart';
 import '../../../../core/services/auth/auth_service.dart';
 import '../../../../core/error/app_exception.dart';
 import '../../../../core/utils/app_logger.dart';
@@ -143,5 +143,10 @@ class UserCubit extends Cubit<UserState> {
   /// Navigate to cart
   void navigateToCart() {
     // Navigation will be handled by screen
+  }
+
+  /// Change bottom navigation index
+  void changeBottomNavIndex(int index) {
+    emit(state.copyWith(selectedBottomNavIndex: index));
   }
 }

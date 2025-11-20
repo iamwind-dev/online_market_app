@@ -2,7 +2,7 @@
 /// 
 /// Sử dụng để import toàn bộ signup module:
 /// ```dart
-/// import 'package:online_market_app/presentation/pages/signup/signup.dart';
+/// import 'package:DNGO/presentation/pages/signup/signup.dart';
 /// ```
 export 'presentation/screen/signup_page.dart';
 export 'presentation/cubit/signup_cubit.dart';

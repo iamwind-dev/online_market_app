@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../cubit/search_cubit.dart';
 import '../cubit/search_state.dart';
 import '../../../../core/widgets/shared_bottom_navigation.dart';
@@ -109,10 +108,20 @@ class _SearchScreenViewState extends State<_SearchScreenView> {
     );
   }
 
-  /// Build header with back button, search bar, and search button
+  /// Build header with back button and search bar (giống product_screen)
   Widget _buildHeader(BuildContext context, SearchLoaded state) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           // Back button
@@ -121,38 +130,39 @@ class _SearchScreenViewState extends State<_SearchScreenView> {
               context.read<SearchCubit>().navigateBack();
               Navigator.pop(context);
             },
-            child: SvgPicture.asset(
-              'assets/img/search_arrow_left.svg',
-              width: 16,
-              height: 16,
+            child: const Icon(
+              Icons.arrow_back,
+              size: 24,
+              color: Colors.black,
             ),
           ),
-          const SizedBox(width: 27),
-          // Search bar
+          const SizedBox(width: 12),
+          
+          // Search bar (giống product_screen)
           Expanded(
             child: Container(
-              height: 31,
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: const Color(0xFF5E5C5C), width: 1),
-                borderRadius: BorderRadius.circular(9998),
+                color: const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFE0E0E0),
+                  width: 1,
+                ),
               ),
               child: Row(
                 children: [
-                  const SizedBox(width: 16),
-                  SvgPicture.asset(
-                    'assets/img/search_icon.svg',
-                    width: 16,
-                    height: 16,
-                    colorFilter: const ColorFilter.mode(
-                      Color(0xFF008EDB),
-                      BlendMode.srcIn,
-                    ),
+                  const Icon(
+                    Icons.search,
+                    size: 20,
+                    color: Color(0xFF8E8E93),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: _searchController,
+                      autofocus: true,
                       onChanged: (value) {
                         context.read<SearchCubit>().updateSearchQuery(value);
                       },
@@ -169,48 +179,36 @@ class _SearchScreenViewState extends State<_SearchScreenView> {
                         }
                       },
                       style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w400,
-                        fontSize: 16,
-                        height: 1.0,
-                        color: Color(0xFFB3B3B3),
+                        fontFamily: 'Roboto',
+                        fontSize: 15,
+                        color: Color(0xFF1C1C1E),
                       ),
                       decoration: const InputDecoration(
+                        hintText: 'Tìm kiếm món ăn...',
+                        hintStyle: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 15,
+                          color: Color(0xFF8E8E93),
+                        ),
                         border: InputBorder.none,
-                        hintText: '',
-                        contentPadding: EdgeInsets.zero,
                         isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
+                  if (state.searchQuery.isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        _searchController.clear();
+                        context.read<SearchCubit>().updateSearchQuery('');
+                      },
+                      child: const Icon(
+                        Icons.close,
+                        size: 18,
+                        color: Color(0xFF8E8E93),
+                      ),
+                    ),
                 ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Search button
-          GestureDetector(
-            onTap: () {
-              final query = _searchController.text;
-              if (query.isNotEmpty) {
-                context.read<SearchCubit>().performSearch();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => SearchResultScreen(searchQuery: query),
-                  ),
-                );
-              }
-            },
-            child: const Text(
-              'Tìm kiếm',
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w400,
-                fontSize: 17,
-                height: 1.176,
-                letterSpacing: 0.25,
-                color: Color(0xFF0272BA),
               ),
             ),
           ),
@@ -219,73 +217,97 @@ class _SearchScreenViewState extends State<_SearchScreenView> {
     );
   }
 
-  /// Build search history section with quick add buttons
+  /// Build search history section - list đơn giản nhưng đẹp mắt
   Widget _buildSearchHistory(BuildContext context, SearchLoaded state) {
+    if (state.searchHistory.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: state.searchHistory.asMap().entries.map((entry) {
-        final index = entry.key;
-        final item = entry.value;
-
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 13,
-            right: 13,
-            top: index == 0 ? 0 : 5,
-          ),
-          child: GestureDetector(
-            onTap: () {
-              // Navigate to search result with this history item
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => SearchResultScreen(searchQuery: item),
-                ),
-              );
-            },
-            child: Row(
-              children: [
-                // History icon
-                SvgPicture.asset(
-                  'assets/img/search_history_icon.svg',
-                  width: 15,
-                  height: 15,
-                ),
-                const SizedBox(width: 9),
-                // Search term
-                Expanded(
-                  child: Text(
-                    item,
-                    style: const TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 16,
-                      height: 1.0,
-                      color: Color(0xFF707070),
-                    ),
-                  ),
-                ),
-                // Quick add button
-                GestureDetector(
-                  onTap: () {
-                    context.read<SearchCubit>().quickAddItem(item);
-                  },
-                  child: const Text(
-                    '+',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 25,
-                      height: 1.0,
-                      color: Color(0xFFB3B3B3),
-                    ),
-                  ),
-                ),
-              ],
+      children: [
+        // Header
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+          child: Text(
+            'Tìm kiếm gần đây',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1C1C1E),
+              letterSpacing: 0.2,
             ),
           ),
-        );
-      }).toList(),
+        ),
+        
+        // Divider
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 18),
+          child: Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFE0E0E0),
+          ),
+        ),
+        const SizedBox(height: 4),
+        
+        // History items
+        ...state.searchHistory.asMap().entries.map((entry) {
+          final item = entry.value;
+
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SearchResultScreen(searchQuery: item),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                child: Row(
+                  children: [
+                    // History icon
+                    const Icon(
+                      Icons.history,
+                      size: 20,
+                      color: Color(0xFF8E8E93),
+                    ),
+                    const SizedBox(width: 14),
+                    
+                    // Search term
+                    Expanded(
+                      child: Text(
+                        item,
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 15,
+                          color: Color(0xFF1C1C1E),
+                          height: 1.4,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    
+                    // Arrow icon
+                    const Icon(
+                      Icons.north_west,
+                      size: 18,
+                      color: Color(0xFF8E8E93),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 

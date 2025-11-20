@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../feature/ingredient/presentation/ingredient/screen/ingredient_screen.dart';
+import '../../feature/ingredient/presentation/ingredient_detail/screen/ingredient_detail_page.dart';
 import '../config/route_name.dart';
 import '../../feature/splash/presentation/screen/splash_page.dart';
 import '../../feature/login/presentation/screen/login_page.dart';
@@ -40,6 +42,26 @@ class AppRouter {
         return _buildRoute(
           settings,
           const LoginPage(),
+        );
+
+      case RouteName.ingredient:
+        return _buildRoute(
+          settings,
+          const IngredientScreen(),
+        );
+
+      case RouteName.ingredientDetail:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          settings,
+          IngredientDetailPage(
+            maNguyenLieu: args?['maNguyenLieu'],
+            ingredientName: args?['name'] ?? '',
+            ingredientImage: args?['image'] ?? '',
+            price: args?['price'] ?? '',
+            unit: args?['unit'],
+            shopName: args?['shopName'],
+          ),
         );
 
       case RouteName.register:
@@ -84,6 +106,7 @@ class AppRouter {
           const CartPage(),
         );
 
+      case RouteName.payment:
       case RouteName.checkout:
         return _buildRoute(
           settings,

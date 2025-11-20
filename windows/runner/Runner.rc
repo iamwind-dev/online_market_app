@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "online_market_app" "\0"
+            VALUE "FileDescription", "DNGO" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "online_market_app" "\0"
+            VALUE "InternalName", "DNGO" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "online_market_app.exe" "\0"
-            VALUE "ProductName", "online_market_app" "\0"
+            VALUE "OriginalFilename", "DNGO.exe" "\0"
+            VALUE "ProductName", "DNGO" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

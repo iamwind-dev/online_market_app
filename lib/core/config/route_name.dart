@@ -23,6 +23,10 @@ class RouteName {
   static const String menuDetail = '/menu-detail';
   static const String search = '/search';
   static const String categoryProducts = '/category-products';
+  static const String ingredient = '/ingredient';
+  static const String ingredientDetail = '/ingredient-detail';
+
+
 
   // Category Routes
   static const String categoryList = '/categories';
@@ -32,6 +36,7 @@ class RouteName {
   static const String cart = '/cart';
   static const String checkout = '/checkout';
   static const String checkoutSuccess = '/checkout-success';
+  static const String payment = '/payment';
 
   // Order Routes
   static const String orderList = '/orders';

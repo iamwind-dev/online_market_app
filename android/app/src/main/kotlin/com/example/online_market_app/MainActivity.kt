@@ -1,4 +1,4 @@
-package com.example.online_market_app
+package com.example.DNGO
 
 import io.flutter.embedding.android.FlutterActivity
 

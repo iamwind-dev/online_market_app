@@ -60,11 +60,12 @@ class SharedBottomNavigation extends StatelessWidget {
           ),
           _buildNavItem(
             context,
-            icon: 'assets/img/wifi_notification.svg',
-            label: 'Thông báo',
+            icon: 'assets/img/ingredient.png',
+            label: 'Nguyên liệu',
             index: 3,
             currentIndex: currentIndex,
-            isImage: false,
+            route: RouteName.ingredient,
+            isImage: true,
           ),
           _buildNavItem(
             context,

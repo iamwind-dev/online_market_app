@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:online_market_app/feature/productdetail/presentation/cubit/productdetail_state.dart';
-import 'package:online_market_app/core/services/mon_an_service.dart';
-import 'package:online_market_app/core/dependency/injection.dart';
+import 'package:DNGO/feature/productdetail/presentation/cubit/productdetail_state.dart';
+import 'package:DNGO/core/services/mon_an_service.dart';
+import 'package:DNGO/core/dependency/injection.dart';
 
 /// Cubit quản lý state cho ProductDetail
 class ProductDetailCubit extends Cubit<ProductDetailState> {

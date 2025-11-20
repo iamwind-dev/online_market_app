@@ -78,10 +78,26 @@ class AppColors {
   static const Color inStock = Color(0xFF10B981);
   static const Color outOfStock = Color(0xFF6B7280);
   static const Color rating = Color(0xFFFBBF24);
+  
+  // App Specific Colors
+  static const Color primaryGreen = Color(0xFF2F8000);
+  static const Color lightGreenBackground = Color(0xFFD7FFBD);
+  static const Color cardBackground = Color(0xFFD7FFBD); // Same as lightGreenBackground for consistency
 
   // Social Media Colors
   static const Color facebook = Color(0xFF1877F2);
   static const Color google = Color(0xFFDB4437);
   static const Color apple = Color(0xFF000000);
   static const Color twitter = Color(0xFF1DA1F2);
+  
+  // Helper methods
+  /// Get card background color with alpha
+  static Color getCardBackground({double alpha = 0.5}) {
+    return cardBackground.withValues(alpha: alpha);
+  }
+  
+  /// Get primary green with alpha
+  static Color getPrimaryGreen({double alpha = 1.0}) {
+    return primaryGreen.withValues(alpha: alpha);
+  }
 }

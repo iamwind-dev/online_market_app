@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/productdetail_cubit.dart';
 import '../cubit/productdetail_state.dart';
+import '../../../../core/widgets/ingredient_list_item.dart';
 import '../../../../core/widgets/ingredient_card.dart';
 import '../../../../core/widgets/shared_bottom_navigation.dart';
 
@@ -69,9 +70,9 @@ class _ProductDetailView extends StatelessWidget {
           _buildExpandButton(),
           _buildRelatedProductsTitle(),
           _buildRelatedProducts(context),
-          const SizedBox(height: 20),
-          _buildReviewSection(state),
-          const SizedBox(height: 100),
+          // const SizedBox(height: 20),
+          // _buildReviewSection(state),
+          // const SizedBox(height: 100),
         ],
       ),
     );
@@ -238,7 +239,7 @@ class _ProductDetailView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             ...state.nguyenLieu!.map((nl) {
-              return IngredientCard(
+              return IngredientListItem(
                 tenNguyenLieu: nl.ten,
                 dinhLuong: nl.dinhLuong,
                 donViGoc: nl.donVi,
@@ -441,16 +442,33 @@ class _ProductDetailView extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        return Container(
+        return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: state.nguyenLieu!.map((nl) {
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.85,
+            ),
+            itemCount: state.nguyenLieu!.length,
+            itemBuilder: (context, index) {
+              final nl = state.nguyenLieu![index];
               return IngredientCard(
-                tenNguyenLieu: nl.ten,
-                dinhLuong: nl.dinhLuong,
-                donViGoc: nl.donVi,
+                name: nl.ten,
+                price: nl.dinhLuong != null && nl.donVi != null
+                    ? '${nl.dinhLuong} ${nl.donVi}'
+                    : 'N/A',
+                imagePath: '', // Không có ảnh
+                isGridLayout: true, // Grid layout cho ProductDetail
+                onBuyNow: () {
+                  // Navigate to ingredient detail or add to cart
+                  print('Bấm vào nguyên liệu: ${nl.ten}');
+                },
               );
-            }).toList(),
+            },
           ),
         );
       },

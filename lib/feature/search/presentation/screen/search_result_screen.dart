@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../cubit/search_result_cubit.dart';
 import '../cubit/search_result_state.dart';
 import '../../../../core/widgets/shared_bottom_navigation.dart';
@@ -125,10 +124,20 @@ class _SearchResultScreenViewState extends State<_SearchResultScreenView> {
     );
   }
 
-  /// Build header with back button, search bar, search text, filter button, and quick add
+  /// Build header with back button and search bar (giống product_screen)
   Widget _buildHeader(BuildContext context, SearchResultLoaded state) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           // Back button
@@ -137,94 +146,73 @@ class _SearchResultScreenViewState extends State<_SearchResultScreenView> {
               context.read<SearchResultCubit>().navigateBack();
               Navigator.pop(context);
             },
-            child: SvgPicture.asset(
-              'assets/img/search_result_arrow_left.svg',
-              width: 16,
-              height: 16,
+            child: const Icon(
+              Icons.arrow_back,
+              size: 24,
+              color: Colors.black,
             ),
           ),
-          const SizedBox(width: 27),
-          // Search bar
+          const SizedBox(width: 12),
+          
+          // Search bar (giống product_screen)
           Expanded(
-            child: Container(
-              height: 31,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: const Color(0xFF5E5C5C), width: 1),
-                borderRadius: BorderRadius.circular(9998),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 16),
-                  SvgPicture.asset(
-                    'assets/img/search_result_search_icon.svg',
-                    width: 16,
-                    height: 16,
-                    colorFilter: const ColorFilter.mode(
-                      Color(0xFF008EDB),
-                      BlendMode.srcIn,
-                    ),
+            child: GestureDetector(
+              onTap: () {
+                // Quay lại search screen để edit query
+                Navigator.pop(context);
+              },
+              child: Container(
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFE0E0E0),
+                    width: 1,
                   ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      state.searchQuery,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontWeight: FontWeight.w400,
-                        fontSize: 16,
-                        height: 1.0,
-                        color: Color(0xFF000000),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.search,
+                      size: 20,
+                      color: Color(0xFF8E8E93),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        state.searchQuery,
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 15,
+                          color: Color(0xFF1C1C1E),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          // Quick add button
-          GestureDetector(
-            onTap: () {
-              context.read<SearchResultCubit>().quickAddItem(state.searchQuery);
-            },
-            child: const Text(
-              '+',
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w400,
-                fontSize: 25,
-                height: 1.0,
-                color: Color(0xFFB3B3B3),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
+          
           // Filter button
           GestureDetector(
             onTap: () {
               context.read<SearchResultCubit>().navigateToFilter();
             },
-            child: Row(
-              children: [
-                SvgPicture.asset(
-                  'assets/img/search_result_tune_icon.svg',
-                  width: 29,
-                  height: 27,
-                ),
-                const SizedBox(width: 4),
-                const Text(
-                  'Lọc',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 17,
-                    height: 1.176,
-                    letterSpacing: 0.25,
-                    color: Color(0xFF008EDB),
-                  ),
-                ),
-              ],
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF008EDB).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.tune,
+                size: 24,
+                color: Color(0xFF008EDB),
+              ),
             ),
           ),
         ],
@@ -232,51 +220,79 @@ class _SearchResultScreenViewState extends State<_SearchResultScreenView> {
     );
   }
 
-  /// Build market selector with location
+  /// Build market selector (giống ingredient_screen)
   Widget _buildMarketSelector(BuildContext context, SearchResultLoaded state) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 10),
-      child: Row(
-        children: [
-          SvgPicture.asset(
-            'assets/img/search_result_location_icon.svg',
-            width: 25,
-            height: 21,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(
+            color: const Color(0xFFE0E0E0).withValues(alpha: 0.5),
+            width: 1,
           ),
-          const SizedBox(width: 7),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  state.selectedMarket,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    height: 1.222,
-                    color: Color(0xFF008EDB),
-                  ),
-                ),
-                Text(
-                  state.selectedLocation,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    height: 1.692,
-                    color: Color(0xFF008EDB),
-                  ),
-                ),
-              ],
+        ),
+      ),
+      child: GestureDetector(
+        onTap: () {
+          // Open market selector
+        },
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF008EDB).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.location_on,
+                color: Color(0xFF008EDB),
+                size: 20,
+              ),
             ),
-          ),
-          SvgPicture.asset(
-            'assets/img/search_result_dropdown_icon.svg',
-            width: 15,
-            height: 16,
-          ),
-        ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Giao đến',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF8E8E93),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          state.selectedMarket,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1C1C1E),
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.keyboard_arrow_down,
+                        size: 20,
+                        color: Color(0xFF8E8E93),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

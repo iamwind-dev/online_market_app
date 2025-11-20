@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../cubit/order_detail_cubit.dart';
+import '../../../../../core/theme/app_colors.dart';
 
 /// Màn hình chi tiết đơn hàng
 /// 
@@ -69,7 +70,7 @@ class _OrderDetailViewState extends State<OrderDetailView> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFAFAFA),
         body: SafeArea(
           child: Column(
             children: [
@@ -226,8 +227,15 @@ class _OrderDetailViewState extends State<OrderDetailView> {
       margin: const EdgeInsets.symmetric(horizontal: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFD7FFBD).withOpacity(0.5),
+        color: AppColors.getCardBackground(),
         borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,9 +247,16 @@ class _OrderDetailViewState extends State<OrderDetailView> {
               Container(
                 width: 48,
                 height: 49,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF8F959E),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2F8000),
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -263,29 +278,58 @@ class _OrderDetailViewState extends State<OrderDetailView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Shop name
-                    Text(
-                      orderDetail.shopName,
-                      style: const TextStyle(
-                        fontFamily: 'Roboto',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 20,
-                        height: 1.1,
-                        color: Color(0xFF202020),
-                      ),
+                    // Shop name with icon
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2F8000).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Icon(
+                            Icons.store,
+                            size: 14,
+                            color: Color(0xFF2F8000),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            orderDetail.shopName,
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              height: 1.1,
+                              color: Color(0xFF202020),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     
-                    // Status
-                    Text(
-                      orderDetail.status.displayName,
-                      style: const TextStyle(
-                        fontFamily: 'Roboto',
-                        fontWeight: FontWeight.w400,
-                        fontSize: 16,
-                        height: 1.375,
-                        color: Color(0xFF202020),
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(orderDetail.status).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _getStatusColor(orderDetail.status),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        orderDetail.status.displayName,
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: _getStatusColor(orderDetail.status),
+                        ),
                       ),
                     ),
                   ],
@@ -371,8 +415,15 @@ class _OrderDetailViewState extends State<OrderDetailView> {
       margin: const EdgeInsets.symmetric(horizontal: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFD7FFBD).withOpacity(0.5),
+        color: AppColors.getCardBackground(),
         borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,6 +447,14 @@ class _OrderDetailViewState extends State<OrderDetailView> {
           
           const SizedBox(height: 16),
           
+          // Divider
+          Container(
+            height: 1,
+            color: Colors.black.withValues(alpha: 0.08),
+          ),
+          
+          const SizedBox(height: 12),
+          
           // Subtotal
           _buildSummaryRow('Tổng tạm tính', orderDetail.subtotal),
           
@@ -404,7 +463,15 @@ class _OrderDetailViewState extends State<OrderDetailView> {
           // Shipping fee
           _buildSummaryRow('Phí áp dụng', orderDetail.shippingFee),
           
-          const SizedBox(height: 11),
+          const SizedBox(height: 16),
+          
+          // Divider
+          Container(
+            height: 1,
+            color: Colors.black.withValues(alpha: 0.08),
+          ),
+          
+          const SizedBox(height: 12),
           
           // Total
           _buildSummaryRow('Tổng cộng', orderDetail.total, isBold: true),
@@ -415,26 +482,34 @@ class _OrderDetailViewState extends State<OrderDetailView> {
 
   /// Order item
   Widget _buildOrderItem(OrderDetailItem item) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Row(
         children: [
-          // Weight
-          SizedBox(
-            width: 53,
+          // Weight badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2F8000).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
             child: Text(
               '${item.weight}${item.unit}',
               style: const TextStyle(
                 fontFamily: 'Roboto',
-                fontWeight: FontWeight.w400,
-                fontSize: 16,
-                height: 1.375,
-                color: Color(0xFF202020),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: Color(0xFF2F8000),
               ),
             ),
           ),
           
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           
           // Product name
           Expanded(
@@ -442,9 +517,8 @@ class _OrderDetailViewState extends State<OrderDetailView> {
               item.productName,
               style: const TextStyle(
                 fontFamily: 'Roboto',
-                fontWeight: FontWeight.w700,
-                fontSize: 17,
-                height: 1.29,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
                 color: Color(0xFF202020),
               ),
             ),
@@ -454,12 +528,11 @@ class _OrderDetailViewState extends State<OrderDetailView> {
           
           // Price
           Text(
-            _formatPrice(item.totalPrice),
+            '${_formatPrice(item.totalPrice)}đ',
             style: const TextStyle(
               fontFamily: 'Roboto',
-              fontWeight: FontWeight.w400,
-              fontSize: 17,
-              height: 1.29,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
               color: Color(0xFF202020),
             ),
           ),
@@ -470,31 +543,82 @@ class _OrderDetailViewState extends State<OrderDetailView> {
 
   /// Summary row
   Widget _buildSummaryRow(String label, double amount, {bool isBold = false}) {
+    if (isBold) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: Color(0xFF202020),
+              ),
+            ),
+            Text(
+              '${_formatPrice(amount)}đ',
+              style: const TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w700,
+                fontSize: 20,
+                color: Color(0xFF2F8000),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: 'Roboto',
-            fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
-            fontSize: 20,
-            height: 1.1,
-            color: const Color(0xFF202020),
+            fontWeight: FontWeight.w400,
+            fontSize: 16,
+            color: Color(0xFF666666),
           ),
         ),
         Text(
-          _formatPrice(amount),
-          style: TextStyle(
+          '${_formatPrice(amount)}đ',
+          style: const TextStyle(
             fontFamily: 'Roboto',
-            fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
-            fontSize: 17,
-            height: 1.29,
-            color: const Color(0xFF202020),
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            color: Color(0xFF202020),
           ),
         ),
       ],
     );
+  }
+
+  /// Get status color
+  Color _getStatusColor(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return const Color(0xFFFFA500);
+      case OrderStatus.confirmed:
+        return const Color(0xFF4CAF50);
+      case OrderStatus.processing:
+        return const Color(0xFF2196F3);
+      case OrderStatus.shipping:
+        return const Color(0xFF9C27B0);
+      case OrderStatus.delivered:
+        return const Color(0xFF2F8000);
+      case OrderStatus.cancelled:
+        return const Color(0xFFFF0000);
+      case OrderStatus.returned:
+        return const Color(0xFF795548);
+    }
   }
 
   /// Review button
@@ -506,22 +630,44 @@ class _OrderDetailViewState extends State<OrderDetailView> {
           // Navigate to review page
         },
         child: Container(
-          height: 42,
+          height: 50,
           decoration: BoxDecoration(
-            color: const Color(0xFF21A036),
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF2F8000),
+                Color(0xFF267000),
+              ],
+            ),
             borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF2F8000).withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           alignment: Alignment.center,
-          child: const Text(
-            'Đánh giá',
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontWeight: FontWeight.w700,
-              fontSize: 20,
-              height: 1.5,
-              letterSpacing: -0.21,
-              color: Colors.white,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.star_rate,
+                color: Colors.white,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Đánh giá',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  letterSpacing: 0.5,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
         ),
       ),

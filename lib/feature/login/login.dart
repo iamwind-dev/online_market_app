@@ -2,7 +2,7 @@
 /// 
 /// Sử dụng để import toàn bộ login module:
 /// ```dart
-/// import 'package:online_market_app/presentation/pages/login/login.dart';
+/// import 'package:DNGO/presentation/pages/login/login.dart';
 /// ```
 export 'presentation/screen/login_page.dart';
 export 'presentation/cubit/login_cubit.dart';

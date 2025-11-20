@@ -1,6 +1,6 @@
 {
-    "name": "online_market_app",
-    "short_name": "online_market_app",
+    "name": "DNGO",
+    "short_name": "DNGO",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

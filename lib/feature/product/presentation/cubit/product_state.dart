@@ -24,6 +24,8 @@ class ProductLoaded extends ProductState {
   final bool hasMore; // Còn dữ liệu để load không
   final bool isLoadingMore; // Đang load thêm dữ liệu
 
+  final int cartItemCount;
+
   const ProductLoaded({
     this.categories = const [],
     this.monAnList = const [],
@@ -34,6 +36,7 @@ class ProductLoaded extends ProductState {
     this.currentPage = 1,
     this.hasMore = true,
     this.isLoadingMore = false,
+    this.cartItemCount = 0,
   });
 
   ProductLoaded copyWith({
@@ -46,6 +49,7 @@ class ProductLoaded extends ProductState {
     int? currentPage,
     bool? hasMore,
     bool? isLoadingMore,
+    int? cartItemCount,
   }) {
     return ProductLoaded(
       categories: categories ?? this.categories,
@@ -58,12 +62,13 @@ class ProductLoaded extends ProductState {
       currentPage: currentPage ?? this.currentPage,
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      cartItemCount: cartItemCount ?? this.cartItemCount,
     );
   }
 
   @override
   List<Object?> get props =>
-      [categories, monAnList, selectedCategory, searchQuery, selectedBottomNavIndex, selectedFilters, currentPage, hasMore, isLoadingMore];
+      [categories, monAnList, selectedCategory, searchQuery, selectedBottomNavIndex, selectedFilters, currentPage, hasMore, isLoadingMore, cartItemCount];
 }
 
 /// Model kết hợp món ăn với URL ảnh và thông tin chi tiết

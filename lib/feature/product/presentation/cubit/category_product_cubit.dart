@@ -1,9 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:online_market_app/core/dependency/injection.dart';
-import 'package:online_market_app/core/services/mon_an_service.dart';
-import 'package:online_market_app/core/services/auth/auth_service.dart';
-import 'package:online_market_app/core/error/exceptions.dart';
-import 'package:online_market_app/core/models/mon_an_model.dart';
+import 'package:DNGO/core/dependency/injection.dart';
+import 'package:DNGO/core/services/mon_an_service.dart';
+import 'package:DNGO/core/services/auth/auth_service.dart';
+import 'package:DNGO/core/error/exceptions.dart';
+import 'package:DNGO/core/models/mon_an_model.dart';
 import 'category_product_state.dart';
 import 'product_state.dart';
 

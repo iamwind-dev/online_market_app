@@ -1,5 +1,4 @@
-/// Model nguyên liệu từ API danh sách
-/// API: GET /api/buyer/nguyen-lieu?page=1&limit=12
+/// Model cho Nguyên Liệu
 class NguyenLieuModel {
   final String maNguyenLieu;
   final String tenNguyenLieu;
@@ -7,7 +6,7 @@ class NguyenLieuModel {
   final String maNhomNguyenLieu;
   final String tenNhomNguyenLieu;
   final int soGianHang;
-  final String? giaGoc;
+  final double? giaGoc;
   final String? giaCuoi;
   final String? ngayCapNhat;
   final String? hinhAnh;
@@ -25,23 +24,21 @@ class NguyenLieuModel {
     this.hinhAnh,
   });
 
-  /// Parse từ JSON response
   factory NguyenLieuModel.fromJson(Map<String, dynamic> json) {
     return NguyenLieuModel(
-      maNguyenLieu: json['ma_nguyen_lieu'] as String? ?? '',
-      tenNguyenLieu: json['ten_nguyen_lieu'] as String? ?? '',
+      maNguyenLieu: json['ma_nguyen_lieu'] as String,
+      tenNguyenLieu: json['ten_nguyen_lieu'] as String,
       donVi: json['don_vi'] as String?,
-      maNhomNguyenLieu: json['ma_nhom_nguyen_lieu'] as String? ?? '',
-      tenNhomNguyenLieu: json['ten_nhom_nguyen_lieu'] as String? ?? '',
-      soGianHang: json['so_gian_hang'] as int? ?? 0,
-      giaGoc: json['gia_goc'] as String?,
-      giaCuoi: json['gia_cuoi'] as String?,
+      maNhomNguyenLieu: json['ma_nhom_nguyen_lieu'] as String,
+      tenNhomNguyenLieu: json['ten_nhom_nguyen_lieu'] as String,
+      soGianHang: (json['so_gian_hang'] as num).toInt(),
+      giaGoc: json['gia_goc'] != null ? (json['gia_goc'] as num).toDouble() : null,
+      giaCuoi: json['gia_cuoi']?.toString(),
       ngayCapNhat: json['ngay_cap_nhat'] as String?,
       hinhAnh: json['hinh_anh'] as String?,
     );
   }
 
-  /// Convert sang JSON
   Map<String, dynamic> toJson() {
     return {
       'ma_nguyen_lieu': maNguyenLieu,
@@ -58,7 +55,27 @@ class NguyenLieuModel {
   }
 }
 
-/// Model cho metadata phân trang
+/// Response model cho danh sách nguyên liệu
+class NguyenLieuResponse {
+  final List<NguyenLieuModel> data;
+  final NguyenLieuMeta meta;
+
+  NguyenLieuResponse({
+    required this.data,
+    required this.meta,
+  });
+
+  factory NguyenLieuResponse.fromJson(Map<String, dynamic> json) {
+    return NguyenLieuResponse(
+      data: (json['data'] as List<dynamic>)
+          .map((item) => NguyenLieuModel.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      meta: NguyenLieuMeta.fromJson(json['meta'] as Map<String, dynamic>),
+    );
+  }
+}
+
+/// Meta information cho pagination
 class NguyenLieuMeta {
   final int page;
   final int limit;
@@ -74,19 +91,10 @@ class NguyenLieuMeta {
 
   factory NguyenLieuMeta.fromJson(Map<String, dynamic> json) {
     return NguyenLieuMeta(
-      page: json['page'] as int? ?? 1,
-      limit: json['limit'] as int? ?? 12,
-      total: json['total'] as int? ?? 0,
-      hasNext: json['hasNext'] as bool? ?? false,
+      page: (json['page'] as num).toInt(),
+      limit: (json['limit'] as num).toInt(),
+      total: (json['total'] as num).toInt(),
+      hasNext: json['hasNext'] as bool,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'page': page,
-      'limit': limit,
-      'total': total,
-      'hasNext': hasNext,
-    };
   }
 }

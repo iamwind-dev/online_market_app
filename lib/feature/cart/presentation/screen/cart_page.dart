@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../cubit/cart_cubit.dart';
+import '../../../../core/widgets/shared_bottom_navigation.dart';
+import '../../../../core/utils/price_formatter.dart';
+import '../../../../core/theme/app_colors.dart';
 
-/// Màn hình giỏ hàng
-/// 
-/// Chức năng:
-/// - Hiển thị danh sách sản phẩm trong giỏ
-/// - Chọn/bỏ chọn sản phẩm
-/// - Cập nhật số lượng
-/// - Xóa sản phẩm
-/// - Thanh toán
+/// Màn hình giỏ hàng - Code lại với design đẹp hơn
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
 
@@ -25,7 +20,6 @@ class CartPage extends StatelessWidget {
   }
 }
 
-/// View của màn hình giỏ hàng
 class CartView extends StatefulWidget {
   const CartView({super.key});
 
@@ -42,46 +36,51 @@ class _CartViewState extends State<CartView> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: Colors.green,
+              backgroundColor: const Color(0xFF00B40F),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           );
         } else if (state is CartCheckoutSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: Colors.green,
+              backgroundColor: const Color(0xFF00B40F),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           );
         } else if (state is CartFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage),
-              backgroundColor: Colors.red,
+              backgroundColor: const Color(0xFFFF3B30),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           );
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF5F5F5),
         body: SafeArea(
           child: Column(
             children: [
-              // Header with background
               _buildHeader(context),
-              
-              // Divider
-              Container(
-                height: 2,
-                color: const Color(0xFFF0F0F0),
-              ),
-              
-              // Content
               Expanded(
                 child: BlocBuilder<CartCubit, CartState>(
                   builder: (context, state) {
                     if (state is CartLoading) {
                       return const Center(
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF00B40F),
+                        ),
                       );
                     }
 
@@ -89,7 +88,6 @@ class _CartViewState extends State<CartView> {
                       if (state.items.isEmpty) {
                         return _buildEmptyCart(context);
                       }
-                      
                       return _buildCartList(context, state);
                     }
 
@@ -97,147 +95,104 @@ class _CartViewState extends State<CartView> {
                   },
                 ),
               ),
-              
-              // Bottom section
               _buildBottomSection(context),
-              
-              // Bottom navigation
-              _buildBottomNavigation(context),
             ],
           ),
+        ),
+        bottomNavigationBar: BlocBuilder<CartCubit, CartState>(
+          builder: (context, state) {
+            return SharedBottomNavigation(
+              currentIndex: 2, // Cart tab
+              onTap: (index) {
+                // Handle navigation
+              },
+            );
+          },
         ),
       ),
     );
   }
 
-  /// Header với background và title
+  /// Header đẹp hơn với Material Icons
   Widget _buildHeader(BuildContext context) {
-    return Stack(
-      children: [
-        // Background image
-        
-        // Content
-        Container(
-          height: 94,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Title row
+          Row(
             children: [
-              const SizedBox(height: 8),
-              
-              // Title row
-              Row(
-                children: [
-                  // Back button
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    child: SvgPicture.asset(
-                      'assets/img/arrow_left_cart.svg',
-                      width: 25,
-                      height: 26,
-                    ),
-                  ),
-                  
-                  const Spacer(),
-                  
-                  // Title
-                  const Text(
-                    'Giỏ hàng',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 20,
-                      height: 1.1,
-                      color: Color(0xFF000000),
-                    ),
-                  ),
-                  
-                  const Spacer(),
-                  
-                  // Placeholder to balance
-                  const SizedBox(width: 25),
-                ],
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: const Icon(
+                  Icons.arrow_back,
+                  size: 24,
+                  color: Colors.black,
+                ),
               ),
-              
-              const SizedBox(height: 6),
-              
-              // Address row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              const Spacer(),
+              const Text(
+                'Giỏ hàng',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                  color: Color(0xFF1C1C1E),
+                ),
+              ),
+              const Spacer(),
+              const SizedBox(width: 24),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Address row
+          GestureDetector(
+            onTap: () {
+              // Change address
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF008EDB).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset(
-                    'assets/img/location_icon_small.png',
-                    width: 14,
-                    height: 14,
+                  const Icon(
+                    Icons.location_on,
+                    size: 16,
+                    color: Color(0xFF008EDB),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
                   const Text(
                     'Hòa Châu, Hòa Vang, Đà Nẵng',
                     style: TextStyle(
                       fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w400,
                       fontSize: 13,
-                      height: 1.69,
-                      color: Color(0xFF000000),
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF008EDB),
                     ),
                   ),
                   const SizedBox(width: 4),
-                  SvgPicture.asset(
-                    'assets/img/chevron_right.svg',
-                    width: 20,
-                    height: 20,
-                    colorFilter: const ColorFilter.mode(
-                      Color(0xFFB3B3B3),
-                      BlendMode.srcIn,
-                    ),
+                  const Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 16,
+                    color: Color(0xFF008EDB),
                   ),
-                  const Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  'Xong',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 13,
-                    height: 1.69,
-                    color: Color(0xFFFF0004),
-                  ),
-                ),
-              ),
                 ],
               ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Giỏ hàng trống
-  Widget _buildEmptyCart(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.shopping_cart_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Giỏ hàng trống',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Hãy thêm sản phẩm vào giỏ hàng',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
             ),
           ),
         ],
@@ -245,9 +200,77 @@ class _CartViewState extends State<CartView> {
     );
   }
 
-  /// Danh sách sản phẩm trong giỏ
+  /// Empty cart với UI đẹp hơn
+  Widget _buildEmptyCart(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: const Color(0xFF00B40F).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.shopping_cart_outlined,
+                size: 60,
+                color: Color(0xFF00B40F),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Giỏ hàng trống',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1C1C1E),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Hãy thêm sản phẩm vào giỏ hàng\nđể bắt đầu mua sắm',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 15,
+                color: Colors.grey[600],
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00B40F),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Tiếp tục mua sắm',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Danh sách cart items
   Widget _buildCartList(BuildContext context, CartLoaded state) {
-    // Group items by shop
     final itemsByShop = <String, List<CartItem>>{};
     for (final item in state.items) {
       if (!itemsByShop.containsKey(item.shopName)) {
@@ -257,21 +280,14 @@ class _CartViewState extends State<CartView> {
     }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      padding: const EdgeInsets.all(16),
       children: [
-        // Select all section
-        _buildSelectAllSection(context, state),
-        
+        // _buildSelectAllSection(context, state),
         const SizedBox(height: 16),
-        
-        // Cart items grouped by shop
         ...itemsByShop.entries.map((entry) {
-          final shopName = entry.key;
-          final items = entry.value;
-          
           return Column(
             children: [
-              _buildShopSection(context, shopName, items, state),
+              _buildShopSection(context, entry.key, entry.value, state),
               const SizedBox(height: 16),
             ],
           );
@@ -284,39 +300,59 @@ class _CartViewState extends State<CartView> {
   Widget _buildSelectAllSection(BuildContext context, CartLoaded state) {
     final cubit = context.read<CartCubit>();
     
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () => cubit.toggleSelectAll(),
-          child: Container(
-            width: 21,
-            height: 21,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.black),
-              color: cubit.isAllSelected ? Colors.black : Colors.white,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.getCardBackground(),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => cubit.toggleSelectAll(),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: cubit.isAllSelected 
+                      ? const Color(0xFF00B40F) 
+                      : const Color(0xFFE0E0E0),
+                  width: 2,
+                ),
+                color: cubit.isAllSelected 
+                    ? const Color(0xFF00B40F) 
+                    : Colors.white,
+              ),
+              child: cubit.isAllSelected
+                  ? const Icon(
+                      Icons.check,
+                      size: 16,
+                      color: Colors.white,
+                    )
+                  : null,
             ),
-            child: cubit.isAllSelected
-                ? const Icon(
-                    Icons.check,
-                    size: 14,
-                    color: Colors.white,
-                  )
-                : null,
           ),
-        ),
-        const SizedBox(width: 12),
-        const Text(
-          'Tất cả',
-          style: TextStyle(
-            fontFamily: 'Roboto',
-            fontWeight: FontWeight.w400,
-            fontSize: 16,
-            height: 1.375,
-            color: Color(0xFF202020),
+          const SizedBox(width: 12),
+          const Text(
+            'Chọn tất cả',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              color: Color(0xFF1C1C1E),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -327,36 +363,128 @@ class _CartViewState extends State<CartView> {
     List<CartItem> items,
     CartLoaded state,
   ) {
+    final cubit = context.read<CartCubit>();
+    
+    // Check if all items in this shop are selected
+    final allShopItemsSelected = items.every((item) => item.isSelected);
+    final someShopItemsSelected = items.any((item) => item.isSelected);
+    
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFD7FFBD).withOpacity(0.5),
-        borderRadius: BorderRadius.circular(18),
+        color: AppColors.getCardBackground(),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Shop name
-          Text(
-            shopName,
-            style: const TextStyle(
-              fontFamily: 'Roboto',
-              fontWeight: FontWeight.w700,
-              fontSize: 20,
-              height: 1.1,
-              color: Color(0xFF202020),
+          // Shop header với checkbox
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00B40F).withValues(alpha: 0.1),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Checkbox chọn tất cả sản phẩm của shop
+                GestureDetector(
+                  onTap: () {
+                    // Nếu tất cả đã chọn → bỏ chọn tất cả
+                    // Nếu chưa chọn hoặc chọn một phần → chọn tất cả
+                    final shouldSelect = !allShopItemsSelected;
+                    
+                    for (final item in items) {
+                      // Chỉ toggle nếu trạng thái khác với trạng thái mong muốn
+                      if (item.isSelected != shouldSelect) {
+                        cubit.toggleItemSelection(item.id);
+                      }
+                    }
+                  },
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: allShopItemsSelected 
+                            ? const Color(0xFF00B40F) 
+                            : someShopItemsSelected
+                                ? const Color(0xFF00B40F).withValues(alpha: 0.5)
+                                : const Color(0xFFE0E0E0),
+                        width: 2,
+                      ),
+                      color: allShopItemsSelected 
+                          ? const Color(0xFF00B40F) 
+                          : Colors.white,
+                    ),
+                    child: allShopItemsSelected
+                        ? const Icon(
+                            Icons.check,
+                            size: 16,
+                            color: Colors.white,
+                          )
+                        : someShopItemsSelected
+                            ? Container(
+                                margin: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF00B40F),
+                                  shape: BoxShape.circle,
+                                ),
+                              )
+                            : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Icon(
+                  Icons.store,
+                  size: 20,
+                  color: Color(0xFF00B40F),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    shopName,
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: Color(0xFF1C1C1E),
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: Color(0xFF8E8E93),
+                ),
+              ],
             ),
           ),
           
-          const SizedBox(height: 16),
-          
           // Products
-          ...items.map((item) => Column(
-                children: [
-                  _buildCartItem(context, item, state),
-                  if (item != items.last) const SizedBox(height: 16),
-                ],
-              )),
+          ...items.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+            return Column(
+              children: [
+                _buildCartItem(context, item, state),
+                if (index < items.length - 1)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Divider(height: 1, thickness: 1),
+                  ),
+              ],
+            );
+          }),
         ],
       ),
     );
@@ -366,83 +494,124 @@ class _CartViewState extends State<CartView> {
   Widget _buildCartItem(BuildContext context, CartItem item, CartLoaded state) {
     final cubit = context.read<CartCubit>();
     
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Checkbox
-        GestureDetector(
-          onTap: () => cubit.toggleItemSelection(item.id),
-          child: Container(
-            width: 21,
-            height: 21,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.black),
-              color: item.isSelected ? Colors.black : Colors.white,
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Checkbox
+          GestureDetector(
+            onTap: () => cubit.toggleItemSelection(item.id),
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: item.isSelected 
+                      ? const Color(0xFF00B40F) 
+                      : const Color(0xFFE0E0E0),
+                  width: 2,
+                ),
+                color: item.isSelected 
+                    ? const Color(0xFF00B40F) 
+                    : Colors.white,
+              ),
+              child: item.isSelected
+                  ? const Icon(
+                      Icons.check,
+                      size: 16,
+                      color: Colors.white,
+                    )
+                  : null,
             ),
-            child: item.isSelected
-                ? const Icon(
-                    Icons.check,
-                    size: 14,
-                    color: Colors.white,
-                  )
-                : null,
           ),
-        ),
-        
-        const SizedBox(width: 12),
-        
-        // Product image
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset(
-            item.productImage,
-            width: 68,
-            height: 68,
-            fit: BoxFit.cover,
-          ),
-        ),
-        
-        const SizedBox(width: 12),
-        
-        // Product info
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Product name
-              Text(
-                '${item.productName} - (${item.weight}${item.unit})',
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 16,
-                  height: 1.375,
-                  color: Color(0xFF202020),
+          const SizedBox(width: 12),
+          
+          // Product image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              item.productImage,
+              width: 80,
+              height: 80,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                width: 80,
+                height: 80,
+                color: Colors.grey[200],
+                child: const Icon(
+                  Icons.image,
+                  size: 32,
+                  color: Colors.grey,
                 ),
               ),
-              
-              const SizedBox(height: 8),
-              
-              // Price
-              Text(
-                '${_formatPrice(item.price)}đ',
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 17,
-                  height: 1.29,
-                  color: Color(0xFFFF0000),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 12),
+          
+          // Product info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.productName,
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w500,
+                    fontSize: 15,
+                    color: Color(0xFF1C1C1E),
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${item.weight}${item.unit}',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  PriceFormatter.formatPrice(item.price),
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: Color(0xFFFF3B30),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Delete button
+          GestureDetector(
+            onTap: () => cubit.removeItem(item.id),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF3B30).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.delete_outline,
+                size: 20,
+                color: Color(0xFFFF3B30),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  /// Bottom section với tổng tiền và nút thanh toán
+  /// Bottom section với tổng tiền
   Widget _buildBottomSection(BuildContext context) {
     return BlocBuilder<CartCubit, CartState>(
       builder: (context, state) {
@@ -452,191 +621,134 @@ class _CartViewState extends State<CartView> {
 
         final cubit = context.read<CartCubit>();
         final isCheckingOut = state is CartCheckoutInProgress;
+        final selectedCount = state.items.where((item) => item.isSelected).length;
 
         return Container(
-          height: 161,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              top: BorderSide(color: Color(0xFF000000), width: 0.5),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Column(
-            children: [
-              // Total section
-              Row(
-                children: [
-                  // Select all checkbox
-                  GestureDetector(
-                    onTap: () => cubit.toggleSelectAll(),
-                    child: Container(
-                      width: 21,
-                      height: 21,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black),
-                        color: cubit.isAllSelected ? Colors.black : Colors.white,
-                      ),
-                      child: cubit.isAllSelected
-                          ? const Icon(
-                              Icons.check,
-                              size: 14,
-                              color: Colors.white,
-                            )
-                          : null,
-                    ),
-                  ),
-                  
-                  const SizedBox(width: 12),
-                  
-                  const Text(
-                    'Tất cả',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 16,
-                      height: 1.375,
-                      color: Color(0xFF202020),
-                    ),
-                  ),
-                  
-                  const Spacer(),
-                  
-                  // Total price
-                  Text(
-                    '${_formatPrice(state.totalAmount)}đ',
-                    style: const TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 17,
-                      height: 1.29,
-                      color: Color(0xFFFF0000),
-                    ),
-                  ),
-                ],
+          decoration: BoxDecoration(
+            color: const Color.fromARGB(255, 255, 255, 255).withValues(alpha: 0.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
               ),
-              
-              const Spacer(),
-              
-              // Checkout button
-              GestureDetector(
-                onTap: isCheckingOut ? null : () => cubit.checkout(),
-                child: Container(
-                  height: 43,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2F8000),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  alignment: Alignment.center,
-                  child: isCheckingOut
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Total row
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => cubit.toggleSelectAll(),
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: cubit.isAllSelected 
+                                ? const Color(0xFF00B40F) 
+                                : const Color(0xFFE0E0E0),
+                            width: 2,
                           ),
-                        )
-                      : const Text(
-                          'Thanh toán',
+                          color: cubit.isAllSelected 
+                              ? const Color(0xFF00B40F) 
+                              : Colors.white,
+                        ),
+                        child: cubit.isAllSelected
+                            ? const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: Colors.white,
+                              )
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Tất cả ($selectedCount)',
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 14,
+                        color: Color(0xFF8E8E93),
+                      ),
+                    ),
+                    const Spacer(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text(
+                          'Tổng cộng',
                           style: TextStyle(
                             fontFamily: 'Roboto',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            height: 1.47,
-                            color: Colors.white,
+                            fontSize: 13,
+                            color: Color(0xFF8E8E93),
                           ),
                         ),
+                        Text(
+                          PriceFormatter.formatPrice(state.totalAmount),
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 20,
+                            color: Color(0xFFFF3B30),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              
-              const SizedBox(height: 8),
-              
-              // Done text
-              
-            ],
+                const SizedBox(height: 16),
+                
+                // Checkout button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: isCheckingOut || selectedCount == 0 
+                        ? null 
+                        : () {
+                            // Navigate to payment page
+                            Navigator.pushNamed(context, '/payment');
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00B40F),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.grey[300],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: isCheckingOut
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'Thanh toán ($selectedCount)',
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
     );
-  }
-
-  /// Bottom navigation
-  Widget _buildBottomNavigation(BuildContext context) {
-    return Container(
-      height: 69,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Colors.grey[300]!),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem('assets/img/add_home.svg', 'Trang chủ'),
-          _buildNavItem('assets/img/mon_an_icon.png', 'Món ăn', isImage: true),
-          _buildNavItem('assets/img/user_personas_presentation-26cd3a.png', '', isImage: true, isCenter: true),
-          _buildNavItem('assets/img/wifi_notification.svg', 'Thông báo'),
-          _buildNavItem('assets/img/account_circle.svg', 'Tài khoản'),
-        ],
-      ),
-    );
-  }
-
-  /// Navigation item
-  Widget _buildNavItem(String icon, String label, {bool isImage = false, bool isCenter = false}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (isCenter)
-          Container(
-            width: 58,
-            height: 67,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              image: DecorationImage(
-                image: AssetImage(icon),
-                fit: BoxFit.cover,
-              ),
-            ),
-          )
-        else ...[
-          isImage
-              ? Image.asset(
-                  icon,
-                  width: 30,
-                  height: 30,
-                )
-              : SvgPicture.asset(
-                  icon,
-                  width: 30,
-                  height: 30,
-                ),
-          if (label.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w400,
-                fontSize: 12,
-                height: 1.33,
-                color: Color(0xFF000000),
-              ),
-            ),
-          ],
-        ],
-      ],
-    );
-  }
-
-  /// Format price helper
-  String _formatPrice(double price) {
-    return price.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (Match m) => '${m[1]}.',
-        );
   }
 }

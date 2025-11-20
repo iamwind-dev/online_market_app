@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/config/app_config.dart';
-import 'core/config/route_name.dart';
 import 'core/dependency/injection.dart';
 import 'core/router/app_router.dart';
+import 'core/router/navigation_observer.dart';
 import 'core/theme/app_theme.dart';
 import 'core/utils/app_logger.dart';
+import 'core/services/navigation_state_service.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized
@@ -20,16 +21,26 @@ void main() async {
   // Initialize dependencies
   await initDependencies();
 
+  // Get initial route
+  final navigationService = getIt<NavigationStateService>();
+  final initialRoute = navigationService.getInitialRoute();
+
   // Log app startup
   AppLogger.info('Starting ${AppConfig.appName}...');
   AppLogger.info('Environment: ${AppConfig.environment}');
   AppLogger.info('Base URL: ${AppConfig.baseUrl}');
+  AppLogger.info('Initial Route: $initialRoute');
 
-  runApp(const MyApp());
+  runApp(MyApp(initialRoute: initialRoute));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String initialRoute;
+
+  const MyApp({
+    super.key,
+    required this.initialRoute,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,8 +54,9 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       
       // Routing
-      initialRoute: RouteName.splash,
+      initialRoute: initialRoute,
       onGenerateRoute: AppRouter.onGenerateRoute,
+      navigatorObservers: [AppNavigationObserver()],
       
       // Builder for error handling
       builder: (context, child) {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:online_market_app/core/widgets/shared_bottom_navigation.dart';
-import 'package:online_market_app/feature/menudetail/presentation/cubit/menudetail_cubit.dart';
-import 'package:online_market_app/feature/menudetail/presentation/cubit/menudetail_state.dart';
+import 'package:DNGO/core/widgets/shared_bottom_navigation.dart';
+import 'package:DNGO/feature/menudetail/presentation/cubit/menudetail_cubit.dart';
+import 'package:DNGO/feature/menudetail/presentation/cubit/menudetail_state.dart';
 
 class MenuDetailScreen extends StatelessWidget {
   const MenuDetailScreen({super.key});

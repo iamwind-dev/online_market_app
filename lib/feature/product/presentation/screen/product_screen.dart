@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/widgets/shared_bottom_navigation.dart';
 import '../../../../core/widgets/product_list_item.dart';
+import '../../../../core/widgets/cart_icon_with_badge.dart';
 import '../../../../core/config/route_name.dart';
 import '../../../../core/router/app_router.dart';
 import '../cubit/product_cubit.dart';
@@ -73,158 +74,188 @@ class _ProductViewState extends State<ProductView> {
       },
       child: Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            _buildSearchSection(context),
-            const SizedBox(height: 16),
-            _buildCategoryTitle(),
-            const SizedBox(height: 16),
-            _buildCategoryTabs(context),
-            const SizedBox(height: 10),
-            Expanded(
-              child: _buildProductList(context),
+      body: Column(
+        children: [
+          _buildHeader(context),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  _buildCategoryTitle(),
+                  const SizedBox(height: 16),
+                  _buildCategoryTabs(context),
+                  const SizedBox(height: 10),
+                  _buildProductList(context),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-      bottomNavigationBar: const SharedBottomNavigation(currentIndex: 1),
+      bottomNavigationBar: BlocBuilder<ProductCubit, ProductState>(
+        builder: (context, state) {
+          if (state is ProductLoaded) {
+            return SharedBottomNavigation(
+              currentIndex: state.selectedBottomNavIndex,
+              onTap: (index) => context.read<ProductCubit>().changeBottomNavIndex(index),
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
       ),
     );
   }
 
-  /// Header với location selector
   Widget _buildHeader(BuildContext context) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-    child: Row(
-      children: [
-        const Icon(
-          Icons.location_on,
-          size: 20,
-          color: Color(0xFF008EDB),
-        ),
-        const SizedBox(width: 6),
-
-        // Text "Chọn chợ" + dropdown icon LIỀN NHAU
-        GestureDetector(
-          onTap: () {
-            // mở bottom sheet chọn chợ
-          },
-          child: Row(
-            children: const [
-              Text(
-                "Chọn chợ",
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF008EDB),
+    return BlocBuilder<ProductCubit, ProductState>(
+      builder: (context, state) {
+        final selectedMarket = state is ProductLoaded ? 'CHỢ BẮC MỸ AN' : 'Chọn chợ';
+        final searchQuery = state is ProductLoaded ? state.searchQuery : '';
+        
+        return SafeArea(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-              SizedBox(width: 3),
-              Icon(
-                Icons.keyboard_arrow_down,
-                size: 18,
-                color: Color(0xFF008EDB),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-
-  /// Search section với back button, search bar và filter
-  Widget _buildSearchSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Row(
-        children: [
-          // Back button
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, size: 16),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-          const SizedBox(width: 14),
-          
-          // Search bar
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                // Navigate to search screen
-                AppRouter.navigateTo(context, RouteName.search);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: const Color(0xFF5E5C5C)),
-                  borderRadius: BorderRadius.circular(9998),
-                ),
-                child: Row(
+              ],
+            ),
+            child: Column(
+              children: [
+                // Market Selector
+                _buildMarketSelector(selectedMarket),
+                const SizedBox(height: 12),
+                
+                // Search Bar Row
+                Row(
                   children: [
-                    SvgPicture.asset(
-                      'assets/img/Search.svg',
-                      width: 16,
-                      height: 16,
-                      colorFilter: const ColorFilter.mode(
-                        Color(0xFF008EDB),
-                        BlendMode.srcIn,
-                      ),
+                    // Search Bar
+                    Expanded(
+                      child: _buildSearchBar(context, searchQuery),
                     ),
-                    const SizedBox(width: 6),
-                    const Expanded(
-                      child: Text(
-                        'Tìm kiếm món ăn...',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 16,
-                          color: Color(0xFFB3B3B3),
-                        ),
-                      ),
+                    const SizedBox(width: 12),
+                    
+                    // Cart Icon with Badge
+                    CartIconWithBadge(
+                      itemCount: state is ProductLoaded ? state.cartItemCount : 0,
+                      onTap: () {
+                        AppRouter.navigateTo(context, RouteName.cart);
+                      },
                     ),
-                    GestureDetector(
-                    onTap: () {
-                      print("Clear search tapped"); 
-                      // Tùy bạn: clear text, reset state, ...
-                    },
-                    child: const Icon(
-                      Icons.close,
-                      size: 18,
-                      color: Color(0xFF8A8A8A),
-                    ),
-                  ),
                   ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSearchBar(BuildContext context, String searchQuery) {
+    return GestureDetector(
+      onTap: () {
+        AppRouter.navigateTo(context, RouteName.search);
+      },
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFFE0E0E0),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.search,
+              size: 20,
+              color: Color(0xFF8E8E93),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Tìm kiếm món ăn...',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 15,
+                  color: Color(0xFF8E8E93),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 14),
-          
-          // Add button
-          const SizedBox(width: 14),
-          
-          // Filter button
-          const Icon(
-            Icons.tune,
-            size: 27,
-            color: Color(0xFF008EDB),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'Lọc',
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMarketSelector(String selectedMarket) {
+    return GestureDetector(
+      onTap: () {
+        print('Chọn chợ');
+      },
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF008EDB).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.location_on,
               color: Color(0xFF008EDB),
-              height: 1.18,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Giao đến',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF8E8E93),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        selectedMarket,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1C1C1E),
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 20,
+                      color: Color(0xFF8E8E93),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -368,6 +399,8 @@ class _ProductViewState extends State<ProductView> {
             color: const Color(0xFFFFFFFF),
             child: ListView.builder(
               controller: _scrollController,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 28),
               itemCount: monAnList.length + (state.isLoadingMore ? 1 : 0),
               itemBuilder: (context, index) {
