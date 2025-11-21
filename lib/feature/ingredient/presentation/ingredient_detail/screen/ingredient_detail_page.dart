@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/ingredient_detail_cubit.dart';
 import '../cubit/ingredient_detail_state.dart';
 import '../../../../../core/widgets/ingredient_grid_card.dart';
+import '../../../../../core/widgets/cart_badge_icon.dart';
 
 class IngredientDetailPage extends StatelessWidget {
   final String? maNguyenLieu;
@@ -123,44 +124,9 @@ class _IngredientDetailView extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        // Navigate to cart
-                      },
-                      child: Stack(
-                        children: [
-                          const Icon(
-                            Icons.shopping_cart_outlined,
-                            size: 26,
-                            color: Color(0xFF008EDB),
-                          ),
-                          if (state.cartItemCount > 0)
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFFFDBDB),
-                                  shape: BoxShape.circle,
-                                ),
-                                constraints: const BoxConstraints(
-                                  minWidth: 15,
-                                  minHeight: 15,
-                                ),
-                                child: Text(
-                                  '${state.cartItemCount}',
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                    const CartBadgeIcon(
+                      iconSize: 26,
+                      iconColor: Color(0xFF008EDB),
                     ),
                     const SizedBox(width: 16),
                     const Icon(
@@ -341,20 +307,22 @@ class _IngredientDetailView extends StatelessWidget {
   Widget _buildSellerCard(BuildContext context, Seller seller, IngredientDetailState state) {
     final isNetworkImage = seller.imagePath != null && 
         (seller.imagePath!.startsWith('http://') || seller.imagePath!.startsWith('https://'));
+    final isSelected = state.selectedSeller?.maGianHang == seller.maGianHang;
     
     return GestureDetector(
       onTap: () {
-        // TODO: Chọn seller này để mua
+        print('👆 [UI] Bấm vào gian hàng: ${seller.tenGianHang}');
+        print('👆 [UI] Mã gian hàng: ${seller.maGianHang}');
         context.read<IngredientDetailCubit>().selectSeller(seller);
       },
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isSelected ? const Color(0xFFE3F2FD) : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: const Color(0xFFE0E0E0),
-            width: 1,
+            color: isSelected ? const Color(0xFF008EDB) : const Color(0xFFE0E0E0),
+            width: isSelected ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
@@ -498,10 +466,10 @@ class _IngredientDetailView extends StatelessWidget {
             ),
             
             // Icon chọn
-            const Icon(
-              Icons.chevron_right,
+            Icon(
+              isSelected ? Icons.check_circle : Icons.chevron_right,
               size: 24,
-              color: Color(0xFF8E8E93),
+              color: isSelected ? const Color(0xFF008EDB) : const Color(0xFF8E8E93),
             ),
           ],
         ),
@@ -661,6 +629,89 @@ class _IngredientDetailView extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
+              
+              // Quantity controls
+              BlocBuilder<IngredientDetailCubit, IngredientDetailState>(
+                builder: (context, state) {
+                  return Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFE0E0E0)),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Decrease button
+                        GestureDetector(
+                          onTap: () => context.read<IngredientDetailCubit>().decreaseQuantity(),
+                          child: Container(
+                            width: 32,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: state.quantity > 1 
+                                  ? const Color(0xFFF5F5F5) 
+                                  : const Color(0xFFE0E0E0),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(4),
+                                bottomLeft: Radius.circular(4),
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.remove,
+                              size: 18,
+                              color: state.quantity > 1 
+                                  ? const Color(0xFF008EDB) 
+                                  : const Color(0xFF999999),
+                            ),
+                          ),
+                        ),
+                        
+                        // Quantity display
+                        Container(
+                          width: 40,
+                          height: 40,
+                          color: Colors.white,
+                          child: Center(
+                            child: Text(
+                              '${state.quantity}',
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF000000),
+                              ),
+                            ),
+                          ),
+                        ),
+                        
+                        // Increase button
+                        GestureDetector(
+                          onTap: () => context.read<IngredientDetailCubit>().increaseQuantity(),
+                          child: Container(
+                            width: 32,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF5F5F5),
+                              borderRadius: BorderRadius.only(
+                                topRight: Radius.circular(4),
+                                bottomRight: Radius.circular(4),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              size: 18,
+                              color: Color(0xFF008EDB),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              
+              const SizedBox(width: 10),
               Expanded(
                 child: GestureDetector(
                   onTap: () => context.read<IngredientDetailCubit>().addToCart(),
@@ -689,7 +740,7 @@ class _IngredientDetailView extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: GestureDetector(
-                  onTap: () => context.read<IngredientDetailCubit>().buyNow(),
+                  onTap: () => context.read<IngredientDetailCubit>().buyNow(context),
                   child: Container(
                     height: 40,
                     decoration: BoxDecoration(

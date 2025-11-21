@@ -13,37 +13,37 @@ class PriceFormatter {
   /// VD: "10000" -> "10,000đ"
   /// VD: 10000 -> "10,000đ"
   static String formatPrice(dynamic price) {
-    if (price == null) return 'Liên hệ';
+    if (price == null) return '0đ';
     
     // Nếu là string
     if (price is String) {
       // Loại bỏ ký tự không phải số
       final cleanPrice = price.replaceAll(RegExp(r'[^\d.]'), '');
-      if (cleanPrice.isEmpty) return 'Liên hệ';
+      if (cleanPrice.isEmpty) return '0đ';
       
       try {
         final number = double.parse(cleanPrice);
-        if (number <= 0) return 'Liên hệ';
+        if (number <= 0) return '0đ';
         return '${formatNumber(number)}đ';
       } catch (e) {
-        return 'Liên hệ';
+        return '0đ';
       }
     }
     
     // Nếu là number
     if (price is num) {
-      if (price <= 0) return 'Liên hệ';
+      if (price <= 0) return '0đ';
       return '${formatNumber(price)}đ';
     }
     
-    return 'Liên hệ';
+    return '0đ';
   }
 
   /// Format giá với đơn vị
   /// VD: 10000, "kg" -> "10,000đ/kg"
   static String formatPriceWithUnit(dynamic price, String? unit) {
     final formattedPrice = formatPrice(price);
-    if (formattedPrice == 'Liên hệ') return formattedPrice;
+    if (formattedPrice == '0đ') return formattedPrice;
     if (unit == null || unit.isEmpty) return formattedPrice;
     return '$formattedPrice/$unit';
   }

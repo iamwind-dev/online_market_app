@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/cart_cubit.dart';
-import '../../../../core/widgets/shared_bottom_navigation.dart';
+
 import '../../../../core/utils/price_formatter.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -99,16 +99,7 @@ class _CartViewState extends State<CartView> {
             ],
           ),
         ),
-        bottomNavigationBar: BlocBuilder<CartCubit, CartState>(
-          builder: (context, state) {
-            return SharedBottomNavigation(
-              currentIndex: 2, // Cart tab
-              onTap: (index) {
-                // Handle navigation
-              },
-            );
-          },
-        ),
+        
       ),
     );
   }
@@ -157,44 +148,7 @@ class _CartViewState extends State<CartView> {
           const SizedBox(height: 12),
           
           // Address row
-          GestureDetector(
-            onTap: () {
-              // Change address
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF008EDB).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.location_on,
-                    size: 16,
-                    color: Color(0xFF008EDB),
-                  ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'Hòa Châu, Hòa Vang, Đà Nẵng',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF008EDB),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 16,
-                    color: Color(0xFF008EDB),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          
         ],
       ),
     );
@@ -531,22 +485,7 @@ class _CartViewState extends State<CartView> {
           // Product image
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              item.productImage,
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 80,
-                height: 80,
-                color: Colors.grey[200],
-                child: const Icon(
-                  Icons.image,
-                  size: 32,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
+            child: _buildProductImage(item.productImage),
           ),
           const SizedBox(width: 12),
           
@@ -569,7 +508,7 @@ class _CartViewState extends State<CartView> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${item.weight}${item.unit}',
+                  'x${item.quantity}',
                   style: TextStyle(
                     fontFamily: 'Roboto',
                     fontSize: 13,
@@ -713,8 +652,30 @@ class _CartViewState extends State<CartView> {
                     onPressed: isCheckingOut || selectedCount == 0 
                         ? null 
                         : () {
-                            // Navigate to payment page
-                            Navigator.pushNamed(context, '/payment');
+                            // Get selected items
+                            final selectedItems = state.items
+                                .where((item) => item.isSelected)
+                                .toList();
+                            
+                            // Navigate to payment page with selected items
+                            Navigator.pushNamed(
+                              context,
+                              '/payment',
+                              arguments: {
+                                'isFromCart': true,
+                                'orderCode': state.orderCode, // Mã đơn hàng từ API cart
+                                'selectedItems': selectedItems.map((item) => {
+                                  'maNguyenLieu': item.productId,
+                                  'tenNguyenLieu': item.productName,
+                                  'maGianHang': item.shopId,
+                                  'tenGianHang': item.shopName,
+                                  'hinhAnh': item.productImage,
+                                  'gia': item.price.toString(),
+                                  'soLuong': item.quantity,
+                                }).toList(),
+                                'totalAmount': state.totalAmount,
+                              },
+                            );
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF00B40F),
@@ -750,5 +711,58 @@ class _CartViewState extends State<CartView> {
         );
       },
     );
+  }
+
+  /// Build product image - support both URL and asset
+  Widget _buildProductImage(String imagePath) {
+    final isNetworkImage = imagePath.startsWith('http://') || 
+                          imagePath.startsWith('https://');
+    
+    final placeholderWidget = Container(
+      width: 80,
+      height: 80,
+      color: Colors.grey[200],
+      child: const Icon(Icons.image, size: 32, color: Colors.grey),
+    );
+
+    if (imagePath.isEmpty) {
+      return placeholderWidget;
+    }
+
+    if (isNetworkImage) {
+      return Image.network(
+        imagePath,
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 80,
+            height: 80,
+            color: Colors.grey[200],
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / 
+                      loadingProgress.expectedTotalBytes!
+                    : null,
+                strokeWidth: 2,
+                color: const Color(0xFF00B40F),
+              ),
+            ),
+          );
+        },
+        errorBuilder: (_, __, ___) => placeholderWidget,
+      );
+    } else {
+      return Image.asset(
+        imagePath,
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => placeholderWidget,
+      );
+    }
   }
 }

@@ -378,7 +378,7 @@ class IngredientCubit extends Cubit<IngredientState> {
       return PriceFormatter.formatPrice(giaGoc);
     }
     
-    return 'Liên hệ';
+    return '0đ';
   }
 
   /// Format giá gốc (giá gạch ngang - hiển thị nhỏ)

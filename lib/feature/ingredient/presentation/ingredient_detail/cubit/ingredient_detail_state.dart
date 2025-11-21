@@ -12,6 +12,8 @@ class IngredientDetailState extends Equatable {
   final String shopName;
   final String description;
   final List<Seller> sellers; // Danh sách người bán
+  final Seller? selectedSeller; // Gian hàng được chọn
+  final int quantity; // Số lượng muốn mua
   final List<RelatedProduct> relatedProducts;
   final List<RelatedProduct> recommendedProducts;
   final int cartItemCount;
@@ -30,6 +32,8 @@ class IngredientDetailState extends Equatable {
     this.shopName = '',
     this.description = '',
     this.sellers = const [],
+    this.selectedSeller,
+    this.quantity = 1,
     this.relatedProducts = const [],
     this.recommendedProducts = const [],
     this.cartItemCount = 0,
@@ -49,6 +53,8 @@ class IngredientDetailState extends Equatable {
     String? shopName,
     String? description,
     List<Seller>? sellers,
+    Object? selectedSeller = _undefined, // Sử dụng sentinel value
+    int? quantity,
     List<RelatedProduct>? relatedProducts,
     List<RelatedProduct>? recommendedProducts,
     int? cartItemCount,
@@ -67,6 +73,10 @@ class IngredientDetailState extends Equatable {
       shopName: shopName ?? this.shopName,
       description: description ?? this.description,
       sellers: sellers ?? this.sellers,
+      selectedSeller: selectedSeller == _undefined 
+          ? this.selectedSeller 
+          : selectedSeller as Seller?,
+      quantity: quantity ?? this.quantity,
       relatedProducts: relatedProducts ?? this.relatedProducts,
       recommendedProducts: recommendedProducts ?? this.recommendedProducts,
       cartItemCount: cartItemCount ?? this.cartItemCount,
@@ -88,6 +98,8 @@ class IngredientDetailState extends Equatable {
         shopName,
         description,
         sellers,
+        selectedSeller,
+        quantity,
         relatedProducts,
         recommendedProducts,
         cartItemCount,
@@ -96,6 +108,9 @@ class IngredientDetailState extends Equatable {
         errorMessage,
       ];
 }
+
+// Sentinel value để phân biệt "không truyền" vs "truyền null"
+const _undefined = Object();
 
 /// Model cho người bán (seller) trong state
 class Seller extends Equatable {

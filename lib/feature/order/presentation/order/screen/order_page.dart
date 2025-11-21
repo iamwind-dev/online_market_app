@@ -114,6 +114,23 @@ class _OrderViewState extends State<OrderView> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Row(
         children: [
+          // Back button
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.arrow_back,
+                color: Color(0xFF000000),
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(

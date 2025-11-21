@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/config/app_config.dart';
+import '../../../../core/services/cart_api_service.dart';
 
 part 'cart_state.dart';
 
@@ -28,27 +29,42 @@ class CartCubit extends Cubit<CartState> {
     try {
       emit(CartLoading());
 
-      // TODO: Gọi API để lấy giỏ hàng
-      // await _cartRepository.getCart();
-      
-      // Mock data for now
-      await Future.delayed(const Duration(seconds: 1));
+      // Gọi API để lấy giỏ hàng
+      final cartApiService = CartApiService();
+      final cartResponse = await cartApiService.getCart();
       
       // Check if cubit is still open before continuing
       if (isClosed) return;
       
-      _cartItems = _generateMockCartItems();
+      // Convert API response to CartItem list
+      _cartItems = cartResponse.items.map((item) {
+        return CartItem(
+          id: '${item.maNguyenLieu}_${item.maGianHang}',
+          productId: item.maNguyenLieu,
+          shopId: item.maGianHang,
+          shopName: item.tenGianHang,
+          productName: item.tenNguyenLieu,
+          productImage: item.hinhAnh ?? '',
+          price: item.giaCuoi,
+          quantity: item.soLuong,
+          isSelected: false,
+        );
+      }).toList();
+      
       final totalAmount = _calculateTotalAmount();
 
       if (AppConfig.enableApiLogging) {
         AppLogger.info('✅ [CART] Tải thành công ${_cartItems.length} sản phẩm');
-        AppLogger.info('💰 [CART] Tổng tiền: ${totalAmount}đ');
+        AppLogger.info('💰 [CART] Tổng tiền từ API: ${cartResponse.cart.tongTien}đ');
+        AppLogger.info('💰 [CART] Tổng tiền tính toán: $totalAmount đ');
       }
 
       emit(CartLoaded(
         items: _cartItems,
         totalAmount: totalAmount,
         selectedItemIds: _selectedItemIds,
+        apiTotalAmount: cartResponse.cart.tongTien,
+        orderCode: cartResponse.cart.maDonHang,
       ));
     } catch (e) {
       if (AppConfig.enableApiLogging) {
@@ -256,48 +272,6 @@ class CartCubit extends Cubit<CartState> {
 
   /// Check xem đã chọn hết chưa
   bool get isAllSelected => _selectedItemIds.length == _cartItems.length && _cartItems.isNotEmpty;
-
-  /// Generate mock cart items
-  List<CartItem> _generateMockCartItems() {
-    return [
-      const CartItem(
-        id: '1',
-        productId: 'p1',
-        shopName: 'Cô Nhi',
-        productName: 'Thịt đùi',
-        productImage: 'assets/img/cart_product_1.png',
-        price: 89000,
-        weight: 0.7,
-        unit: 'KG',
-        quantity: 1,
-        isSelected: false,
-      ),
-      const CartItem(
-        id: '2',
-        productId: 'p2',
-        shopName: 'Cô Nhi',
-        productName: 'Thịt sườn',
-        productImage: 'assets/img/cart_product_2.png',
-        price: 189000,
-        weight: 1.1,
-        unit: 'KG',
-        quantity: 1,
-        isSelected: false,
-      ),
-      const CartItem(
-        id: '3',
-        productId: 'p3',
-        shopName: 'Cô Như',
-        productName: 'Cá Nục',
-        productImage: 'assets/img/cart_product_3.png',
-        price: 69000,
-        weight: 0.7,
-        unit: 'KG',
-        quantity: 1,
-        isSelected: false,
-      ),
-    ];
-  }
 
   /// Reset state về initial
   void resetState() {

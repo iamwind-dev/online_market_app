@@ -1,8 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'ingredient_detail_state.dart';
 import '../../../../../core/services/nguyen_lieu_service.dart';
 import '../../../../../core/dependency/injection.dart';
 import '../../../../../core/utils/price_formatter.dart';
+import '../../../../../core/services/cart_api_service.dart';
+import '../../../../../core/widgets/cart_badge_icon.dart';
 
 /// Cubit quản lý state cho IngredientDetail
 class IngredientDetailCubit extends Cubit<IngredientDetailState> {
@@ -76,6 +79,7 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
           shopName: detail.tenNhomNguyenLieu,
           soldCount: totalSold,
           sellers: sellers,
+          selectedSeller: sellers.isNotEmpty ? sellers.first : null, // Chọn seller đầu tiên mặc định
           description: 'Có ${detail.soGianHang} gian hàng đang bán sản phẩm này',
           relatedProducts: const [], // TODO: Fetch related products
           recommendedProducts: const [], // TODO: Fetch recommended products
@@ -145,7 +149,7 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
       return PriceFormatter.formatPrice(giaGoc);
     }
     
-    return 'Liên hệ';
+    return '0đ';
   }
 
   String? _formatOriginalPrice(double? giaGoc, String? giaCuoi) {
@@ -166,8 +170,47 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
   }
 
   /// Add to cart
-  void addToCart() {
-    emit(state.copyWith(cartItemCount: state.cartItemCount + 1));
+  Future<void> addToCart() async {
+    print('🛒 [ADD TO CART] Starting...');
+    print('🛒 [ADD TO CART] maNguyenLieu: ${state.maNguyenLieu}');
+    print('🛒 [ADD TO CART] selectedSeller: ${state.selectedSeller?.tenGianHang} (${state.selectedSeller?.maGianHang})');
+    
+    if (state.maNguyenLieu == null || state.maNguyenLieu!.isEmpty) {
+      print('⚠️ Không có mã nguyên liệu');
+      return;
+    }
+
+    // Lấy gian hàng được chọn (selectedSeller)
+    if (state.selectedSeller == null) {
+      print('⚠️ Chưa chọn gian hàng nào');
+      return;
+    }
+
+    final maGianHang = state.selectedSeller!.maGianHang;
+    print('🛒 [ADD TO CART] Calling API with maGianHang: $maGianHang');
+
+    try {
+      final cartService = CartApiService();
+      final response = await cartService.addToCart(
+        maNguyenLieu: state.maNguyenLieu!,
+        maGianHang: maGianHang,
+        soLuong: state.quantity,
+      );
+
+      if (response.success) {
+        // Refresh cart badge
+        refreshCartBadge();
+        
+        // Update local count (optional)
+        emit(state.copyWith(cartItemCount: state.cartItemCount + 1));
+        
+        print('✅ Đã thêm vào giỏ hàng: ${state.selectedSeller!.tenGianHang} (${maGianHang})');
+      } else {
+        print('❌ Thêm vào giỏ hàng thất bại: ${response.message}');
+      }
+    } catch (e) {
+      print('❌ Lỗi khi thêm vào giỏ hàng: $e');
+    }
   }
 
   /// Update cart item count
@@ -175,10 +218,43 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
     emit(state.copyWith(cartItemCount: count));
   }
 
-  /// Buy now action
-  void buyNow() {
-    // Implement buy now logic
-    addToCart();
+  /// Buy now action - Chuyển thẳng sang trang thanh toán với thông tin sản phẩm
+  void buyNow(BuildContext context) {
+    print('🛍️ [BUY NOW] Starting...');
+    
+    if (state.maNguyenLieu == null || state.maNguyenLieu!.isEmpty) {
+      print('⚠️ Không có mã nguyên liệu');
+      return;
+    }
+
+    if (state.selectedSeller == null) {
+      print('⚠️ Chưa chọn gian hàng nào');
+      return;
+    }
+
+    print('🛍️ [BUY NOW] Navigating to payment with:');
+    print('  - Nguyên liệu: ${state.ingredientName}');
+    print('  - Mã: ${state.maNguyenLieu}');
+    print('  - Gian hàng: ${state.selectedSeller!.tenGianHang}');
+    print('  - Mã gian hàng: ${state.selectedSeller!.maGianHang}');
+    print('  - Giá: ${state.price}');
+    
+    // Navigate to payment page với thông tin sản phẩm
+    Navigator.pushNamed(
+      context,
+      '/payment',
+      arguments: {
+        'isBuyNow': true,
+        'maNguyenLieu': state.maNguyenLieu,
+        'tenNguyenLieu': state.ingredientName,
+        'maGianHang': state.selectedSeller!.maGianHang,
+        'tenGianHang': state.selectedSeller!.tenGianHang,
+        'hinhAnh': state.ingredientImage,
+        'gia': state.price,
+        'donVi': state.unit,
+        'soLuong': state.quantity,
+      },
+    );
   }
 
   /// Chat with shop
@@ -188,13 +264,32 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
 
   /// Select seller (chọn gian hàng để mua)
   void selectSeller(Seller seller) {
-    // Cập nhật thông tin hiển thị theo seller được chọn
+    print('🏪 [SELECT SELLER] Before: ${state.selectedSeller?.maGianHang}');
+    print('🏪 [SELECT SELLER] Selecting: ${seller.maGianHang} - ${seller.tenGianHang}');
+    
+    // Cập nhật thông tin hiển thị và lưu seller được chọn
     emit(state.copyWith(
+      selectedSeller: seller,
       price: seller.price,
       unit: seller.unit ?? state.unit,
       shopName: seller.tenGianHang,
     ));
     
-    print('✅ Đã chọn gian hàng: ${seller.tenGianHang} - ${seller.price}');
+    print('🏪 [SELECT SELLER] After: ${state.selectedSeller?.maGianHang}');
+    print('✅ Đã chọn gian hàng: ${seller.tenGianHang} (${seller.maGianHang}) - ${seller.price}');
+  }
+
+  /// Tăng số lượng
+  void increaseQuantity() {
+    emit(state.copyWith(quantity: state.quantity + 1));
+    print('➕ Số lượng: ${state.quantity}');
+  }
+
+  /// Giảm số lượng (tối thiểu là 1)
+  void decreaseQuantity() {
+    if (state.quantity > 1) {
+      emit(state.copyWith(quantity: state.quantity - 1));
+      print('➖ Số lượng: ${state.quantity}');
+    }
   }
 }

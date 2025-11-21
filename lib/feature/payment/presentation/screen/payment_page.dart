@@ -18,8 +18,24 @@ class PaymentPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Lấy arguments
+    final arguments = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final isBuyNow = arguments?['isBuyNow'] == true;
+    final isFromCart = arguments?['isFromCart'] == true;
+    
+    print('💳 [PAYMENT PAGE] isBuyNow: $isBuyNow, isFromCart: $isFromCart');
+    if (isBuyNow) {
+      print('💳 [PAYMENT PAGE] Buy now data: $arguments');
+    } else if (isFromCart) {
+      print('💳 [PAYMENT PAGE] Cart data: ${arguments?['selectedItems']?.length} items');
+    }
+    
     return BlocProvider(
-      create: (context) => PaymentCubit()..loadOrderSummary(),
+      create: (context) => PaymentCubit()..loadOrderSummary(
+        isBuyNow: isBuyNow,
+        isFromCart: isFromCart,
+        orderData: arguments,
+      ),
       child: const PaymentView(),
     );
   }
@@ -79,7 +95,7 @@ class _PaymentViewState extends State<PaymentView> {
             ),
             
             // Bottom navigation
-            _buildBottomNavigation(context),
+            
           ],
         ),
       ),
@@ -318,78 +334,95 @@ class _PaymentViewState extends State<PaymentView> {
     );
   }
 
-  /// Order items section
+  /// Order items section - Nhóm theo gian hàng
   Widget _buildOrderItems(OrderSummary orderSummary) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.getCardBackground(),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Shop name with icon
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.store,
-                  color: Color(0xFF00B40F),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  orderSummary.items.first.shopName,
-                  style: const TextStyle(
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                    height: 1.1,
-                    color: Color(0xFF202020),
-                  ),
-                ),
+    // Nhóm items theo shop
+    final itemsByShop = <String, List<OrderItem>>{};
+    for (final item in orderSummary.items) {
+      if (!itemsByShop.containsKey(item.shopName)) {
+        itemsByShop[item.shopName] = [];
+      }
+      itemsByShop[item.shopName]!.add(item);
+    }
+
+    return Column(
+      children: itemsByShop.entries.map((entry) {
+        final shopName = entry.key;
+        final items = entry.value;
+        
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: AppColors.getCardBackground(),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-          
-          const SizedBox(height: 16),
-          
-          // Divider
-          Container(
-            height: 1,
-            color: Colors.black.withValues(alpha: 0.1),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Shop name with icon
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.store,
+                      color: Color(0xFF00B40F),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      shopName,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                        height: 1.1,
+                        color: Color(0xFF202020),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Divider
+              Container(
+                height: 1,
+                color: Colors.black.withValues(alpha: 0.1),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Products của shop này
+              ...items.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                return Column(
+                  children: [
+                    if (index > 0) const SizedBox(height: 16),
+                    _buildOrderItem(item),
+                  ],
+                );
+              }),
+            ],
           ),
-          
-          const SizedBox(height: 16),
-          
-          // Products
-          ...orderSummary.items.asMap().entries.map((entry) {
-            final index = entry.key;
-            final item = entry.value;
-            return Column(
-              children: [
-                if (index > 0) const SizedBox(height: 16),
-                _buildOrderItem(item),
-              ],
-            );
-          }),
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
 
@@ -420,12 +453,7 @@ class _PaymentViewState extends State<PaymentView> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                item.productImage,
-                width: 91,
-                height: 91,
-                fit: BoxFit.cover,
-              ),
+              child: _buildProductImage(item.productImage),
             ),
           ),
           
@@ -1029,73 +1057,59 @@ class _PaymentViewState extends State<PaymentView> {
   }
 
   /// Bottom navigation
-  Widget _buildBottomNavigation(BuildContext context) {
-    return Container(
-      height: 69,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Colors.grey[300]!),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem('assets/img/add_home.svg', 'Trang chủ'),
-          _buildNavItem('assets/img/mon_an_icon.png', 'Món ăn', isImage: true),
-          _buildNavItem('assets/img/user_personas_presentation-26cd3a.png', '', isImage: true, isCenter: true),
-          _buildNavItem('assets/img/wifi_notification.svg', 'Thông báo'),
-          _buildNavItem('assets/img/account_circle.svg', 'Tài khoản'),
-        ],
-      ),
-    );
-  }
+  
 
-  /// Navigation item
-  Widget _buildNavItem(String icon, String label, {bool isImage = false, bool isCenter = false}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (isCenter)
-          Container(
-            width: 58,
-            height: 67,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              image: DecorationImage(
-                image: AssetImage(icon),
-                fit: BoxFit.cover,
-              ),
-            ),
-          )
-        else ...[
-          isImage
-              ? Image.asset(
-                  icon,
-                  width: 30,
-                  height: 30,
-                )
-              : SvgPicture.asset(
-                  icon,
-                  width: 30,
-                  height: 30,
-                ),
-          if (label.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w400,
-                fontSize: 12,
-                height: 1.33,
-                color: Color(0xFF000000),
-              ),
-            ),
-          ],
-        ],
-      ],
+  /// Build product image - support both URL and asset
+  Widget _buildProductImage(String imagePath) {
+    final isNetworkImage = imagePath.startsWith('http://') || 
+                          imagePath.startsWith('https://');
+    
+    final placeholderWidget = Container(
+      width: 91,
+      height: 91,
+      color: Colors.grey[200],
+      child: const Icon(Icons.image, size: 40, color: Colors.grey),
     );
+
+    if (imagePath.isEmpty) {
+      return placeholderWidget;
+    }
+
+    if (isNetworkImage) {
+      return Image.network(
+        imagePath,
+        width: 91,
+        height: 91,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 91,
+            height: 91,
+            color: Colors.grey[200],
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / 
+                      loadingProgress.expectedTotalBytes!
+                    : null,
+                strokeWidth: 2,
+                color: const Color(0xFF00B40F),
+              ),
+            ),
+          );
+        },
+        errorBuilder: (_, __, ___) => placeholderWidget,
+      );
+    } else {
+      return Image.asset(
+        imagePath,
+        width: 91,
+        height: 91,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => placeholderWidget,
+      );
+    }
   }
 
   /// Format price helper

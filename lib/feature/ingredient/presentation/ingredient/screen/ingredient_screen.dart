@@ -6,7 +6,7 @@ import '../../../../../core/widgets/shared_bottom_navigation.dart';
 import '../../../../../core/widgets/ingredient_card.dart';
 import '../../../../../core/widgets/shop_card.dart';
 import '../../../../../core/widgets/category_card.dart';
-import '../../../../../core/widgets/cart_icon_with_badge.dart';
+import '../../../../../core/widgets/cart_badge_icon.dart';
 
 class IngredientScreen extends StatelessWidget {
   const IngredientScreen({super.key});
@@ -133,12 +133,8 @@ class _IngredientViewState extends State<_IngredientView> {
               const SizedBox(width: 12),
               
               // Cart Icon with Badge
-              CartIconWithBadge(
-                itemCount: state.cartItemCount,
-                onTap: () {
-                  // Navigate to cart
-                  print('Mở giỏ hàng');
-                },
+              const CartBadgeIcon(
+                iconSize: 26,
               ),
             ],
           ),
