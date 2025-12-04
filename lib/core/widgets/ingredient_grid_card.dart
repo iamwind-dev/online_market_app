@@ -60,18 +60,47 @@ class IngredientGridCard extends StatelessWidget {
   }
 
   Widget _buildImageSection() {
+    final isNetworkImage = imagePath != null && 
+        (imagePath!.startsWith('http://') || imagePath!.startsWith('https://'));
+    
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
       child: imagePath != null && imagePath!.isNotEmpty
-          ? Image.asset(
-              imagePath!,
-              width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return _buildPlaceholder();
-              },
-            )
+          ? (isNetworkImage
+              ? Image.network(
+                  imagePath!,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: Colors.grey[100],
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded / 
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                          strokeWidth: 2,
+                          color: const Color(0xFF00B40F),
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return _buildPlaceholder();
+                  },
+                )
+              : Image.asset(
+                  imagePath!,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return _buildPlaceholder();
+                  },
+                ))
           : _buildPlaceholder(),
     );
   }

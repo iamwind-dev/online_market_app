@@ -17,18 +17,29 @@ class NguyenLieuService {
     int limit = 12,
     String sort = 'ten_nguyen_lieu',
     String order = 'asc',
+    String? maCho, // Thêm parameter mã chợ
+    bool hinhAnh = true, // Thêm parameter hình ảnh
   }) async {
     try {
       final token = await _authService.getToken();
       
+      final queryParams = {
+        'page': page.toString(),
+        'limit': limit.toString(),
+        'sort': sort,
+        'order': order,
+        'hinh_anh': hinhAnh.toString(), // Thêm parameter hình ảnh
+        if (maCho != null && maCho.isNotEmpty) 'ma_cho': maCho, // Thêm mã chợ vào query
+        
+      };
+      
       final uri = Uri.parse('$baseUrl/nguyen-lieu').replace(
-        queryParameters: {
-          'page': page.toString(),
-          'limit': limit.toString(),
-          'sort': sort,
-          'order': order,
-        },
+        queryParameters: queryParams,
       );
+
+      print('🔍 [NguyenLieuService] Fetching nguyen lieu...');
+      print('   URL: $uri');
+      print('   Ma cho: $maCho');
 
       final response = await http.get(
         uri,
@@ -38,15 +49,20 @@ class NguyenLieuService {
         },
       );
 
+      print('🔍 [NguyenLieuService] Response status: ${response.statusCode}');
+
       if (response.statusCode == 200) {
         final jsonData = json.decode(utf8.decode(response.bodyBytes));
-        return NguyenLieuResponse.fromJson(jsonData);
+        final result = NguyenLieuResponse.fromJson(jsonData);
+        print('✅ [NguyenLieuService] Fetched ${result.data.length} nguyen lieu');
+        return result;
       } else if (response.statusCode == 401) {
         throw UnauthorizedException('Token hết hạn hoặc không hợp lệ');
       } else {
         throw ServerException('Lỗi server: ${response.statusCode}');
       }
     } catch (e) {
+      print('❌ [NguyenLieuService] Error: $e');
       if (e is UnauthorizedException || e is ServerException) {
         rethrow;
       }

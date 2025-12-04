@@ -6,6 +6,7 @@ class RouteName {
   // Main Routes
   static const String splash = '/';
   static const String onboarding = '/onboarding';
+  static const String main = '/main';
   static const String home = '/home';
 
   // Authentication Routes
@@ -25,6 +26,7 @@ class RouteName {
   static const String categoryProducts = '/category-products';
   static const String ingredient = '/ingredient';
   static const String ingredientDetail = '/ingredient-detail';
+  static const String shop = '/shop';
 
 
 

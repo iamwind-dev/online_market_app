@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 /// Shop Card Widget
 /// Hiển thị thông tin gian hàng dạng card nhỏ
 class ShopCard extends StatelessWidget {
+  final String shopId;
   final String shopName;
   final String? shopImage;
   final String? rating;
@@ -11,6 +12,7 @@ class ShopCard extends StatelessWidget {
 
   const ShopCard({
     super.key,
+    required this.shopId,
     required this.shopName,
     this.shopImage,
     this.rating,

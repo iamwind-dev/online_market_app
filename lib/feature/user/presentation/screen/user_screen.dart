@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/user_cubit.dart';
 import '../cubit/user_state.dart';
-import '../../../../core/widgets/shared_bottom_navigation.dart';
 import '../../../../core/dependency/injection.dart';
 import '../../../../core/services/auth/auth_service.dart';
+import '../../../../core/config/route_name.dart';
 
 class UserScreen extends StatelessWidget {
   const UserScreen({super.key});
@@ -66,14 +66,7 @@ class _UserView extends StatelessWidget {
           );
         },
       ),
-      bottomNavigationBar: BlocBuilder<UserCubit, UserState>(
-        builder: (context, state) {
-          return SharedBottomNavigation(
-            currentIndex: state.selectedBottomNavIndex,
-            onTap: (index) => context.read<UserCubit>().changeBottomNavIndex(index),
-          );
-        },
-      ),
+      
     );
   }
 
@@ -84,16 +77,114 @@ class _UserView extends StatelessWidget {
         children: [
           const SizedBox(height: 77),
           _buildProfileSection(context, state),
-          const SizedBox(height: 23),
-          _buildMyOrdersSection(context, state),
-          const SizedBox(height: 16),
-          _buildOrderStatusSection(state),
-          const SizedBox(height: 16),
-          _buildUtilitiesSection(context),
+          const SizedBox(height: 24),
+          _buildMenuSection(context),
           const SizedBox(height: 40),
           _buildLogoutButton(context),
           const SizedBox(height: 100),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMenuSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          // Cập nhật thông tin cá nhân
+          _buildMenuItem(
+            context,
+            icon: Icons.person_outline,
+            iconColor: const Color(0xFF00B40F),
+            label: 'Cập nhật thông tin cá nhân',
+            onTap: () {
+              Navigator.pushNamed(context, RouteName.editProfile);
+            },
+          ),
+          const SizedBox(height: 12),
+          // Xem danh sách đơn hàng
+          _buildMenuItem(
+            context,
+            icon: Icons.receipt_long_outlined,
+            iconColor: const Color(0xFF2196F3),
+            label: 'Xem danh sách đơn hàng',
+            onTap: () {
+              Navigator.pushNamed(context, RouteName.orderList);
+            },
+          ),
+          const SizedBox(height: 12),
+          // Giỏ hàng
+          _buildMenuItem(
+            context,
+            icon: Icons.shopping_cart_outlined,
+            iconColor: const Color(0xFFFF9800),
+            label: 'Giỏ hàng của tôi',
+            onTap: () {
+              Navigator.pushNamed(context, RouteName.cart);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                  color: Color(0xFF202020),
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Color(0xFF999999),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -126,244 +217,63 @@ class _UserView extends StatelessWidget {
 
   Widget _buildProfileSection(BuildContext context, UserState state) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: Row(
-        children: [
-          Stack(
-            children: [
-              // Profile image
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(49),
-                  image: DecorationImage(
-                    image: AssetImage(state.userImage),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              // White circle border
-              Positioned(
-                top: -2,
-                left: -2,
-                child: Container(
-                  width: 42.29,
-                  height: 40.81,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.16),
-                        blurRadius: 15,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Text(
-              state.userName,
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontWeight: FontWeight.w700,
-                fontSize: 17,
-                height: 1.76,
-                letterSpacing: -0.21,
-                color: Color(0xFF000000),
-              ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-          ),
-          GestureDetector(
-            onTap: () => context.read<UserCubit>().navigateToEditProfile(),
-            child: Icon(Icons.edit, size: 15, color: Color(0xFF000000)),
-          ),
-          const SizedBox(width: 24),
-          GestureDetector(
-            onTap: () => context.read<UserCubit>().navigateToSettings(),
-            child: Icon(Icons.settings, size: 24, color: Color(0xFF000000)),
-          ),
-          const SizedBox(width: 20),
-          GestureDetector(
-            onTap: () => context.read<UserCubit>().navigateToCart(),
-            child: Icon(Icons.add_shopping_cart, size: 21.74, color: Color(0xFFD9D9D9)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMyOrdersSection(BuildContext context, UserState state) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      child: Text(
-        'Đơn hàng của tôi',
-        style: TextStyle(
-          fontFamily: 'Roboto',
-          fontWeight: FontWeight.w700,
-          fontSize: 17,
-          height: 1.29,
-          color: Color(0xFF202020),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildOrderStatusSection(UserState state) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 11),
-      height: 99,
-      decoration: BoxDecoration(
-        color: Color(0xFFD7FFBD).withOpacity(0.5),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildOrderStatusItem('Chờ Xác Nhận', state.pendingOrders),
-          _buildOrderStatusItem('Đang Xử Lý', state.processingOrders),
-          _buildOrderStatusItem('Đang Giao', state.shippingOrders),
-          _buildOrderStatusItem('Giao Thành Công', state.completedOrders),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOrderStatusItem(String label, int count) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          count.toString(),
-          style: TextStyle(
-            fontFamily: 'Roboto',
-            fontWeight: FontWeight.w700,
-            fontSize: 30,
-            height: 0.73,
-            color: Color(0xFF292D32),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: 'Roboto',
-            fontWeight: label == 'Giao Thành Công' ? FontWeight.w500 : FontWeight.w500,
-            fontSize: 12,
-            height: 1.25,
-            letterSpacing: -0.16,
-            color: Color(0xFF2CCE75),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUtilitiesSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25),
-          child: Text(
-            'Tiện ích',
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontWeight: FontWeight.w700,
-              fontSize: 17,
-              height: 1.76,
-              letterSpacing: -0.21,
-              color: Color(0xFF000000),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        _buildUtilityItem(
-          context,
-          icon: Icons.favorite_border,
-          label: 'Yêu thích',
-          onTap: () => context.read<UserCubit>().navigateToFavorites(),
-        ),
-        const SizedBox(height: 25),
-        _buildUtilityItem(
-          context,
-          icon: Icons.credit_card,
-          label: 'MCard',
-          onTap: () => context.read<UserCubit>().navigateToMCard(),
-        ),
-        const SizedBox(height: 25),
-        _buildUtilityItem(
-          context,
-          icon: Icons.policy,
-          label: 'Điều khoản sử dụng',
-          onTap: () => context.read<UserCubit>().navigateToTermsOfService(),
-        ),
-        const SizedBox(height: 25),
-        _buildUtilityItem(
-          context,
-          icon: Icons.language,
-          label: 'Ngôn ngữ',
-          onTap: () => context.read<UserCubit>().navigateToLanguage(),
-        ),
-        const SizedBox(height: 25),
-        _buildUtilityItem(
-          context,
-          icon: Icons.contact_support,
-          label: 'Chăm sóc khách hàng',
-          onTap: () => context.read<UserCubit>().navigateToCustomerCare(),
-        ),
-        const SizedBox(height: 25),
-        _buildUtilityItem(
-          context,
-          icon: Icons.report,
-          label: 'Hỗ trợ',
-          onTap: () => context.read<UserCubit>().navigateToSupport(),
-        ),
-        const SizedBox(height: 25),
-        _buildUtilityItem(
-          context,
-          icon: Icons.delete,
-          label: 'Xóa tài khoản',
-          onTap: () => _showDeleteAccountDialog(context),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUtilityItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 33),
         child: Row(
           children: [
-            Icon(icon, size: 24, color: Color(0xFF000000)),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 17,
-                  height: 0.88,
-                  letterSpacing: -0.16,
-                  color: Color(0xFF000000),
-                ),
+            // Default user avatar
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: const Color(0xFF00B40F).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.person,
+                size: 32,
+                color: Color(0xFF00B40F),
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 17, color: Color(0xFF000000)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    state.userName,
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                      color: Color(0xFF202020),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Chào mừng bạn!',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
+                      color: Color(0xFF666666),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -374,15 +284,20 @@ class _UserView extends StatelessWidget {
     return Center(
       child: GestureDetector(
         onTap: () => _showLogoutDialog(context),
-        child: Text(
-          'Đăng Xuất',
-          style: TextStyle(
-            fontFamily: 'Roboto',
-            fontWeight: FontWeight.w700,
-            fontSize: 17,
-            height: 1.29,
-            letterSpacing: -0.18,
-            color: Color(0xFF02CCE75),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFFF5252)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Text(
+            'Đăng Xuất',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+              color: Color(0xFFFF5252),
+            ),
           ),
         ),
       ),
@@ -423,27 +338,4 @@ class _UserView extends StatelessWidget {
     );
   }
 
-  void _showDeleteAccountDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Xóa tài khoản'),
-        content: const Text('Bạn có chắc chắn muốn xóa tài khoản? Hành động này không thể hoàn tác.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<UserCubit>().deleteAccount();
-              Navigator.pop(context);
-              // Navigate to login screen
-            },
-            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
 }

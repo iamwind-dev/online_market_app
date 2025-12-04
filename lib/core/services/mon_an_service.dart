@@ -261,6 +261,7 @@ class MonAnService {
   /// Lấy chi tiết món ăn từ API (có ảnh)
   /// 
   /// [maMonAn] - Mã món ăn cần lấy chi tiết
+  /// [khauPhan] - Số khẩu phần (tùy chọn, để tính toán lại định lượng nguyên liệu)
   /// 
   /// Trả về: MonAnDetailModel - Thông tin chi tiết món ăn bao gồm ảnh
   /// 
@@ -268,7 +269,7 @@ class MonAnService {
   /// - UnauthorizedException: Nếu token không hợp lệ hoặc hết hạn
   /// - NetworkException: Nếu có lỗi kết nối
   /// - ServerException: Nếu server trả về lỗi
-  Future<MonAnDetailModel> getMonAnDetail(String maMonAn) async {
+  Future<MonAnDetailModel> getMonAnDetail(String maMonAn, {int? khauPhan}) async {
     try {
       // 1. Lấy token từ SharedPreferences
       final token = await _getToken();
@@ -283,12 +284,19 @@ class MonAnService {
         'Content-Type': 'application/json',
       };
 
-      // 3. Gửi GET request
+      // 3. Chuẩn bị query parameters
+      final queryParams = <String, dynamic>{};
+      if (khauPhan != null) {
+        queryParams['khau_phan'] = khauPhan.toString();
+      }
+
+      // 4. Gửi GET request
       final url = '$_baseUrl$_endpointList/$maMonAn';
-      _logger.i('Gọi API: GET $url');
+      _logger.i('Gọi API: GET $url${khauPhan != null ? '?khau_phan=$khauPhan' : ''}');
 
       final response = await _dio.get(
         url,
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
         options: Options(headers: headers),
       ).timeout(
         const Duration(seconds: 30),

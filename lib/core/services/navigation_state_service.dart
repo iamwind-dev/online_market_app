@@ -51,13 +51,14 @@ class NavigationStateService {
       }
     }
 
-    // Mặc định về home
-    return RouteName.home;
+    // Mặc định về main (home tab)
+    return RouteName.main;
   }
 
   /// Kiểm tra có phải route chính không
   bool _isMainRoute(String route) {
     final mainRoutes = [
+      RouteName.main,
       RouteName.home,
       RouteName.productList,
       RouteName.ingredient,

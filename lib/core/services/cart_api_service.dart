@@ -79,6 +79,60 @@ class CartApiService {
     }
   }
 
+  /// Checkout giỏ hàng với các items đã chọn
+  Future<CheckoutResponse> checkout({
+    required List<Map<String, String>> selectedItems,
+  }) async {
+    if (AppConfig.enableApiLogging) {
+      AppLogger.info('💳 [CART API] Checkout with ${selectedItems.length} items');
+    }
+
+    try {
+      final token = await getToken();
+      
+      if (token == null) {
+        throw Exception('User not logged in');
+      }
+
+      final url = Uri.parse('$_baseUrl/cart/checkout');
+      
+      final requestBody = {
+        'selectedItems': selectedItems,
+      };
+
+      if (AppConfig.enableApiLogging) {
+        AppLogger.info('💳 [CART API] Request body: $requestBody');
+      }
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode(requestBody),
+      );
+
+      if (AppConfig.enableApiLogging) {
+        AppLogger.info('💳 [CART API] Response status: ${response.statusCode}');
+        AppLogger.info('💳 [CART API] Response body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonData = json.decode(utf8.decode(response.bodyBytes));
+        return CheckoutResponse.fromJson(jsonData);
+      } else {
+        throw Exception(
+            'Failed to checkout: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      if (AppConfig.enableApiLogging) {
+        AppLogger.error('❌ [CART API] Checkout error: $e');
+      }
+      rethrow;
+    }
+  }
+
   /// Fetch thông tin giỏ hàng
   Future<CartResponse> getCart() async {
     if (AppConfig.enableApiLogging) {
@@ -132,6 +186,66 @@ class CartApiService {
     } catch (e) {
       if (AppConfig.enableApiLogging) {
         AppLogger.error('❌ [CART API] Error: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Xóa sản phẩm khỏi giỏ hàng
+  /// API: DELETE /api/buyer/cart/items/{ma_nguyen_lieu}/{ma_gian_hang}
+  /// Response: {success: bool, ma_don_hang: string, tong_tien: double, tong_tien_goc: double, tiet_kiem: double}
+  Future<DeleteCartItemResponse> deleteCartItem({
+    required String maNguyenLieu,
+    required String maGianHang,
+  }) async {
+    if (AppConfig.enableApiLogging) {
+      AppLogger.info('🗑️ [CART API] Deleting item: $maNguyenLieu from shop: $maGianHang');
+    }
+
+    try {
+      final token = await getToken();
+      
+      if (token == null) {
+        throw Exception('User not logged in');
+      }
+
+      final url = Uri.parse('$_baseUrl/cart/items/$maNguyenLieu/$maGianHang');
+
+      print('🗑️ [CART API] DELETE URL: $url');
+
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('🗑️ [CART API] Response Status: ${response.statusCode}');
+      print('🗑️ [CART API] Response Body: ${response.body}');
+
+      if (AppConfig.enableApiLogging) {
+        AppLogger.info('🗑️ [CART API] Delete response: ${response.statusCode}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        // Handle empty response body (204 No Content)
+        if (response.body.isEmpty) {
+          return DeleteCartItemResponse(
+            success: true,
+            message: 'Item deleted successfully',
+          );
+        }
+        final jsonData = json.decode(utf8.decode(response.bodyBytes));
+        return DeleteCartItemResponse.fromJson(jsonData);
+      } else {
+        throw Exception(
+            'Failed to delete cart item: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('❌ [CART API] Delete error: $e');
+      if (AppConfig.enableApiLogging) {
+        AppLogger.error('❌ [CART API] Delete item error: $e');
       }
       rethrow;
     }

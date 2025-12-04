@@ -102,17 +102,8 @@ class SharedBottomNavigation extends StatelessWidget {
         // Nếu đã được chọn, không làm gì
         if (isSelected) return;
         
-        // Navigate đến route tương ứng nếu có
-        if (route != null) {
-          // Xóa tất cả routes và push route mới để tránh stack sâu
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            route,
-            (route) => false,
-          );
-        } else {
-          // Chỉ gọi onTap khi không có route (tức là không navigate)
-          onTap?.call(index);
-        }
+        // Gọi callback để thay đổi tab
+        onTap?.call(index);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),

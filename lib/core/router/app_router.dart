@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
-import '../../feature/ingredient/presentation/ingredient/screen/ingredient_screen.dart';
-import '../../feature/ingredient/presentation/ingredient_detail/screen/ingredient_detail_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../feature/buyer/ingredient/presentation/ingredient_detail/screen/ingredient_detail_page.dart';
+import '../../feature/shop/presentation/shop_page.dart';
+import '../../feature/shop/presentation/shop_cubit.dart';
 import '../config/route_name.dart';
 import '../../feature/splash/presentation/screen/splash_page.dart';
 import '../../feature/login/presentation/screen/login_page.dart';
 import '../../feature/signup/presentation/screen/signup_page.dart';
-import '../../feature/home/presentation/screen/home_screen.dart';
-import '../../feature/product/presentation/screen/product_screen.dart';
-import '../../feature/productdetail/presentation/screen/productdetail_screen.dart';
-import '../../feature/menudetail/presentation/screen/menudetail_screen.dart';
-import '../../feature/user/presentation/screen/user_screen.dart';
-import '../../feature/review/presentation/screen/review_page.dart';
-import '../../feature/cart/presentation/screen/cart_page.dart';
-import '../../feature/payment/presentation/screen/payment_page.dart';
-import '../../feature/order/presentation/order_detail/screen/order_detail_page.dart';
-import '../../feature/order/presentation/order/screen/order_page.dart';
-import '../../feature/search/presentation/screen/search_screen.dart';
-import '../../feature/product/presentation/screen/category_product_screen.dart';
+import '../../feature/main/presentation/screen/main_screen.dart';
+import '../../feature/buyer/productdetail/presentation/screen/productdetail_screen.dart';
+import '../../feature/buyer/menudetail/presentation/screen/menudetail_screen.dart';
+import '../../feature/buyer/review/presentation/screen/review_page.dart';
+import '../../feature/buyer/cart/presentation/screen/cart_page.dart';
+import '../../feature/buyer/payment/presentation/screen/payment_page.dart';
+import '../../feature/buyer/order/presentation/order_detail/screen/order_detail_page.dart';
+import '../../feature/buyer/order/presentation/order/screen/order_page.dart';
+import '../../feature/buyer/search/presentation/screen/search_screen.dart';
+import '../../feature/buyer/product/presentation/screen/category_product_screen.dart';
+import '../../feature/user/presentation/edit_profile/screen/edit_profile_page.dart';
+import '../dependency/injection.dart';
 
 /// Quản lý navigation và routing của ứng dụng
 /// Sử dụng onGenerateRoute để tạo route động
@@ -32,10 +34,17 @@ class AppRouter {
           const SplashPage(),
         );
 
+      case RouteName.main:
+        final args = settings.arguments as int?;
+        return _buildRoute(
+          settings,
+          MainScreen(initialIndex: args ?? 0),
+        );
+
       case RouteName.home:
         return _buildRoute(
           settings,
-          const HomeScreen(),
+          const MainScreen(initialIndex: 0),
         );
 
       case RouteName.login:
@@ -47,7 +56,7 @@ class AppRouter {
       case RouteName.ingredient:
         return _buildRoute(
           settings,
-          const IngredientScreen(),
+          const MainScreen(initialIndex: 3),
         );
 
       case RouteName.ingredientDetail:
@@ -73,7 +82,7 @@ class AppRouter {
       case RouteName.productList:
         return _buildRoute(
           settings,
-          const ProductScreen(),
+          const MainScreen(initialIndex: 1),
         );
 
       case RouteName.productDetail:
@@ -91,7 +100,7 @@ class AppRouter {
       case RouteName.user:
         return _buildRoute(
           settings,
-          const UserScreen(),
+          const MainScreen(initialIndex: 4),
         );
 
       case RouteName.reviews:
@@ -147,6 +156,22 @@ class AppRouter {
         return _buildRoute(
           settings,
           const _PlaceholderScreen(title: 'Profile Screen'),
+        );
+
+      case RouteName.editProfile:
+        return _buildRoute(
+          settings,
+          const EditProfilePage(),
+        );
+
+      case RouteName.shop:
+        final shopId = settings.arguments as String?;
+        return _buildRoute(
+          settings,
+          BlocProvider(
+            create: (_) => getIt<ShopCubit>(),
+            child: ShopPage(shopId: shopId),
+          ),
         );
 
       default:

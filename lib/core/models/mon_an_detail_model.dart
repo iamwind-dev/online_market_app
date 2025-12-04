@@ -8,10 +8,14 @@ class MonAnDetailModel {
   final int? khoangThoiGian; // Thời gian nấu (phút)
   final String? doKho; // Độ khó: "Dễ", "Trung bình", "Khó"
   final int? khauPhanTieuChuan; // Số khẩu phần tiêu chuẩn
+  final int? khauPhanHienTai; // Số khẩu phần hiện tại (khi có parameter khau_phan)
   final String? cachThucHien; // Cách thực hiện (hướng dẫn nấu)
   final String? soChe; // Số chế (cách chế biến)
   final String? cachDung; // Cách dùng
-  final int? calories; // Calories
+  final int? calories; // Calories gốc
+  final int? caloriesGoc; // Calories gốc (khi có khẩu phần)
+  final int? caloriesMoiKhauPhan; // Calories mỗi khẩu phần
+  final int? caloriesTongTheoKhauPhan; // Tổng calories theo khẩu phần
   final int? soDanhMuc; // Số lượng danh mục
   final int? soNguyenLieu; // Số lượng nguyên liệu
   final List<DanhMucDetail>? danhMuc; // Danh sách danh mục
@@ -24,10 +28,14 @@ class MonAnDetailModel {
     this.khoangThoiGian,
     this.doKho,
     this.khauPhanTieuChuan,
+    this.khauPhanHienTai,
     this.cachThucHien,
     this.soChe,
     this.cachDung,
     this.calories,
+    this.caloriesGoc,
+    this.caloriesMoiKhauPhan,
+    this.caloriesTongTheoKhauPhan,
     this.soDanhMuc,
     this.soNguyenLieu,
     this.danhMuc,
@@ -44,15 +52,19 @@ class MonAnDetailModel {
       maMonAn: detail['ma_mon_an'] as String? ?? '',
       tenMonAn: detail['ten_mon_an'] as String? ?? '',
       hinhAnh: detail['hinh_anh'] as String? ?? '',
-      khoangThoiGian: detail['khoang_thoi_gian'] as int?,
+      khoangThoiGian: (detail['khoang_thoi_gian'] as num?)?.toInt(),
       doKho: detail['do_kho'] as String?,
-      khauPhanTieuChuan: detail['khau_phan_tieu_chuan'] as int?,
+      khauPhanTieuChuan: (detail['khau_phan_tieu_chuan'] as num?)?.toInt(),
+      khauPhanHienTai: (detail['khau_phan_hien_tai'] as num?)?.toInt(),
       cachThucHien: detail['cach_thuc_hien'] as String?,
       soChe: detail['so_che'] as String?,
       cachDung: detail['cach_dung'] as String?,
-      calories: detail['calories'] as int?,
-      soDanhMuc: detail['so_danh_muc'] as int?,
-      soNguyenLieu: detail['so_nguyen_lieu'] as int?,
+      calories: (detail['calories'] as num?)?.toInt(),
+      caloriesGoc: (detail['calories_goc'] as num?)?.toInt(),
+      caloriesMoiKhauPhan: (detail['calories_moi_khau_phan'] as num?)?.toInt(),
+      caloriesTongTheoKhauPhan: (detail['calories_tong_theo_khau_phan'] as num?)?.toInt(),
+      soDanhMuc: (detail['so_danh_muc'] as num?)?.toInt(),
+      soNguyenLieu: (detail['so_nguyen_lieu'] as num?)?.toInt(),
       danhMuc: (detail['danh_muc'] as List<dynamic>?)
           ?.map((item) => DanhMucDetail.fromJson(item as Map<String, dynamic>))
           .toList(),
@@ -71,10 +83,14 @@ class MonAnDetailModel {
       'khoang_thoi_gian': khoangThoiGian,
       'do_kho': doKho,
       'khau_phan_tieu_chuan': khauPhanTieuChuan,
+      'khau_phan_hien_tai': khauPhanHienTai,
       'cach_thuc_hien': cachThucHien,
       'so_che': soChe,
       'cach_dung': cachDung,
       'calories': calories,
+      'calories_goc': caloriesGoc,
+      'calories_moi_khau_phan': caloriesMoiKhauPhan,
+      'calories_tong_theo_khau_phan': caloriesTongTheoKhauPhan,
       'so_danh_muc': soDanhMuc,
       'so_nguyen_lieu': soNguyenLieu,
       'danh_muc': danhMuc?.map((item) => item.toJson()).toList(),

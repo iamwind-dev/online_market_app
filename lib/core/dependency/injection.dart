@@ -8,6 +8,12 @@ import '../services/nguyen_lieu_service.dart';
 import '../services/gian_hang_service.dart';
 import '../services/danh_muc_nguyen_lieu_service.dart';
 import '../services/navigation_state_service.dart';
+import '../services/khu_vuc_service.dart';
+import '../services/cho_service.dart';
+import '../services/chat_ai_service.dart';
+import '../services/search_service.dart';
+import '../services/search_history_service.dart';
+import '../../feature/shop/presentation/shop_cubit.dart';
 import '../utils/app_logger.dart';
 
 /// Dependency Injection Container
@@ -67,6 +73,36 @@ Future<void> initDependencies() async {
   );
   AppLogger.info('✅ DanhMucNguyenLieuService registered');
 
+  // KhuVuc Service - Singleton
+  getIt.registerLazySingleton<KhuVucService>(
+    () => KhuVucService(getIt<AuthService>()),
+  );
+  AppLogger.info('✅ KhuVucService registered');
+
+  // Cho Service - Singleton
+  getIt.registerLazySingleton<ChoService>(
+    () => ChoService(getIt<AuthService>()),
+  );
+  AppLogger.info('✅ ChoService registered');
+
+  // ChatAI Service - Singleton
+  getIt.registerLazySingleton<ChatAIService>(
+    () => ChatAIService(),
+  );
+  AppLogger.info('✅ ChatAIService registered');
+
+  // Search Service - Singleton
+  getIt.registerLazySingleton<SearchService>(
+    () => SearchService(),
+  );
+  AppLogger.info('✅ SearchService registered');
+
+  // SearchHistory Service - Singleton
+  getIt.registerLazySingleton<SearchHistoryService>(
+    () => SearchHistoryService(getIt<LocalStorageService>().prefs),
+  );
+  AppLogger.info('✅ SearchHistoryService registered');
+
   // NavigationState Service - Singleton
   getIt.registerLazySingleton<NavigationStateService>(
     () => NavigationStateService(getIt<LocalStorageService>().prefs),
@@ -96,6 +132,12 @@ Future<void> initDependencies() async {
   //     logoutUseCase: getIt<LogoutUseCase>(),
   //   ),
   // );
+
+  // Shop Cubit - Factory (new instance each time)
+  getIt.registerFactory<ShopCubit>(
+    () => ShopCubit(),
+  );
+  AppLogger.info('✅ ShopCubit registered');
 
   AppLogger.info('✅ All dependencies initialized successfully');
 }
