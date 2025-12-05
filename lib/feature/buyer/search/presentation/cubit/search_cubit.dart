@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'search_state.dart';
 import '../../../../../core/services/search_service.dart';
@@ -9,7 +10,16 @@ class SearchCubit extends Cubit<SearchState> {
   final SearchService _searchService = getIt<SearchService>();
   final SearchHistoryService _historyService = getIt<SearchHistoryService>();
 
+  Timer? _debounceTimer;
+  String _lastQuery = '';
+
   SearchCubit() : super(const SearchInitial());
+
+  @override
+  Future<void> close() {
+    _debounceTimer?.cancel();
+    return super.close();
+  }
 
   /// Load lịch sử tìm kiếm
   void loadHistory() {
@@ -17,7 +27,49 @@ class SearchCubit extends Cubit<SearchState> {
     emit(SearchInitial(searchHistory: history));
   }
 
-  /// Tìm kiếm với query
+  /// Suggest khi gõ - có debounce 300ms
+  void suggest(String query) {
+    _debounceTimer?.cancel();
+
+    if (query.trim().isEmpty) {
+      loadHistory();
+      return;
+    }
+
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _fetchSuggestions(query.trim());
+    });
+  }
+
+  /// Fetch suggestions từ API
+  Future<void> _fetchSuggestions(String query) async {
+    if (query == _lastQuery) return;
+    _lastQuery = query;
+
+    final history = _historyService.getSearchHistory();
+    emit(SearchSuggesting(query: query));
+
+    try {
+      final response = await _searchService.search(query);
+      if (isClosed) return;
+
+      if (response.data.isEmpty) {
+        emit(SearchInitial(searchHistory: history));
+      } else {
+        emit(SearchSuggestionsLoaded(
+          data: response.data,
+          query: query,
+          searchHistory: history,
+        ));
+      }
+    } catch (e) {
+      if (!isClosed) {
+        emit(SearchInitial(searchHistory: history));
+      }
+    }
+  }
+
+  /// Tìm kiếm với query (khi submit)
   Future<void> search(String query) async {
     if (query.trim().isEmpty) {
       loadHistory();
@@ -27,9 +79,7 @@ class SearchCubit extends Cubit<SearchState> {
     emit(const SearchLoading());
 
     try {
-      // Lưu vào lịch sử
       await _historyService.addSearchQuery(query.trim());
-      
       final response = await _searchService.search(query.trim());
 
       if (response.data.isEmpty) {
@@ -56,15 +106,8 @@ class SearchCubit extends Cubit<SearchState> {
 
   /// Clear search
   void clear() {
+    _lastQuery = '';
+    _debounceTimer?.cancel();
     loadHistory();
-  }
-
-  /// Gợi ý tìm kiếm realtime
-  void suggest(String query) {
-    if (query.trim().isEmpty) {
-      loadHistory();
-      return;
-    }
-    // TODO: Implement suggest logic with API call
   }
 }

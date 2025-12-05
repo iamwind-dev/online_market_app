@@ -24,8 +24,7 @@ class ChatMessageWidget extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment:
-            message.isBot ? MainAxisAlignment.start : MainAxisAlignment.end,
+        mainAxisAlignment: message.isBot ? MainAxisAlignment.start : MainAxisAlignment.end,
         children: [
           if (message.isBot) ...[
             Container(
@@ -35,48 +34,25 @@ class ChatMessageWidget extends StatelessWidget {
               decoration: const BoxDecoration(
                 color: Color(0xFFFFD503),
                 shape: BoxShape.circle,
-                border: Border.fromBorderSide(
-                  BorderSide(color: Color(0xFF008EDB), width: 1),
-                ),
+                border: Border.fromBorderSide(BorderSide(color: Color(0xFF008EDB), width: 1)),
               ),
             ),
           ],
           Flexible(
             child: Column(
-              crossAxisAlignment: message.isBot
-                  ? CrossAxisAlignment.start
-                  : CrossAxisAlignment.end,
+              crossAxisAlignment: message.isBot ? CrossAxisAlignment.start : CrossAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: message.isBot
-                        ? const Color(0xFFDEDEDE)
-                        : const Color(0x4D008EDB),
+                    color: message.isBot ? const Color(0xFFDEDEDE) : const Color(0x4D008EDB),
                     borderRadius: message.isBot
-                        ? const BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
-                          )
-                        : const BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            topRight: Radius.circular(20),
-                            bottomLeft: Radius.circular(20),
-                          ),
+                        ? const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20), bottomRight: Radius.circular(20))
+                        : const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20), bottomLeft: Radius.circular(20)),
                   ),
                   child: Text(
                     message.message,
-                    style: const TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 17,
-                      fontWeight: FontWeight.w300,
-                      height: 1.33,
-                      color: Color.fromARGB(255, 0, 0, 0),
-                    ),
+                    style: const TextStyle(fontFamily: 'Roboto', fontSize: 17, fontWeight: FontWeight.w300, height: 1.33, color: Color.fromARGB(255, 0, 0, 0)),
                   ),
                 ),
                 if (message.options != null && message.options!.isNotEmpty)
@@ -85,15 +61,9 @@ class ChatMessageWidget extends StatelessWidget {
                     child: Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: message.options!
-                          .map((option) => ChatOptionWidget(
-                                option: option,
-                                onTap: () => onOptionTap(option),
-                              ))
-                          .toList(),
+                      children: message.options!.map((option) => ChatOptionWidget(option: option, onTap: () => onOptionTap(option))).toList(),
                     ),
                   ),
-                // Hiển thị món ăn suggestions nếu có
                 if (message.monAnSuggestions != null && message.monAnSuggestions!.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 12),
@@ -104,22 +74,11 @@ class ChatMessageWidget extends StatelessWidget {
                         itemCount: message.monAnSuggestions!.length,
                         itemBuilder: (context, index) {
                           final monAn = message.monAnSuggestions![index];
-                          return MonAnSuggestionCard(
-                            monAn: monAn,
-                            onTap: () {
-                              // Navigate to product detail
-                              AppRouter.navigateTo(
-                                context,
-                                RouteName.productDetail,
-                                arguments: monAn.maMonAn,
-                              );
-                            },
-                          );
+                          return MonAnSuggestionCard(monAn: monAn, onTap: () => AppRouter.navigateTo(context, RouteName.productDetail, arguments: monAn.maMonAn));
                         },
                       ),
                     ),
                   ),
-                // Hiển thị nguyên liệu suggestions nếu có
                 if (message.nguyenLieuSuggestions != null && message.nguyenLieuSuggestions!.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 12),
@@ -130,7 +89,6 @@ class ChatMessageWidget extends StatelessWidget {
                         itemCount: message.nguyenLieuSuggestions!.length,
                         itemBuilder: (context, index) {
                           final nguyenLieu = message.nguyenLieuSuggestions![index];
-                          // Convert to chat_model.NguyenLieuSuggestion
                           final chatModelNguyenLieu = chat_model.NguyenLieuSuggestion(
                             maNguyenLieu: nguyenLieu.maNguyenLieu,
                             tenNguyenLieu: nguyenLieu.tenNguyenLieu,
@@ -153,49 +111,23 @@ class ChatMessageWidget extends StatelessWidget {
                               addToCartEndpoint: nguyenLieu.canAddToCart ? '/api/cart' : null,
                             ),
                           );
-                          
                           return NguyenLieuSuggestionCard(
                             nguyenLieu: chatModelNguyenLieu,
-                            onTap: () {
-                              // Navigate to ingredient detail
-                              AppRouter.navigateTo(
-                                context,
-                                RouteName.ingredientDetail,
-                                arguments: {
-                                  'maNguyenLieu': nguyenLieu.maNguyenLieu,
-                                  'name': nguyenLieu.tenNguyenLieu,
-                                  'image': '',
-                                  'price': nguyenLieu.gianHangSuggest?.gia ?? '',
-                                  'unit': nguyenLieu.gianHangSuggest?.donViBan,
-                                  'shopName': nguyenLieu.gianHangSuggest?.tenGianHang,
-                                },
-                              );
-                            },
+                            onTap: () => AppRouter.navigateTo(context, RouteName.ingredientDetail, arguments: {
+                              'maNguyenLieu': nguyenLieu.maNguyenLieu,
+                              'name': nguyenLieu.tenNguyenLieu,
+                              'image': '',
+                              'price': nguyenLieu.gianHangSuggest?.gia ?? '',
+                              'unit': nguyenLieu.gianHangSuggest?.donViBan,
+                              'shopName': nguyenLieu.gianHangSuggest?.tenGianHang,
+                            }),
                             onAddToCart: nguyenLieu.canAddToCart && nguyenLieu.gianHangSuggest != null
                                 ? () async {
                                     try {
-                                      await CartApiService().addToCart(
-                                        maNguyenLieu: nguyenLieu.maNguyenLieu,
-                                        maGianHang: nguyenLieu.gianHangSuggest!.maGianHang,
-                                        soLuong: 1,
-                                      );
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Đã thêm vào giỏ hàng'),
-                                            duration: Duration(seconds: 2),
-                                          ),
-                                        );
-                                      }
+                                      await CartApiService().addToCart(maNguyenLieu: nguyenLieu.maNguyenLieu, maGianHang: nguyenLieu.gianHangSuggest!.maGianHang, soLuong: 1);
+                                      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã thêm vào giỏ hàng'), duration: Duration(seconds: 2)));
                                     } catch (e) {
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Lỗi: ${e.toString()}'),
-                                            duration: const Duration(seconds: 2),
-                                          ),
-                                        );
-                                      }
+                                      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: ${e.toString()}'), duration: const Duration(seconds: 2)));
                                     }
                                   }
                                 : null,

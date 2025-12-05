@@ -42,8 +42,6 @@ class _CartBadgeIconState extends State<CartBadgeIcon> {
   void initState() {
     super.initState();
     _loadCartCount();
-    
-    // Listen to refresh events
     _refreshSubscription = _cartRefreshController.stream.listen((_) {
       _loadCartCount();
     });
@@ -57,12 +55,7 @@ class _CartBadgeIconState extends State<CartBadgeIcon> {
 
   Future<void> _loadCartCount() async {
     if (_isLoading) return;
-
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
+    if (mounted) setState(() => _isLoading = true);
 
     try {
       final cartResponse = await _cartService.getCart();
@@ -73,40 +66,23 @@ class _CartBadgeIconState extends State<CartBadgeIcon> {
         });
       }
     } catch (e) {
-      // Silently fail - don't show error, just show 0 items
-      // This handles cases where user is not logged in or API fails
-      if (mounted) {
-        setState(() {
-          _itemCount = 0;
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() { _itemCount = 0; _isLoading = false; });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const CartPage()),
-        );
-      },
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CartPage())),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Cart icon
           SvgPicture.asset(
             'assets/img/add_shopping_cart.svg',
             width: widget.iconSize,
             height: widget.iconSize,
-            colorFilter: widget.iconColor != null
-                ? ColorFilter.mode(widget.iconColor!, BlendMode.srcIn)
-                : null,
+            colorFilter: widget.iconColor != null ? ColorFilter.mode(widget.iconColor!, BlendMode.srcIn) : null,
           ),
-
-          // Badge
           if (_itemCount > 0)
             Positioned(
               right: -6,
@@ -116,34 +92,18 @@ class _CartBadgeIconState extends State<CartBadgeIcon> {
                 decoration: BoxDecoration(
                   color: widget.badgeBackgroundColor ?? const Color(0xFFFF0000),
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4, offset: const Offset(0, 2))],
                 ),
-                constraints: const BoxConstraints(
-                  minWidth: 18,
-                  minHeight: 18,
-                ),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                 child: Center(
                   child: Text(
                     _itemCount > 99 ? '99+' : _itemCount.toString(),
-                    style: widget.badgeTextStyle ??
-                        const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    style: widget.badgeTextStyle ?? const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
                     textAlign: TextAlign.center,
                   ),
                 ),
               ),
             ),
-
-          // Loading indicator
           if (_isLoading)
             Positioned(
               right: -6,
@@ -151,20 +111,8 @@ class _CartBadgeIconState extends State<CartBadgeIcon> {
               child: Container(
                 width: 18,
                 height: 18,
-                decoration: BoxDecoration(
-                  color: widget.badgeBackgroundColor ?? const Color(0xFFFF0000),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: SizedBox(
-                    width: 10,
-                    height: 10,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+                decoration: BoxDecoration(color: widget.badgeBackgroundColor ?? const Color(0xFFFF0000), shape: BoxShape.circle),
+                child: const Center(child: SizedBox(width: 10, height: 10, child: CircularProgressIndicator(strokeWidth: 1.5, color: Colors.white))),
               ),
             ),
         ],
