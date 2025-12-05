@@ -163,14 +163,16 @@ class AddToCartResponse {
 }
 
 /// Model cho response khi checkout
+/// Response format có thể là:
+/// 1. Flat format:
+/// { "success": true, "ma_don_hang": "DHABC123", "tong_tien": 30000, ... }
+/// 
+/// 2. Nested format:
+/// { "success": true, "order": { "ma_don_hang": "DHABC123", ... }, "totals": { ... } }
 class CheckoutResponse {
   final bool success;
   final String maDonHang;
   final double tongTien;
-  final double tongTienGoc;
-  final double tietKiem;
-  final String trangThai;
-  final String paymentMethod;
   final int soMatHang;
   final int itemsCheckout;
   final int itemsRemaining;
@@ -179,28 +181,30 @@ class CheckoutResponse {
     required this.success,
     required this.maDonHang,
     required this.tongTien,
-    required this.tongTienGoc,
-    required this.tietKiem,
-    required this.trangThai,
-    required this.paymentMethod,
     required this.soMatHang,
     required this.itemsCheckout,
     required this.itemsRemaining,
   });
 
   factory CheckoutResponse.fromJson(Map<String, dynamic> json) {
-    // Lấy order object từ response
-    final order = json['order'] as Map<String, dynamic>? ?? {};
-    final totals = json['totals'] as Map<String, dynamic>? ?? {};
+    // Hỗ trợ cả 2 format: nested (order/totals) và flat
+    final order = json['order'] as Map<String, dynamic>?;
+    final totals = json['totals'] as Map<String, dynamic>?;
+    
+    // Lấy ma_don_hang từ order hoặc totals hoặc root
+    final maDonHang = order?['ma_don_hang'] ?? 
+                      totals?['ma_don_hang'] ?? 
+                      json['ma_don_hang'] ?? '';
+    
+    // Lấy tong_tien từ order hoặc totals hoặc root
+    final tongTien = order?['tong_tien'] ?? 
+                     totals?['tong_tien'] ?? 
+                     json['tong_tien'];
     
     return CheckoutResponse(
       success: json['success'] ?? false,
-      maDonHang: order['ma_don_hang'] ?? totals['ma_don_hang'] ?? '',
-      tongTien: _parseToDouble(totals['tong_tien'] ?? order['tong_tien']),
-      tongTienGoc: _parseToDouble(totals['tong_tien_goc'] ?? order['tong_tien_goc']),
-      tietKiem: _parseToDouble(totals['tiet_kiem']),
-      trangThai: order['trang_thai'] ?? '',
-      paymentMethod: order['payment_method'] ?? '',
+      maDonHang: maDonHang,
+      tongTien: _parseToDouble(tongTien),
       soMatHang: _parseToInt(json['so_mat_hang']),
       itemsCheckout: _parseToInt(json['items_checkout']),
       itemsRemaining: _parseToInt(json['items_remaining']),

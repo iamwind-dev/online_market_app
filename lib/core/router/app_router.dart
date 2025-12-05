@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../feature/buyer/ingredient/presentation/ingredient_detail/screen/ingredient_detail_page.dart';
-import '../../feature/shop/presentation/shop_page.dart';
-import '../../feature/shop/presentation/shop_cubit.dart';
+import '../../feature/buyer/shop/presentation/shop_page.dart';
+import '../../feature/buyer/shop/presentation/shop_cubit.dart';
 import '../config/route_name.dart';
 import '../../feature/splash/presentation/screen/splash_page.dart';
 import '../../feature/login/presentation/screen/login_page.dart';
@@ -18,7 +18,6 @@ import '../../feature/buyer/order/presentation/order/screen/order_page.dart';
 import '../../feature/buyer/search/presentation/screen/search_screen.dart';
 import '../../feature/buyer/product/presentation/screen/category_product_screen.dart';
 import '../../feature/user/presentation/edit_profile/screen/edit_profile_page.dart';
-import '../dependency/injection.dart';
 
 /// Quản lý navigation và routing của ứng dụng
 /// Sử dụng onGenerateRoute để tạo route động
@@ -29,35 +28,20 @@ class AppRouter {
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
       case RouteName.splash:
-        return _buildRoute(
-          settings,
-          const SplashPage(),
-        );
+        return _buildRoute(settings, const SplashPage());
 
       case RouteName.main:
         final args = settings.arguments as int?;
-        return _buildRoute(
-          settings,
-          MainScreen(initialIndex: args ?? 0),
-        );
+        return _buildRoute(settings, MainScreen(initialIndex: args ?? 0));
 
       case RouteName.home:
-        return _buildRoute(
-          settings,
-          const MainScreen(initialIndex: 0),
-        );
+        return _buildRoute(settings, const MainScreen(initialIndex: 0));
 
       case RouteName.login:
-        return _buildRoute(
-          settings,
-          const LoginPage(),
-        );
+        return _buildRoute(settings, const LoginPage());
 
       case RouteName.ingredient:
-        return _buildRoute(
-          settings,
-          const MainScreen(initialIndex: 3),
-        );
+        return _buildRoute(settings, const MainScreen(initialIndex: 3));
 
       case RouteName.ingredientDetail:
         final args = settings.arguments as Map<String, dynamic>?;
@@ -74,73 +58,41 @@ class AppRouter {
         );
 
       case RouteName.register:
-        return _buildRoute(
-          settings,
-          const SignUpPage(),
-        );
+        return _buildRoute(settings, const SignUpPage());
 
       case RouteName.productList:
-        return _buildRoute(
-          settings,
-          const MainScreen(initialIndex: 1),
-        );
+        return _buildRoute(settings, const MainScreen(initialIndex: 1));
 
       case RouteName.productDetail:
-        return _buildRoute(
-          settings,
-          const ProductDetailScreen(),
-        );
+        return _buildRoute(settings, const ProductDetailScreen());
 
       case RouteName.menuDetail:
-        return _buildRoute(
-          settings,
-          const MenuDetailScreen(),
-        );
+        return _buildRoute(settings, const MenuDetailScreen());
 
       case RouteName.user:
-        return _buildRoute(
-          settings,
-          const MainScreen(initialIndex: 4),
-        );
+        return _buildRoute(settings, const MainScreen(initialIndex: 4));
 
       case RouteName.reviews:
-        return _buildRoute(
-          settings,
-          const ReviewPage(),
-        );
+        return _buildRoute(settings, const ReviewPage());
 
       case RouteName.cart:
-        return _buildRoute(
-          settings,
-          const CartPage(),
-        );
+        return _buildRoute(settings, const CartPage());
 
       case RouteName.payment:
       case RouteName.checkout:
-        return _buildRoute(
-          settings,
-          const PaymentPage(),
-        );
+        return _buildRoute(settings, const PaymentPage());
 
       case RouteName.orderDetail:
         return _buildRoute(
           settings,
-          OrderDetailPage(
-            orderId: settings.arguments as String?,
-          ),
+          OrderDetailPage(orderId: settings.arguments as String?),
         );
 
       case RouteName.orderList:
-        return _buildRoute(
-          settings,
-          const OrderPage(),
-        );
+        return _buildRoute(settings, const OrderPage());
 
       case RouteName.search:
-        return _buildRoute(
-          settings,
-          const SearchScreen(),
-        );
+        return _buildRoute(settings, const SearchScreen());
 
       case RouteName.categoryProducts:
         final args = settings.arguments as Map<String, String>?;
@@ -153,87 +105,42 @@ class AppRouter {
         );
 
       case RouteName.profile:
-        return _buildRoute(
-          settings,
-          const _PlaceholderScreen(title: 'Profile Screen'),
-        );
+        return _buildRoute(settings, const _PlaceholderScreen(title: 'Profile Screen'));
 
       case RouteName.editProfile:
-        return _buildRoute(
-          settings,
-          const EditProfilePage(),
-        );
+        return _buildRoute(settings, const EditProfilePage());
 
       case RouteName.shop:
-        final shopId = settings.arguments as String?;
+        final shopId = settings.arguments as String? ?? '';
         return _buildRoute(
           settings,
           BlocProvider(
-            create: (_) => getIt<ShopCubit>(),
+            create: (_) => ShopCubit(),
             child: ShopPage(shopId: shopId),
           ),
         );
 
       default:
-        return _buildRoute(
-          settings,
-          const _NotFoundScreen(),
-        );
+        return _buildRoute(settings, const _NotFoundScreen());
     }
   }
 
-  /// Build MaterialPageRoute with settings
-  static MaterialPageRoute _buildRoute(
-    RouteSettings settings,
-    Widget page,
-  ) {
-    return MaterialPageRoute(
-      builder: (_) => page,
-      settings: settings,
-    );
+  static MaterialPageRoute _buildRoute(RouteSettings settings, Widget page) {
+    return MaterialPageRoute(builder: (_) => page, settings: settings);
   }
 
-  /// Navigate to named route
-  static Future<T?> navigateTo<T>(
-    BuildContext context,
-    String routeName, {
-    Object? arguments,
-  }) {
-    return Navigator.pushNamed<T>(
-      context,
-      routeName,
-      arguments: arguments,
-    );
+  static Future<T?> navigateTo<T>(BuildContext context, String routeName, {Object? arguments}) {
+    return Navigator.pushNamed<T>(context, routeName, arguments: arguments);
   }
 
-  /// Navigate to named route and remove all previous routes
-  static Future<T?> navigateAndRemoveUntil<T>(
-    BuildContext context,
-    String routeName, {
-    Object? arguments,
-  }) {
-    return Navigator.pushNamedAndRemoveUntil<T>(
-      context,
-      routeName,
-      (route) => false,
-      arguments: arguments,
-    );
+  static Future<T?> navigateAndRemoveUntil<T>(BuildContext context, String routeName, {Object? arguments}) {
+    return Navigator.pushNamedAndRemoveUntil<T>(context, routeName, (route) => false, arguments: arguments);
   }
 
-  /// Navigate to named route and replace current route
-  static Future<T?> navigateAndReplace<T>(
-    BuildContext context,
-    String routeName, {
-    Object? arguments,
-  }) {
-    return Navigator.pushReplacementNamed<T, void>(
-      context,
-      routeName,
-      arguments: arguments,
-    );
+  static Future<T?> navigateAndReplace<T>(BuildContext context, String routeName, {Object? arguments}) {
+    return Navigator.pushReplacementNamed<T, void>(context, routeName, arguments: arguments);
   }
 
-  /// Go back to previous route
   static void goBack(BuildContext context, {Object? result}) {
     if (Navigator.canPop(context)) {
       Navigator.pop(context, result);
@@ -241,34 +148,21 @@ class AppRouter {
   }
 }
 
-/// Placeholder screen for development
 class _PlaceholderScreen extends StatelessWidget {
   final String title;
-
-  const _PlaceholderScreen({
-    required this.title,
-  });
+  const _PlaceholderScreen({required this.title});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.construction,
-              size: 64,
-              color: Theme.of(context).primaryColor,
-            ),
+            Icon(Icons.construction, size: 64, color: Theme.of(context).primaryColor),
             const SizedBox(height: 16),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text(title, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => AppRouter.goBack(context),
@@ -282,30 +176,20 @@ class _PlaceholderScreen extends StatelessWidget {
   }
 }
 
-/// Screen hiển thị khi không tìm thấy route
 class _NotFoundScreen extends StatelessWidget {
   const _NotFoundScreen();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('404'),
-      ),
+      appBar: AppBar(title: const Text('404')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 64, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 16),
-            Text(
-              'Không tìm thấy trang',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text('Không tìm thấy trang', style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => AppRouter.goBack(context),

@@ -19,8 +19,45 @@ class ShopLoaded extends ShopState {
   final ShopInfo shopInfo;
   final List<ShopProduct> products;
   final int selectedTabIndex;
+  final bool hasMore;
+  final int currentPage;
 
   const ShopLoaded({
+    required this.shopInfo,
+    required this.products,
+    this.selectedTabIndex = 0,
+    this.hasMore = false,
+    this.currentPage = 1,
+  });
+
+  @override
+  List<Object?> get props =>
+      [shopInfo, products, selectedTabIndex, hasMore, currentPage];
+
+  ShopLoaded copyWith({
+    ShopInfo? shopInfo,
+    List<ShopProduct>? products,
+    int? selectedTabIndex,
+    bool? hasMore,
+    int? currentPage,
+  }) {
+    return ShopLoaded(
+      shopInfo: shopInfo ?? this.shopInfo,
+      products: products ?? this.products,
+      selectedTabIndex: selectedTabIndex ?? this.selectedTabIndex,
+      hasMore: hasMore ?? this.hasMore,
+      currentPage: currentPage ?? this.currentPage,
+    );
+  }
+}
+
+/// State đang load thêm sản phẩm
+class ShopLoadingMore extends ShopState {
+  final ShopInfo shopInfo;
+  final List<ShopProduct> products;
+  final int selectedTabIndex;
+
+  const ShopLoadingMore({
     required this.shopInfo,
     required this.products,
     this.selectedTabIndex = 0,
@@ -28,18 +65,6 @@ class ShopLoaded extends ShopState {
 
   @override
   List<Object?> get props => [shopInfo, products, selectedTabIndex];
-
-  ShopLoaded copyWith({
-    ShopInfo? shopInfo,
-    List<ShopProduct>? products,
-    int? selectedTabIndex,
-  }) {
-    return ShopLoaded(
-      shopInfo: shopInfo ?? this.shopInfo,
-      products: products ?? this.products,
-      selectedTabIndex: selectedTabIndex ?? this.selectedTabIndex,
-    );
-  }
 }
 
 /// State lỗi
@@ -66,24 +91,45 @@ class ShopProductFavoriteToggled extends ShopState {
   List<Object?> get props => [productId, isFavorite];
 }
 
-/// Model cho thông tin cửa hàng
+/// Model cho thông tin cửa hàng (từ API)
 class ShopInfo {
   final String shopId;
   final String shopName;
-  final String shopImage;
+  final String? shopImage;
   final double shopRating;
-  final int soldCount;
   final int productCount;
-  final List<String> categories;
+  final int reviewCount;
+  final String viTri;
+  final DateTime? ngayDangKy;
+  final ShopChoInfo? cho;
 
   const ShopInfo({
     required this.shopId,
     required this.shopName,
-    required this.shopImage,
-    this.shopRating = 5.0,
-    this.soldCount = 120,
-    this.productCount = 30,
-    this.categories = const ['Gia vị', 'Thịt heo'],
+    this.shopImage,
+    this.shopRating = 0.0,
+    this.productCount = 0,
+    this.reviewCount = 0,
+    this.viTri = '',
+    this.ngayDangKy,
+    this.cho,
+  });
+}
+
+/// Model cho thông tin chợ
+class ShopChoInfo {
+  final String maCho;
+  final String tenCho;
+  final String diaChi;
+  final String? hinhAnh;
+  final String? phuong;
+
+  const ShopChoInfo({
+    required this.maCho,
+    required this.tenCho,
+    required this.diaChi,
+    this.hinhAnh,
+    this.phuong,
   });
 }
 
@@ -91,31 +137,60 @@ class ShopInfo {
 class ShopProduct {
   final String productId;
   final String productName;
-  final String productImage;
+  final String? productImage;
   final double price;
-  final String badge; // 'Flash sale', 'Đang bán chạy', 'Đã bán 129'
-  final int soldCount;
+  final double originalPrice;
+  final String unit;
+  final String categoryId;
+  final String categoryName;
+  final double soldCount;
+  final double discountPercent;
   final bool isFavorite;
   final String shopId;
 
   const ShopProduct({
     required this.productId,
     required this.productName,
-    required this.productImage,
+    this.productImage,
     required this.price,
-    this.badge = '',
+    this.originalPrice = 0,
+    this.unit = '',
+    this.categoryId = '',
+    this.categoryName = '',
     this.soldCount = 0,
+    this.discountPercent = 0,
     this.isFavorite = false,
     required this.shopId,
   });
+
+  /// Kiểm tra có giảm giá không
+  bool get hasDiscount => discountPercent > 0;
+
+  /// Badge text
+  String get badge {
+    if (discountPercent > 0) {
+      return '-${discountPercent.toStringAsFixed(0)}%';
+    }
+    if (soldCount > 100) {
+      return 'Bán chạy';
+    }
+    if (soldCount > 0) {
+      return 'Đã bán ${soldCount.toStringAsFixed(0)}';
+    }
+    return '';
+  }
 
   ShopProduct copyWith({
     String? productId,
     String? productName,
     String? productImage,
     double? price,
-    String? badge,
-    int? soldCount,
+    double? originalPrice,
+    String? unit,
+    String? categoryId,
+    String? categoryName,
+    double? soldCount,
+    double? discountPercent,
     bool? isFavorite,
     String? shopId,
   }) {
@@ -124,8 +199,12 @@ class ShopProduct {
       productName: productName ?? this.productName,
       productImage: productImage ?? this.productImage,
       price: price ?? this.price,
-      badge: badge ?? this.badge,
+      originalPrice: originalPrice ?? this.originalPrice,
+      unit: unit ?? this.unit,
+      categoryId: categoryId ?? this.categoryId,
+      categoryName: categoryName ?? this.categoryName,
       soldCount: soldCount ?? this.soldCount,
+      discountPercent: discountPercent ?? this.discountPercent,
       isFavorite: isFavorite ?? this.isFavorite,
       shopId: shopId ?? this.shopId,
     );

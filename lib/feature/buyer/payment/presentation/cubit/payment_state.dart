@@ -69,6 +69,22 @@ class PaymentFailure extends PaymentState {
   List<Object?> get props => [errorMessage];
 }
 
+/// State đang chờ thanh toán VNPay (đã tạo đơn, chưa thanh toán xong)
+class PaymentPendingVNPay extends PaymentState {
+  final String orderId;
+  final String message;
+  final OrderSummary orderSummary;
+
+  const PaymentPendingVNPay({
+    required this.orderId,
+    required this.message,
+    required this.orderSummary,
+  });
+
+  @override
+  List<Object?> get props => [orderId, message, orderSummary];
+}
+
 /// Enum cho phương thức thanh toán
 enum PaymentMethod {
   cashOnDelivery,
@@ -83,7 +99,6 @@ class OrderSummary {
   final String estimatedDelivery;
   final List<OrderItem> items;
   final double subtotal;
-  final double shippingFee;
   final double total;
 
   const OrderSummary({
@@ -93,7 +108,6 @@ class OrderSummary {
     required this.estimatedDelivery,
     required this.items,
     required this.subtotal,
-    required this.shippingFee,
     required this.total,
   });
 
@@ -108,7 +122,6 @@ class OrderSummary {
               .toList() ??
           [],
       subtotal: (json['subtotal'] ?? 0).toDouble(),
-      shippingFee: (json['shippingFee'] ?? 0).toDouble(),
       total: (json['total'] ?? 0).toDouble(),
     );
   }
@@ -121,7 +134,6 @@ class OrderSummary {
       'estimatedDelivery': estimatedDelivery,
       'items': items.map((item) => item.toJson()).toList(),
       'subtotal': subtotal,
-      'shippingFee': shippingFee,
       'total': total,
     };
   }
@@ -131,7 +143,8 @@ class OrderSummary {
 
 /// Model cho OrderItem
 class OrderItem {
-  final String id;
+  final String id; // maNguyenLieu
+  final String shopId; // maGianHang
   final String shopName;
   final String productName;
   final String productImage;
@@ -142,6 +155,7 @@ class OrderItem {
 
   const OrderItem({
     required this.id,
+    this.shopId = '',
     required this.shopName,
     required this.productName,
     required this.productImage,
@@ -154,6 +168,7 @@ class OrderItem {
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
       id: json['id'] ?? '',
+      shopId: json['shopId'] ?? '',
       shopName: json['shopName'] ?? '',
       productName: json['productName'] ?? '',
       productImage: json['productImage'] ?? '',
@@ -167,6 +182,7 @@ class OrderItem {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'shopId': shopId,
       'shopName': shopName,
       'productName': productName,
       'productImage': productImage,

@@ -809,11 +809,7 @@ class _CartViewState extends State<CartView> {
         }
 
         final cubit = context.read<CartCubit>();
-        final isCheckingOut = state is CartCheckoutInProgress;
         final selectedCount = state.items.where((item) => item.isSelected).length;
-        
-        // Tính tiết kiệm (nếu có)
-        final savings = 0.0; // TODO: Tính từ API nếu có
 
         return Container(
           decoration: BoxDecoration(
@@ -931,38 +927,43 @@ class _CartViewState extends State<CartView> {
                 
                 // Nút Mua hàng
                 ElevatedButton(
-                  onPressed: isCheckingOut || selectedCount == 0
+                  onPressed: selectedCount == 0
                       ? null
-                      : () async {
+                      : () {
                           // Lấy danh sách items đã chọn
                           final selectedItems = state.items
                               .where((item) => item.isSelected)
                               .toList();
                           
-                          // Gọi API checkout
-                          final maDonHang = await cubit.checkout();
-                          
-                          if (maDonHang != null && context.mounted) {
-                            // Navigate to payment page với mã đơn hàng và items
-                            Navigator.pushNamed(
-                              context,
-                              '/payment',
-                              arguments: {
-                                'orderCode': maDonHang,
-                                'isFromCart': true,
-                                'selectedItems': selectedItems.map((item) => {
+                          // Navigate to payment page với thông tin từ cart (không gọi API checkout)
+                          // Mã đơn hàng sẽ được tạo khi user bấm thanh toán ở trang Payment
+                          Navigator.pushNamed(
+                            context,
+                            '/payment',
+                            arguments: {
+                              'isFromCart': true,
+                              'selectedItems': selectedItems.map((item) {
+                                // Lấy shopId - nếu null thì extract từ id (format: maNguyenLieu_maGianHang)
+                                String shopId = item.shopId ?? '';
+                                if (shopId.isEmpty && item.id.contains('_')) {
+                                  final parts = item.id.split('_');
+                                  if (parts.length > 1) {
+                                    shopId = parts.sublist(1).join('_');
+                                  }
+                                }
+                                return {
                                   'maNguyenLieu': item.productId,
                                   'tenNguyenLieu': item.productName,
-                                  'maGianHang': item.shopId,
+                                  'maGianHang': shopId,
                                   'tenGianHang': item.shopName,
                                   'hinhAnh': item.productImage,
                                   'gia': item.price.toString(),
                                   'soLuong': item.quantity,
-                                }).toList(),
-                                'totalAmount': state.totalAmount,
-                              },
-                            );
-                          }
+                                };
+                              }).toList(),
+                              'totalAmount': state.totalAmount,
+                            },
+                          );
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00B40F),
@@ -977,23 +978,14 @@ class _CartViewState extends State<CartView> {
                     ),
                     elevation: 0,
                   ),
-                  child: isCheckingOut
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          'Mua hàng ($selectedCount)',
-                          style: const TextStyle(
-                            fontFamily: 'Roboto',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
-                        ),
+                  child: Text(
+                    'Mua hàng ($selectedCount)',
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
               ],
             ),

@@ -2,17 +2,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/config/app_config.dart';
+import '../../../../core/services/gian_hang_service.dart';
+import '../../../../core/services/cart_api_service.dart';
+import '../../../../core/models/shop_detail_model.dart';
+import '../../../../core/dependency/injection.dart';
 
 part 'shop_state.dart';
 
 /// Shop Cubit quản lý logic nghiệp vụ của trang gian hàng
-/// 
-/// Chức năng chính:
-/// - Tải thông tin cửa hàng
-/// - Tải danh sách sản phẩm của cửa hàng
-/// - Toggle yêu thích sản phẩm
-/// - Chuyển đổi tab danh mục
 class ShopCubit extends Cubit<ShopState> {
+  final GianHangService _gianHangService = getIt<GianHangService>();
+  final CartApiService _cartApiService = CartApiService();
+
+  String? _currentShopId;
+
   ShopCubit() : super(ShopInitial());
 
   /// Tải thông tin cửa hàng và sản phẩm theo shopId
@@ -21,90 +24,100 @@ class ShopCubit extends Cubit<ShopState> {
       AppLogger.info('🏪 [SHOP] Bắt đầu tải thông tin cửa hàng: $shopId');
     }
 
+    _currentShopId = shopId;
+
     try {
       emit(ShopLoading());
 
-      // Tạo mock data cho demo
-      // TODO: Gọi API thực tế để lấy thông tin cửa hàng
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Gọi API để lấy thông tin cửa hàng
+      final response = await _gianHangService.getShopDetail(shopId);
 
-      final shopInfo = ShopInfo(
-        shopId: shopId,
-        shopName: 'Cô Nhi',
-        shopImage: 'assets/img/shop_seller_1.png',
-        shopRating: 5.0,
-        soldCount: 120,
-        productCount: 30,
-        categories: const ['Gia vị', 'Thịt heo'],
-      );
+      if (isClosed) return;
 
-      final products = [
-        ShopProduct(
-          productId: 'P001',
-          productName: 'TRỨNG GÀ CÔNG NGHIỆP VỈ 30 QUẢ',
-          productImage: 'assets/img/shop_product_1.png',
-          price: 48000,
-          badge: '',
-          shopId: shopId,
-        ),
-        ShopProduct(
-          productId: 'P002',
-          productName: 'Đùi gà công nghiệp Đông Tảo VLT',
-          productImage: 'assets/img/shop_product_1.png',
-          price: 116000,
-          badge: 'Flash sale',
-          soldCount: 0,
-          shopId: shopId,
-        ),
-        ShopProduct(
-          productId: 'P003',
-          productName: 'Sườn heo đông lanh',
-          productImage: 'assets/img/shop_product_1.png',
-          price: 19000,
-          badge: 'Đang bán chạy',
-          soldCount: 129,
-          shopId: shopId,
-        ),
-        ShopProduct(
-          productId: 'P004',
-          productName: 'Thịt heo đùi',
-          productImage: 'assets/img/shop_product_1.png',
-          price: 143000,
-          badge: 'Đã bán 56',
-          soldCount: 56,
-          shopId: shopId,
-        ),
-      ];
+      // Convert API response to state models
+      final shopInfo = _convertToShopInfo(response.detail);
+      final products = _convertToShopProducts(response.sanPham.data, shopId);
 
       if (AppConfig.enableApiLogging) {
         AppLogger.info('✅ [SHOP] Tải thành công: ${shopInfo.shopName}');
         AppLogger.info('   Số sản phẩm: ${products.length}');
+        AppLogger.info('   Tổng sản phẩm: ${response.sanPham.meta.total}');
       }
 
       emit(ShopLoaded(
         shopInfo: shopInfo,
         products: products,
+        hasMore: response.sanPham.meta.hasNext,
+        currentPage: response.sanPham.meta.page,
       ));
     } catch (e) {
       if (AppConfig.enableApiLogging) {
         AppLogger.error('❌ [SHOP] Lỗi khi tải cửa hàng: ${e.toString()}');
       }
-      emit(ShopFailure(
-        errorMessage: 'Không thể tải thông tin cửa hàng: ${e.toString()}',
-      ));
+      if (!isClosed) {
+        emit(ShopFailure(
+          errorMessage: 'Không thể tải thông tin cửa hàng: ${e.toString()}',
+        ));
+      }
     }
+  }
+
+  /// Convert ShopDetail từ API sang ShopInfo
+  ShopInfo _convertToShopInfo(ShopDetail detail) {
+    ShopChoInfo? choInfo;
+    if (detail.cho != null) {
+      choInfo = ShopChoInfo(
+        maCho: detail.cho!.maCho,
+        tenCho: detail.cho!.tenCho,
+        diaChi: detail.cho!.diaChi,
+        hinhAnh: detail.cho!.hinhAnh,
+        phuong: detail.cho!.khuVuc?.phuong,
+      );
+    }
+
+    return ShopInfo(
+      shopId: detail.maGianHang,
+      shopName: detail.tenGianHang,
+      shopImage: detail.hinhAnh,
+      shopRating: detail.danhGiaTb,
+      productCount: detail.soSanPham,
+      reviewCount: detail.soDanhGia,
+      viTri: detail.viTri,
+      ngayDangKy: detail.ngayDangKy,
+      cho: choInfo,
+    );
+  }
+
+  /// Convert danh sách sản phẩm từ API
+  List<ShopProduct> _convertToShopProducts(
+      List<ShopProductItem> items, String shopId) {
+    return items.map((item) {
+      return ShopProduct(
+        productId: item.maNguyenLieu,
+        productName: item.tenNguyenLieu,
+        productImage: item.hinhAnh,
+        price: item.giaCuoi,
+        originalPrice: item.giaGoc,
+        unit: item.donVi,
+        categoryId: item.maNhomNguyenLieu,
+        categoryName: item.tenNhomNguyenLieu,
+        soldCount: item.soLuongBan,
+        discountPercent: item.phanTramGiamGia,
+        shopId: shopId,
+      );
+    }).toList();
   }
 
   /// Toggle yêu thích sản phẩm
   void toggleProductFavorite(String productId) {
     if (state is ShopLoaded) {
       final currentState = state as ShopLoaded;
-      
-      // Tìm sản phẩm và toggle trạng thái yêu thích
+
       final updatedProducts = currentState.products.map((product) {
         if (product.productId == productId) {
           if (AppConfig.enableApiLogging) {
-            AppLogger.info('❤️ [SHOP] Toggle yêu thích: $productId (${!product.isFavorite})');
+            AppLogger.info(
+                '❤️ [SHOP] Toggle yêu thích: $productId (${!product.isFavorite})');
           }
           return product.copyWith(isFavorite: !product.isFavorite);
         }
@@ -112,12 +125,6 @@ class ShopCubit extends Cubit<ShopState> {
       }).toList();
 
       emit(currentState.copyWith(products: updatedProducts));
-      emit(ShopProductFavoriteToggled(
-        productId: productId,
-        isFavorite: updatedProducts
-            .firstWhere((p) => p.productId == productId)
-            .isFavorite,
-      ));
     }
   }
 
@@ -125,7 +132,7 @@ class ShopCubit extends Cubit<ShopState> {
   void selectCategory(int tabIndex) {
     if (state is ShopLoaded) {
       final currentState = state as ShopLoaded;
-      
+
       if (AppConfig.enableApiLogging) {
         AppLogger.info('📂 [SHOP] Chọn tab: $tabIndex');
       }
@@ -135,28 +142,35 @@ class ShopCubit extends Cubit<ShopState> {
   }
 
   /// Thêm sản phẩm vào giỏ hàng
-  Future<void> addToCart(String productId, int quantity) async {
-    if (state is ShopLoaded) {
+  Future<bool> addToCart(String productId, int quantity) async {
+    if (state is ShopLoaded && _currentShopId != null) {
       final currentState = state as ShopLoaded;
-      final product = currentState.products
-          .firstWhere((p) => p.productId == productId);
+      final product =
+          currentState.products.firstWhere((p) => p.productId == productId);
 
       if (AppConfig.enableApiLogging) {
-        AppLogger.info('🛒 [SHOP] Thêm vào giỏ hàng: ${product.productName} x$quantity');
+        AppLogger.info(
+            '🛒 [SHOP] Thêm vào giỏ hàng: ${product.productName} x$quantity');
       }
 
       try {
-        // TODO: Gọi API để thêm vào giỏ hàng
-        await Future.delayed(const Duration(milliseconds: 300));
+        await _cartApiService.addToCart(
+          maNguyenLieu: productId,
+          maGianHang: _currentShopId!,
+          soLuong: quantity,
+        );
 
         if (AppConfig.enableApiLogging) {
           AppLogger.info('✅ [SHOP] Thêm giỏ hàng thành công');
         }
+        return true;
       } catch (e) {
         if (AppConfig.enableApiLogging) {
           AppLogger.error('❌ [SHOP] Lỗi khi thêm giỏ hàng: $e');
         }
+        return false;
       }
     }
+    return false;
   }
 }

@@ -80,11 +80,19 @@ class CartApiService {
   }
 
   /// Checkout giỏ hàng với các items đã chọn
+  /// 
+  /// Parameters:
+  /// - selectedItems: Danh sách items cần checkout
+  /// - paymentMethod: Phương thức thanh toán ('tien_mat' hoặc 'chuyen_khoan')
+  /// - recipient: Thông tin người nhận (name, phone, address)
   Future<CheckoutResponse> checkout({
     required List<Map<String, String>> selectedItems,
+    String? paymentMethod,
+    Map<String, String>? recipient,
   }) async {
     if (AppConfig.enableApiLogging) {
       AppLogger.info('💳 [CART API] Checkout with ${selectedItems.length} items');
+      AppLogger.info('💳 [CART API] Payment method: $paymentMethod');
     }
 
     try {
@@ -96,9 +104,19 @@ class CartApiService {
 
       final url = Uri.parse('$_baseUrl/cart/checkout');
       
-      final requestBody = {
+      final requestBody = <String, dynamic>{
         'selectedItems': selectedItems,
       };
+      
+      // Thêm payment_method nếu có
+      if (paymentMethod != null) {
+        requestBody['payment_method'] = paymentMethod;
+      }
+      
+      // Thêm recipient nếu có
+      if (recipient != null) {
+        requestBody['recipient'] = recipient;
+      }
 
       if (AppConfig.enableApiLogging) {
         AppLogger.info('💳 [CART API] Request body: $requestBody');

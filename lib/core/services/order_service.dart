@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'auth/simple_auth_helper.dart';
+import '../utils/status_formatter.dart';
 
 /// Service để fetch danh sách đơn hàng từ API
 class OrderService {
@@ -239,25 +240,11 @@ class PaymentInfo {
   }
 
   String get paymentMethodDisplay {
-    switch (hinhThucThanhToan) {
-      case 'chuyen_khoan':
-        return 'Chuyển khoản';
-      case 'tien_mat':
-        return 'Tiền mặt';
-      default:
-        return hinhThucThanhToan;
-    }
+    return StatusFormatter.formatPaymentMethod(hinhThucThanhToan);
   }
 
   String get paymentStatusDisplay {
-    switch (tinhTrangThanhToan) {
-      case 'da_thanh_toan':
-        return 'Đã thanh toán';
-      case 'cho_thanh_toan':
-        return 'Chờ thanh toán';
-      default:
-        return tinhTrangThanhToan;
-    }
+    return StatusFormatter.formatOrderStatus(tinhTrangThanhToan);
   }
 }
 
@@ -345,20 +332,7 @@ class OrderDetailData {
   }
 
   String get orderStatusDisplay {
-    switch (tinhTrangDonHang) {
-      case 'cho_xac_nhan':
-        return 'Chờ xác nhận';
-      case 'da_xac_nhan':
-        return 'Đã xác nhận';
-      case 'dang_giao':
-        return 'Đang giao';
-      case 'da_giao':
-        return 'Đã giao';
-      case 'da_huy':
-        return 'Đã hủy';
-      default:
-        return tinhTrangDonHang;
-    }
+    return StatusFormatter.formatOrderStatus(tinhTrangDonHang);
   }
 }
 

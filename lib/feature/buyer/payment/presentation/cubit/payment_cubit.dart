@@ -4,8 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/utils/app_logger.dart';
 import '../../../../../core/config/app_config.dart';
 import '../../../../../core/services/vnpay_service.dart';
-import '../../../../../core/services/auth/auth_service.dart';
-import '../../../../../core/dependency/injection.dart';
+import '../../../../../core/services/cart_api_service.dart';
+import '../../../../../core/services/user_profile_service.dart';
 
 part 'payment_state.dart';
 
@@ -16,7 +16,6 @@ part 'payment_state.dart';
 /// - Chọn phương thức thanh toán
 /// - Xử lý thanh toán
 class PaymentCubit extends Cubit<PaymentState> {
-  final AuthService _authService = getIt<AuthService>();
   PaymentMethod _selectedPaymentMethod = PaymentMethod.cashOnDelivery;
   OrderSummary? _orderSummary;
   String? _maDonHang; // Mã đơn hàng từ API cart hoặc tạo mới
@@ -40,11 +39,11 @@ class PaymentCubit extends Cubit<PaymentState> {
       if (isBuyNow && orderData != null) {
         // Mua ngay - tạo order summary từ dữ liệu truyền vào
         print('💳 [PAYMENT CUBIT] Creating order from buy now data');
-        _orderSummary = await _createOrderFromBuyNowData(orderData);
+        _orderSummary = _createOrderFromBuyNowData(orderData);
       } else if (isFromCart && orderData != null) {
         // Từ giỏ hàng - tạo order summary từ các items đã chọn
         print('💳 [PAYMENT CUBIT] Creating order from cart data');
-        _orderSummary = await _createOrderFromCartData(orderData);
+        _orderSummary = _createOrderFromCartData(orderData);
       } else {
         // Fallback - Mock data
         await Future.delayed(const Duration(seconds: 1));
@@ -78,25 +77,8 @@ class PaymentCubit extends Cubit<PaymentState> {
   }
 
   /// Tạo order summary từ dữ liệu "Mua ngay"
-  Future<OrderSummary> _createOrderFromBuyNowData(Map<String, dynamic> data) async {
+  OrderSummary _createOrderFromBuyNowData(Map<String, dynamic> data) {
     print('💳 [PAYMENT CUBIT] Buy now data: $data');
-    
-    // Lưu mã đơn hàng nếu có
-    _maDonHang = data['orderCode'] as String?;
-    
-    // Lấy thông tin user
-    String customerName = 'Khách hàng';
-    String phoneNumber = '';
-    String deliveryAddress = '';
-    
-    try {
-      final user = await _authService.getCurrentUser();
-      customerName = user.tenNguoiDung.isNotEmpty ? user.tenNguoiDung : 'Khách hàng';
-      phoneNumber = user.sdt ?? '';
-      deliveryAddress = user.diaChi ?? '';
-    } catch (e) {
-      print('💳 [PAYMENT CUBIT] Lỗi lấy user data: $e');
-    }
     
     // Parse giá từ string (ví dụ: "89,000 đ" -> 89000)
     final priceStr = data['gia'] as String? ?? '0';
@@ -108,9 +90,9 @@ class PaymentCubit extends Cubit<PaymentState> {
     final totalPrice = priceValue * soLuong;
     
     return OrderSummary(
-      customerName: customerName,
-      phoneNumber: phoneNumber,
-      deliveryAddress: deliveryAddress.isNotEmpty ? deliveryAddress : '(Chưa cập nhật địa chỉ)',
+      customerName: 'Phạm Thị Quỳnh Như',
+      phoneNumber: '(+84) 03******12',
+      deliveryAddress: '123 Đa Mặn, Mỹ An, Ngũ Hành Sơn, Đà Nẵng, Việt Nam',
       estimatedDelivery: 'Nhận vào 2 giờ tới',
       items: [
         OrderItem(
@@ -125,34 +107,21 @@ class PaymentCubit extends Cubit<PaymentState> {
         ),
       ],
       subtotal: totalPrice,
-      shippingFee: 0,
       total: totalPrice,
     );
   }
 
   /// Tạo order summary từ dữ liệu giỏ hàng
-  Future<OrderSummary> _createOrderFromCartData(Map<String, dynamic> data) async {
-    print('💳 [PAYMENT CUBIT] Cart data: $data');
+  OrderSummary _createOrderFromCartData(Map<String, dynamic> data) {
+    if (AppConfig.enableApiLogging) {
+      AppLogger.info('💳 [PAYMENT CUBIT] Cart data: $data');
+    }
     
     final selectedItems = data['selectedItems'] as List<dynamic>? ?? [];
     final totalAmount = data['totalAmount'] as double? ?? 0;
     
     // Lưu mã đơn hàng nếu có (từ cart API)
     _maDonHang = data['orderCode'] as String?;
-    
-    // Lấy thông tin user
-    String customerName = 'Khách hàng';
-    String phoneNumber = '';
-    String deliveryAddress = '';
-    
-    try {
-      final user = await _authService.getCurrentUser();
-      customerName = user.tenNguoiDung.isNotEmpty ? user.tenNguoiDung : 'Khách hàng';
-      phoneNumber = user.sdt ?? '';
-      deliveryAddress = user.diaChi ?? '';
-    } catch (e) {
-      print('💳 [PAYMENT CUBIT] Lỗi lấy user data: $e');
-    }
     
     // Convert selected items to OrderItem list
     final orderItems = selectedItems.map((item) {
@@ -162,8 +131,16 @@ class PaymentCubit extends Cubit<PaymentState> {
         priceStr.replaceAll(RegExp(r'[^\d.]'), '')
       ) ?? 0;
       
+      // Lấy shopId - đảm bảo không empty
+      final shopId = itemMap['maGianHang'] as String? ?? '';
+      
+      if (AppConfig.enableApiLogging) {
+        AppLogger.info('💳 [PAYMENT] Item: maNguyenLieu=${itemMap['maNguyenLieu']}, maGianHang=$shopId');
+      }
+      
       return OrderItem(
         id: itemMap['maNguyenLieu'] as String? ?? '',
+        shopId: shopId,
         shopName: itemMap['tenGianHang'] as String? ?? '',
         productName: itemMap['tenNguyenLieu'] as String? ?? '',
         productImage: itemMap['hinhAnh'] as String? ?? '',
@@ -175,14 +152,13 @@ class PaymentCubit extends Cubit<PaymentState> {
     }).toList();
     
     return OrderSummary(
-      customerName: customerName,
-      phoneNumber: phoneNumber,
-      deliveryAddress: deliveryAddress.isNotEmpty ? deliveryAddress : '(Chưa cập nhật địa chỉ)',
+      customerName: 'Phạm Thị Quỳnh Như',
+      phoneNumber: '(+84) 03******12',
+      deliveryAddress: '123 Đa Mặn, Mỹ An, Ngũ Hành Sơn, Đà Nẵng, Việt Nam',
       estimatedDelivery: 'Nhận vào 2 giờ tới',
       items: orderItems,
       subtotal: totalAmount,
-      shippingFee: 0,
-      total: totalAmount,
+      total: totalAmount ,
     );
   }
 
@@ -204,7 +180,7 @@ class PaymentCubit extends Cubit<PaymentState> {
   }
 
   /// Check payment status (gọi khi app resume từ browser VNPay)
-  /// Lấy mã đơn hàng đã có sẵn ở trang payment và navigate đến order detail
+  /// Gọi API để kiểm tra trạng thái thanh toán thực tế
   Future<void> checkPaymentStatus() async {
     final currentState = state;
     String? maDonHang;
@@ -225,16 +201,59 @@ class PaymentCubit extends Cubit<PaymentState> {
 
     if (AppConfig.enableApiLogging) {
       AppLogger.info('💳 [PAYMENT] App resumed from browser');
-      AppLogger.info('💳 [PAYMENT] Using existing order code: $maDonHang');
+      AppLogger.info('💳 [PAYMENT] Checking payment status for: $maDonHang');
     }
 
-    // Khi user quay lại từ VNPay browser, ta giả định thanh toán thành công
-    // và navigate đến order detail với mã đơn hàng đã có
-    if (!isClosed) {
-      emit(PaymentSuccess(
-        message: 'Thanh toán thành công!',
-        orderId: maDonHang,
-      ));
+    try {
+      emit(PaymentProcessing());
+      
+      // Gọi API để kiểm tra trạng thái đơn hàng
+      final vnpayService = VNPayService();
+      final orderStatus = await vnpayService.getOrderStatus(maDonHang);
+      
+      if (AppConfig.enableApiLogging) {
+        AppLogger.info('💳 [PAYMENT] Order status: ${orderStatus.trangThai}');
+        AppLogger.info('💳 [PAYMENT] Is paid: ${orderStatus.isPaid}');
+      }
+      
+      if (isClosed) return;
+      
+      if (orderStatus.isPaid) {
+        // Thanh toán thành công
+        emit(PaymentSuccess(
+          message: 'Thanh toán thành công!',
+          orderId: maDonHang,
+        ));
+      } else if (orderStatus.isPending || orderStatus.trangThai == 'chua_xac_nhan') {
+        // Đang chờ thanh toán - hiển thị thông báo yêu cầu thanh toán
+        emit(PaymentPendingVNPay(
+          orderId: maDonHang,
+          message: 'Vui lòng thanh toán để xác nhận đơn hàng',
+          orderSummary: _orderSummary!,
+        ));
+      } else if (orderStatus.isCancelled) {
+        // Thanh toán bị hủy
+        emit(const PaymentFailure(
+          errorMessage: 'Thanh toán đã bị hủy. Vui lòng thử lại.',
+        ));
+      } else {
+        // Trạng thái khác - navigate đến order detail để xem chi tiết
+        emit(PaymentSuccess(
+          message: 'Đơn hàng đã được xử lý!',
+          orderId: maDonHang,
+        ));
+      }
+    } catch (e) {
+      if (AppConfig.enableApiLogging) {
+        AppLogger.error('❌ [PAYMENT] Error checking status: $e');
+      }
+      if (!isClosed) {
+        // Nếu lỗi, vẫn navigate đến order detail để user có thể xem
+        emit(PaymentSuccess(
+          message: 'Vui lòng kiểm tra trạng thái đơn hàng',
+          orderId: maDonHang,
+        ));
+      }
     }
   }
 
@@ -302,32 +321,58 @@ class PaymentCubit extends Cubit<PaymentState> {
     }
 
     try {
-      // Lấy mã đơn hàng TRƯỚC khi emit PaymentProcessing
-      final currentState = state;
-      String maDonHang;
-      
-      if (currentState is PaymentLoaded && currentState.orderCode != null && currentState.orderCode!.isNotEmpty) {
-        maDonHang = currentState.orderCode!;
-        if (AppConfig.enableApiLogging) {
-          AppLogger.info('💳 [PAYMENT] Using order code from state: $maDonHang');
-        }
-      } else if (_maDonHang != null && _maDonHang!.isNotEmpty) {
-        maDonHang = _maDonHang!;
-        if (AppConfig.enableApiLogging) {
-          AppLogger.info('💳 [PAYMENT] Using order code from instance: $maDonHang');
-        }
-      } else {
-        // Fallback: tạo mã đơn hàng mới
-        maDonHang = 'DH${DateTime.now().millisecondsSinceEpoch}';
-        if (AppConfig.enableApiLogging) {
-          AppLogger.warning('⚠️ [PAYMENT] No order code found, generating new: $maDonHang');
-        }
-      }
-      
       emit(PaymentProcessing());
 
       if (_selectedPaymentMethod == PaymentMethod.vnpay) {
         // Xử lý thanh toán VNPay
+        // Bước 1: Gọi API /api/buyer/cart/checkout để tạo đơn hàng
+        if (AppConfig.enableApiLogging) {
+          AppLogger.info('💳 [PAYMENT] Step 1: Calling cart checkout API...');
+        }
+        
+        // Validate items trước khi gọi API
+        for (final item in _orderSummary!.items) {
+          if (item.id.isEmpty) {
+            throw Exception('Thiếu mã nguyên liệu cho sản phẩm: ${item.productName}');
+          }
+          if (item.shopId.isEmpty) {
+            throw Exception('Thiếu mã gian hàng cho sản phẩm: ${item.productName}');
+          }
+        }
+        
+        // Lấy selectedItems từ _orderSummary với format đúng API yêu cầu
+        // Input: { "selectedItems": [{ "ma_nguyen_lieu": "NL001", "ma_gian_hang": "GH001" }] }
+        final selectedItems = _orderSummary!.items.map((item) => {
+          'ma_nguyen_lieu': item.id,
+          'ma_gian_hang': item.shopId,
+        }).toList();
+        
+        if (AppConfig.enableApiLogging) {
+          AppLogger.info('💳 [PAYMENT] Selected items: $selectedItems');
+        }
+        
+        final cartApiService = CartApiService();
+        final checkoutResponse = await cartApiService.checkout(
+          selectedItems: selectedItems,
+        );
+        
+        if (!checkoutResponse.success || checkoutResponse.maDonHang.isEmpty) {
+          throw Exception('Checkout failed: Không nhận được mã đơn hàng');
+        }
+        
+        final maDonHang = checkoutResponse.maDonHang;
+        _maDonHang = maDonHang; // Lưu lại để dùng sau
+        
+        if (AppConfig.enableApiLogging) {
+          AppLogger.info('✅ [PAYMENT] Checkout success!');
+          AppLogger.info('📝 [PAYMENT] ma_don_hang: $maDonHang');
+          AppLogger.info('💰 [PAYMENT] tong_tien: ${checkoutResponse.tongTien}');
+          AppLogger.info('📦 [PAYMENT] items_checkout: ${checkoutResponse.itemsCheckout}');
+          AppLogger.info('💳 [PAYMENT] Step 2: Creating VNPay payment...');
+        }
+        
+        // Bước 2: Gọi API /api/payment/vnpay/checkout với ma_don_hang từ bước 1
+        // Input: { "ma_don_hang": "DHABC123", "bankCode": "NCB" }
         final vnpayService = VNPayService();
         final vnpayResponse = await vnpayService.createVNPayCheckout(
           maDonHang: maDonHang,
@@ -365,20 +410,111 @@ class PaymentCubit extends Cubit<PaymentState> {
           throw Exception('Không nhận được URL thanh toán từ VNPay');
         }
       } else {
-        // Thanh toán khi nhận hàng
-        await Future.delayed(const Duration(seconds: 2));
+        // Thanh toán khi nhận hàng (COD)
+        if (AppConfig.enableApiLogging) {
+          AppLogger.info('💳 [PAYMENT] Processing COD payment...');
+        }
 
-        // Check if cubit is still open before continuing
-        if (isClosed) return;
+        // Validate items
+        for (final item in _orderSummary!.items) {
+          if (item.id.isEmpty) {
+            throw Exception(
+                'Thiếu mã nguyên liệu cho sản phẩm: ${item.productName}');
+          }
+          if (item.shopId.isEmpty) {
+            throw Exception(
+                'Thiếu mã gian hàng cho sản phẩm: ${item.productName}');
+          }
+        }
+
+        // Lấy selectedItems từ _orderSummary
+        final selectedItems = _orderSummary!.items
+            .map((item) => {
+                  'ma_nguyen_lieu': item.id,
+                  'ma_gian_hang': item.shopId,
+                })
+            .toList();
+
+        // Lấy thông tin người nhận từ user profile
+        final userProfileService = UserProfileService();
+        String userName = _orderSummary!.customerName;
+        String phoneNumber = '0912345678'; // Default
+        String address = _orderSummary!.deliveryAddress;
+
+        try {
+          final profileResponse = await userProfileService.getProfile();
+          final profile = profileResponse.data;
+
+          // Lấy tên từ profile
+          if (profile.tenNguoiDung.isNotEmpty) {
+            userName = profile.tenNguoiDung;
+          }
+
+          // Lấy số điện thoại từ profile
+          if (profile.sdt != null && profile.sdt!.isNotEmpty) {
+            phoneNumber = profile.sdt!;
+            // Đảm bảo format đúng
+            if (!phoneNumber.startsWith('0') &&
+                !phoneNumber.startsWith('+84')) {
+              phoneNumber = '0$phoneNumber';
+            }
+          }
+
+          // Lấy địa chỉ từ profile
+          if (profile.diaChi != null && profile.diaChi!.isNotEmpty) {
+            address = profile.diaChi!;
+          }
+
+          if (AppConfig.enableApiLogging) {
+            AppLogger.info('👤 [PAYMENT] User profile loaded');
+            AppLogger.info('👤 [PAYMENT] Name: $userName');
+            AppLogger.info('👤 [PAYMENT] Phone: $phoneNumber');
+            AppLogger.info('👤 [PAYMENT] Address: $address');
+          }
+        } catch (e) {
+          if (AppConfig.enableApiLogging) {
+            AppLogger.warning(
+                '⚠️ [PAYMENT] Could not load user profile, using defaults: $e');
+          }
+        }
+
+        final recipient = {
+          'name': userName,
+          'phone': phoneNumber,
+          'address': address,
+        };
 
         if (AppConfig.enableApiLogging) {
-          AppLogger.info('🎉 [PAYMENT] Đặt hàng thành công!');
-          AppLogger.info('📝 [PAYMENT] Mã đơn hàng: $maDonHang');
+          AppLogger.info('💳 [PAYMENT] Selected items: $selectedItems');
+          AppLogger.info('💳 [PAYMENT] Recipient: $recipient');
+        }
+
+        // Gọi API checkout với payment_method = 'tien_mat'
+        final cartApiService = CartApiService();
+        final checkoutResponse = await cartApiService.checkout(
+          selectedItems: selectedItems,
+          paymentMethod: 'tien_mat',
+          recipient: recipient,
+        );
+
+        if (isClosed) return;
+
+        if (!checkoutResponse.success || checkoutResponse.maDonHang.isEmpty) {
+          throw Exception('Checkout failed: Không nhận được mã đơn hàng');
+        }
+
+        final orderId = checkoutResponse.maDonHang;
+        _maDonHang = orderId;
+
+        if (AppConfig.enableApiLogging) {
+          AppLogger.info('🎉 [PAYMENT] Đặt hàng COD thành công!');
+          AppLogger.info('📝 [PAYMENT] Mã đơn hàng: $orderId');
+          AppLogger.info('💰 [PAYMENT] Tổng tiền: ${checkoutResponse.tongTien}');
         }
 
         emit(PaymentSuccess(
           message: 'Đặt hàng thành công! Thanh toán khi nhận hàng.',
-          orderId: maDonHang,
+          orderId: orderId,
         ));
       }
     } catch (e) {
@@ -426,8 +562,7 @@ class PaymentCubit extends Cubit<PaymentState> {
         ),
       ],
       subtotal: 89000,
-      shippingFee: 0,
-      total: 89000,
+      total: 104000,
     );
   }
 

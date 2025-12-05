@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import '../cubit/order_cubit.dart';
 import '../../order_detail/screen/order_detail_page.dart';
@@ -273,7 +272,7 @@ class _OrderViewState extends State<OrderView> {
           _buildStatusTab(
             context,
             'Đang Xử Lý',
-            '0',
+            state.processingCount.toString(),
             OrderFilterType.processing,
             state.filterType == OrderFilterType.processing,
           ),

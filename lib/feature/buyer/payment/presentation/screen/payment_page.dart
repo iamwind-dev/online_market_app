@@ -98,6 +98,9 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
               backgroundColor: Colors.red,
             ),
           );
+        } else if (state is PaymentPendingVNPay) {
+          // Hiển thị dialog thông báo cần thanh toán
+          _showPendingPaymentDialog(context, state);
         }
       },
       child: Scaffold(
@@ -111,7 +114,7 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
             Expanded(
               child: BlocBuilder<PaymentCubit, PaymentState>(
                 builder: (context, state) {
-                  if (state is PaymentLoading) {
+                  if (state is PaymentLoading || state is PaymentProcessing) {
                     return const Center(
                       child: CircularProgressIndicator(
                         color: Color(0xFF00B40F),
@@ -121,6 +124,11 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
 
                   if (state is PaymentLoaded) {
                     return _buildContent(context, state);
+                  }
+                  
+                  if (state is PaymentPendingVNPay) {
+                    // Hiển thị UI chờ thanh toán
+                    return _buildPendingPaymentContent(context, state);
                   }
 
                   return const SizedBox.shrink();
@@ -240,11 +248,22 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
                     return Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00B40F).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Image.asset(
+                            'assets/img/location_icon_small.png',
+                            width: 20,
+                            height: 20,
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            '${state.orderSummary.customerName} - ${state.orderSummary.phoneNumber}',
+                            '${state.orderSummary.customerName} ${state.orderSummary.phoneNumber}',
                             style: const TextStyle(
                               fontFamily: 'Roboto',
                               fontWeight: FontWeight.w600,
@@ -302,7 +321,7 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
           const SizedBox(height: 24),
           
           // Order summary
-          _buildOrderSummary(state.orderSummary, state.orderCode),
+          _buildOrderSummary(state.orderSummary),
           
           const SizedBox(height: 24),
           
@@ -649,7 +668,7 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
   }
 
   /// Order summary section
-  Widget _buildOrderSummary(OrderSummary orderSummary, String? orderCode) {
+  Widget _buildOrderSummary(OrderSummary orderSummary) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -669,40 +688,15 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Tóm tắt đơn hàng',
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 20,
-                  height: 1.1,
-                  color: Color(0xFF202020),
-                ),
-              ),
-              if (orderCode != null && orderCode.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF00B40F).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFF00B40F).withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Text(
-                    orderCode,
-                    style: const TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      color: Color(0xFF00B40F),
-                    ),
-                  ),
-                ),
-            ],
+          const Text(
+            'Tóm tắt đơn hàng',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+              height: 1.1,
+              color: Color(0xFF202020),
+            ),
           ),
           
           const SizedBox(height: 16),
@@ -721,7 +715,7 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
           const SizedBox(height: 12),
           
           // Shipping
-          _buildSummaryRow('Vận chuyển', orderSummary.shippingFee, false),
+          // _buildSummaryRow('Vận chuyển', orderSummary.shippingFee, false),
           
           const SizedBox(height: 16),
           
@@ -1139,8 +1133,295 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
     );
   }
 
-  /// Bottom navigation
-  
+  /// Dialog thông báo cần thanh toán VNPay
+  void _showPendingPaymentDialog(BuildContext context, PaymentPendingVNPay state) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Warning icon
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF9500).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.payment,
+                    color: Color(0xFFFF9500),
+                    size: 40,
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Title
+                const Text(
+                  'Chờ thanh toán',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 22,
+                    color: Color(0xFF202020),
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Message
+                Text(
+                  state.message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 15,
+                    color: Color(0xFF666666),
+                    height: 1.4,
+                  ),
+                ),
+                
+                const SizedBox(height: 8),
+                
+                // Order code
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Mã đơn: ${state.orderId}',
+                    style: const TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: Color(0xFF666666),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Buttons
+                Row(
+                  children: [
+                    // Hủy button
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          Navigator.of(context).pop(); // Quay lại trang trước
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFE0E0E0)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Hủy',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Color(0xFF666666),
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(width: 12),
+                    
+                    // Thanh toán lại button
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          // Gọi lại thanh toán VNPay
+                          context.read<PaymentCubit>().processPayment();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00B40F),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Thanh toán',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// UI hiển thị khi đang chờ thanh toán VNPay
+  Widget _buildPendingPaymentContent(BuildContext context, PaymentPendingVNPay state) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const SizedBox(height: 40),
+          
+          // Warning icon
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF9500).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.payment,
+              color: Color(0xFFFF9500),
+              size: 50,
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Title
+          const Text(
+            'Đơn hàng chờ thanh toán',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontWeight: FontWeight.w700,
+              fontSize: 24,
+              color: Color(0xFF202020),
+            ),
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Message
+          Text(
+            state.message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 16,
+              color: Color(0xFF666666),
+              height: 1.5,
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Order code card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFFF9500).withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.receipt_long,
+                  color: Color(0xFFFF9500),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Mã đơn hàng: ${state.orderId}',
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: Color(0xFF202020),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // Thanh toán button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                context.read<PaymentCubit>().processPayment();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00B40F),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text(
+                'Thanh toán ngay',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Quay lại button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFE0E0E0)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text(
+                'Quay lại',
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  color: Color(0xFF666666),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   /// Build product image - support both URL and asset
   Widget _buildProductImage(String imagePath) {
