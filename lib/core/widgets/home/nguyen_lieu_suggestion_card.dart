@@ -40,18 +40,37 @@ class NguyenLieuSuggestionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Hình ảnh nguyên liệu (placeholder)
+            // Hình ảnh nguyên liệu
             Container(
               width: 160,
               height: 100,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
               ),
-              child: const Icon(
-                Icons.shopping_basket,
-                size: 40,
-                color: Color(0xFF00B40F),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                child: nguyenLieu.hinhAnh != null && nguyenLieu.hinhAnh!.isNotEmpty
+                    ? Image.network(
+                        nguyenLieu.hinhAnh!,
+                        width: 160,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Center(
+                          child: Icon(
+                            Icons.shopping_basket,
+                            size: 40,
+                            color: Color(0xFF00B40F),
+                          ),
+                        ),
+                      )
+                    : const Center(
+                        child: Icon(
+                          Icons.shopping_basket,
+                          size: 40,
+                          color: Color(0xFF00B40F),
+                        ),
+                      ),
               ),
             ),
             

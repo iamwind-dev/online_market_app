@@ -1473,7 +1473,9 @@ class _OrderDetailViewState extends State<OrderDetailView> {
           final isProcessing = state is OrderDetailProcessing;
           
           return GestureDetector(
-            onTap: isProcessing ? null : () => _showCancelConfirmDialog(context, maDonHang),
+            // onTap: isProcessing ? null : () => _showCancelConfirmDialog(context, maDonHang),
+             onTap: () => {},
+            
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 14),

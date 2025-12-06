@@ -71,6 +71,7 @@ class NguyenLieuSuggestion {
   final String tenNguyenLieu;
   final String? donVi;
   final String? dinhLuong;
+  final String? hinhAnh;
   final GianHangSuggest? gianHangSuggest;
   final NguyenLieuActions actions;
 
@@ -79,6 +80,7 @@ class NguyenLieuSuggestion {
     required this.tenNguyenLieu,
     this.donVi,
     this.dinhLuong,
+    this.hinhAnh,
     this.gianHangSuggest,
     required this.actions,
   });
@@ -89,6 +91,7 @@ class NguyenLieuSuggestion {
       tenNguyenLieu: json['ten_nguyen_lieu'] as String,
       donVi: json['don_vi'] as String?,
       dinhLuong: json['dinh_luong'] as String?,
+      hinhAnh: json['hinh_anh'] as String?,
       gianHangSuggest: json['gian_hang_suggest'] != null
           ? GianHangSuggest.fromJson(json['gian_hang_suggest'] as Map<String, dynamic>)
           : null,

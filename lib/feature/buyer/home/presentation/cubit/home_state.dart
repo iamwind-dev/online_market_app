@@ -101,6 +101,7 @@ class NguyenLieuSuggestion extends Equatable {
   final String tenNguyenLieu;
   final String? donVi;
   final String? dinhLuong;
+  final String? hinhAnh;
   final GianHangSuggest? gianHangSuggest;
   final bool canAddToCart;
 
@@ -109,12 +110,13 @@ class NguyenLieuSuggestion extends Equatable {
     required this.tenNguyenLieu,
     this.donVi,
     this.dinhLuong,
+    this.hinhAnh,
     this.gianHangSuggest,
     this.canAddToCart = false,
   });
 
   @override
-  List<Object?> get props => [maNguyenLieu, tenNguyenLieu, donVi, dinhLuong, gianHangSuggest, canAddToCart];
+  List<Object?> get props => [maNguyenLieu, tenNguyenLieu, donVi, dinhLuong, hinhAnh, gianHangSuggest, canAddToCart];
 }
 
 /// Model cho gian hàng suggest

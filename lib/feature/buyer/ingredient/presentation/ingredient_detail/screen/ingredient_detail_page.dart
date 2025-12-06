@@ -429,13 +429,17 @@ class _IngredientDetailView extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                       ],
-                      Text(
-                        seller.price,
-                        style: const TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFFF3B30),
+                      Flexible(
+                        child: Text(
+                          seller.price,
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFFF3B30),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (seller.unit != null) ...[
@@ -447,13 +451,17 @@ class _IngredientDetailView extends StatelessWidget {
                             color: Color(0xFF8E8E93),
                           ),
                         ),
-                        Text(
-                          seller.unit!,
-                          style: const TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFF8E8E93),
+                        Flexible(
+                          child: Text(
+                            seller.unit!,
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF8E8E93),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

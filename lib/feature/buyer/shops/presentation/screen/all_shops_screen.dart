@@ -149,7 +149,7 @@ class _AllShopsViewState extends State<_AllShopsView> {
         padding: const EdgeInsets.all(16),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.85,
+          childAspectRatio: 0.75,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),
@@ -280,24 +280,26 @@ class _AllShopsViewState extends State<_AllShopsView> {
                     
                     // Rating
                     if (shop.danhGiaTb > 0)
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.star,
-                            size: 14,
-                            color: Color(0xFFFFB800),
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            shop.danhGiaTb.toStringAsFixed(1),
-                            style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1C1C1E),
+                      Flexible(
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              size: 12,
+                              color: Color(0xFFFFB800),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 2),
+                            Text(
+                              shop.danhGiaTb.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontFamily: 'Roboto',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1C1C1E),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                   ],
                 ),

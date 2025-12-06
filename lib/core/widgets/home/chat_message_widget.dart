@@ -98,6 +98,7 @@ class ChatMessageWidget extends StatelessWidget {
                             tenNguyenLieu: nguyenLieu.tenNguyenLieu,
                             donVi: nguyenLieu.donVi,
                             dinhLuong: nguyenLieu.dinhLuong,
+                            hinhAnh: nguyenLieu.hinhAnh,
                             gianHangSuggest: nguyenLieu.gianHangSuggest != null
                                 ? chat_model.GianHangSuggest(
                                     maGianHang: nguyenLieu.gianHangSuggest!.maGianHang,

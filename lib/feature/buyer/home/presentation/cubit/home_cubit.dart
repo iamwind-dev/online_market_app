@@ -93,6 +93,7 @@ class HomeCubit extends Cubit<HomeState> {
                   tenNguyenLieu: item.tenNguyenLieu,
                   donVi: item.donVi,
                   dinhLuong: item.dinhLuong,
+                  hinhAnh: item.hinhAnh,
                   gianHangSuggest: item.gianHangSuggest != null
                       ? GianHangSuggest(
                           maGianHang: item.gianHangSuggest!.maGianHang,
