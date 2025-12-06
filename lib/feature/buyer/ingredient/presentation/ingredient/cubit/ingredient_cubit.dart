@@ -5,6 +5,7 @@ import '../../../../../../core/services/danh_muc_nguyen_lieu_service.dart';
 import '../../../../../../core/services/nguyen_lieu_service.dart';
 import '../../../../../../core/dependency/injection.dart';
 import '../../../../../../core/utils/price_formatter.dart';
+
 /// Cubit quản lý state cho Ingredient Screen
 class IngredientCubit extends Cubit<IngredientState> {
   GianHangService? _gianHangService;
@@ -41,6 +42,7 @@ class IngredientCubit extends Cubit<IngredientState> {
         // Convert API data to Category model
         final allCategories = response.data.map((danhMuc) {
           return Category(
+            maNhomNguyenLieu: danhMuc.maNhomNguyenLieu,
             name: danhMuc.tenNhomNguyenLieu,
             imagePath: '', // Không có ảnh từ API
           );
@@ -183,18 +185,19 @@ class IngredientCubit extends Cubit<IngredientState> {
       shopNames = ['Cô Hồng', 'Cô Như', 'Cô Nhi'];
     }
 
-    // Fetch shops từ API
+    // Fetch shops từ API - load tất cả gian hàng
     List<Shop> shops = [];
     try {
       if (_gianHangService != null) {
-        final response = await _gianHangService!.getGianHangList(
+        // Fetch trang đầu để lấy total
+        final firstResponse = await _gianHangService!.getGianHangList(
           page: 1,
-          limit: 12,
+          limit: 50, // Tăng limit để lấy nhiều hơn
           sort: 'ten_gian_hang',
           order: 'asc',
         );
         
-        shops = response.data.map((gianHang) {
+        shops = firstResponse.data.map((gianHang) {
           return Shop(
             id: gianHang.maGianHang,
             name: gianHang.tenGianHang,
@@ -203,33 +206,40 @@ class IngredientCubit extends Cubit<IngredientState> {
             distance: gianHang.viTri,
           );
         }).toList();
-        print('✅ Fetched ${shops.length} shops from API');
+        
+        // Nếu còn shops chưa load, fetch tiếp
+        if (firstResponse.meta.hasNext) {
+          int currentPage = 2;
+          while (true) {
+            final nextResponse = await _gianHangService!.getGianHangList(
+              page: currentPage,
+              limit: 50,
+              sort: 'ten_gian_hang',
+              order: 'asc',
+            );
+            
+            shops.addAll(nextResponse.data.map((gianHang) {
+              return Shop(
+                id: gianHang.maGianHang,
+                name: gianHang.tenGianHang,
+                imagePath: _getValidImagePath(gianHang.hinhAnh),
+                rating: gianHang.danhGiaTb > 0 ? gianHang.danhGiaTb.toStringAsFixed(1) : null,
+                distance: gianHang.viTri,
+              );
+            }));
+            
+            if (!nextResponse.meta.hasNext) break;
+            currentPage++;
+          }
+        }
+        
+        print('✅ Fetched ${shops.length} shops from API (total: ${firstResponse.meta.total})');
       } else {
         throw Exception('GianHangService not available');
       }
     } catch (e) {
       print('⚠️ Lỗi khi fetch gian hàng: $e');
       // Fallback to mock data nếu API lỗi
-      shops = [
-        const Shop(
-          id: 'G001',
-          name: 'Cô Hồng',
-          rating: '4.8',
-          distance: '1.2 km',
-        ),
-        const Shop(
-          id: 'G002',
-          name: 'Cô Như',
-          rating: '4.5',
-          distance: '2.5 km',
-        ),
-        const Shop(
-          id: 'G003',
-          name: 'Cô Nhi',
-          rating: '4.7',
-          distance: '0.8 km',
-        ),
-      ];
     }
 
     emit(IngredientLoaded(
@@ -272,15 +282,17 @@ class IngredientCubit extends Cubit<IngredientState> {
     
     try {
       if (_gianHangService != null) {
-        // TODO: Nếu API hỗ trợ filter theo ma_khu_vuc, thêm parameter vào đây
-        final response = await _gianHangService!.getGianHangList(
+        List<Shop> shops = [];
+        
+        // Fetch tất cả shops
+        final firstResponse = await _gianHangService!.getGianHangList(
           page: 1,
-          limit: 12,
+          limit: 50,
           sort: 'ten_gian_hang',
           order: 'asc',
         );
         
-        final shops = response.data.map((gianHang) {
+        shops = firstResponse.data.map((gianHang) {
           return Shop(
             id: gianHang.maGianHang,
             name: gianHang.tenGianHang,
@@ -289,6 +301,32 @@ class IngredientCubit extends Cubit<IngredientState> {
             distance: gianHang.viTri,
           );
         }).toList();
+        
+        // Fetch thêm nếu còn
+        if (firstResponse.meta.hasNext) {
+          int currentPage = 2;
+          while (true) {
+            final nextResponse = await _gianHangService!.getGianHangList(
+              page: currentPage,
+              limit: 50,
+              sort: 'ten_gian_hang',
+              order: 'asc',
+            );
+            
+            shops.addAll(nextResponse.data.map((gianHang) {
+              return Shop(
+                id: gianHang.maGianHang,
+                name: gianHang.tenGianHang,
+                imagePath: _getValidImagePath(gianHang.hinhAnh),
+                rating: gianHang.danhGiaTb > 0 ? gianHang.danhGiaTb.toStringAsFixed(1) : null,
+                distance: gianHang.viTri,
+              );
+            }));
+            
+            if (!nextResponse.meta.hasNext) break;
+            currentPage++;
+          }
+        }
         
         emit(currentState.copyWith(shops: shops));
         print('✅ Loaded ${shops.length} shops for region: $maKhuVuc');
@@ -449,6 +487,11 @@ class IngredientCubit extends Cubit<IngredientState> {
     }
   }
 
+  /// Refresh toàn bộ dữ liệu (pull-to-refresh)
+  Future<void> refreshData() async {
+    await loadIngredientData();
+  }
+
   /// Select category
   void selectCategory(String categoryName) {
     // Navigate to category detail or filter products
@@ -467,19 +510,18 @@ class IngredientCubit extends Cubit<IngredientState> {
     // Navigation will be handled by screen
   }
 
-  /// Buy product now
+  /// Buy product now - Navigate to ingredient detail to select shop and buy
   void buyNow(Product product) {
-    // Implement buy now logic
+    // Không thể mua trực tiếp từ danh sách vì cần chọn gian hàng
+    // Sẽ được xử lý ở UI - navigate đến trang chi tiết
+    print('🛍️ [IngredientCubit] Buy now: ${product.name}');
   }
 
-  /// Add to cart
+  /// Add to cart - Navigate to ingredient detail to select shop and add
   void addToCart(Product product) {
-    if (state is IngredientLoaded) {
-      final currentState = state as IngredientLoaded;
-      emit(currentState.copyWith(
-        cartItemCount: currentState.cartItemCount + 1,
-      ));
-    }
+    // Không thể thêm trực tiếp từ danh sách vì cần chọn gian hàng
+    // Sẽ được xử lý ở UI - navigate đến trang chi tiết
+    print('🛒 [IngredientCubit] Add to cart: ${product.name}');
   }
 
   // ==================== Helper Methods ====================

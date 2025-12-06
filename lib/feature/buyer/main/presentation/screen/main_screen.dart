@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../buyer/home/presentation/screen/home_screen.dart';
-import '../../../buyer/product/presentation/screen/product_screen.dart';
-import '../../../buyer/ingredient/presentation/ingredient/screen/ingredient_screen.dart';
-import '../../../user/presentation/screen/user_screen.dart';
-import '../../../../core/widgets/shared_bottom_navigation.dart';
+import '../../../../buyer/home/presentation/screen/home_screen.dart';
+import '../../../../buyer/product/presentation/screen/product_screen.dart';
+import '../../../../buyer/ingredient/presentation/ingredient/screen/ingredient_screen.dart';
+import '../../../../user/presentation/screen/user_screen.dart';
+import '../../../../../core/widgets/shared_bottom_navigation.dart';
 
 /// Main Screen với IndexedStack để giữ state của các trang
 class MainScreen extends StatefulWidget {

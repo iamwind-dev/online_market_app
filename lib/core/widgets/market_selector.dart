@@ -33,12 +33,12 @@ class MarketSelector extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: const Color(0xFF008EDB).withOpacity(0.1),
+              color: const Color(0xFF2F8000).withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(
               Icons.location_on,
-              color: Color(0xFF008EDB),
+              color: Color(0xFF2F8000),
               size: 20,
             ),
           ),

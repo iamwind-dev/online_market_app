@@ -1,3 +1,4 @@
+import 'package:DNGO/core/widgets/buyer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -5,6 +6,8 @@ import '../cubit/order_detail_cubit.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/services/order_service.dart';
 import '../../../../../../core/services/review_api_service.dart';
+
+
 
 /// Màn hình chi tiết đơn hàng
 /// 
@@ -79,8 +82,18 @@ class _OrderDetailViewState extends State<OrderDetailView> {
     required String itemId,
     required String tenNguyenLieu,
   }) async {
+    debugPrint('🔵 [REVIEW DEBUG] ========== START SUBMIT ITEM REVIEW ==========');
+    debugPrint('🔵 [REVIEW DEBUG] maDonHang: $maDonHang');
+    debugPrint('🔵 [REVIEW DEBUG] maNguyenLieu: $maNguyenLieu');
+    debugPrint('🔵 [REVIEW DEBUG] maGianHang: $maGianHang');
+    debugPrint('🔵 [REVIEW DEBUG] itemId: $itemId');
+    debugPrint('🔵 [REVIEW DEBUG] tenNguyenLieu: $tenNguyenLieu');
+    
     final rating = _itemRatings[itemId] ?? 0;
+    debugPrint('🔵 [REVIEW DEBUG] rating: $rating');
+    
     if (rating == 0) {
+      debugPrint('⚠️ [REVIEW DEBUG] Rating is 0, showing warning');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Vui lòng chọn số sao đánh giá'),
@@ -100,6 +113,11 @@ class _OrderDetailViewState extends State<OrderDetailView> {
       final comment = _itemReviewControllers[itemId]?.text ?? '';
       final binhLuan = [tags, comment].where((s) => s.isNotEmpty).join('. ');
       
+      debugPrint('🔵 [REVIEW DEBUG] tags: $tags');
+      debugPrint('🔵 [REVIEW DEBUG] comment: $comment');
+      debugPrint('🔵 [REVIEW DEBUG] binhLuan: $binhLuan');
+      debugPrint('🔵 [REVIEW DEBUG] Calling ReviewApiService.submitReview...');
+      
       final response = await _reviewApiService.submitReview(
         maDonHang: maDonHang,
         maNguyenLieu: maNguyenLieu,
@@ -108,6 +126,10 @@ class _OrderDetailViewState extends State<OrderDetailView> {
         binhLuan: binhLuan.isNotEmpty ? binhLuan : 'Đánh giá $rating sao',
       );
       
+      debugPrint('✅ [REVIEW DEBUG] Response success: ${response.success}');
+      debugPrint('✅ [REVIEW DEBUG] Response danhGiaTb: ${response.danhGiaTb}');
+      debugPrint('✅ [REVIEW DEBUG] Response message: ${response.message}');
+      
       if (response.success && mounted) {
         setState(() {
           _submittedItemReviews.add(itemId);
@@ -115,7 +137,18 @@ class _OrderDetailViewState extends State<OrderDetailView> {
         
         _showThankYouDialog(tenNguyenLieu, response.danhGiaTb);
       }
+    } on ReviewException catch (e) {
+      debugPrint('❌ [REVIEW DEBUG] ReviewException: ${e.statusCode} - ${e.message}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: e.statusCode == 403 ? Colors.orange : Colors.red,
+          ),
+        );
+      }
     } catch (e) {
+      debugPrint('❌ [REVIEW DEBUG] Error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -125,6 +158,7 @@ class _OrderDetailViewState extends State<OrderDetailView> {
         );
       }
     } finally {
+      debugPrint('🔵 [REVIEW DEBUG] ========== END SUBMIT ITEM REVIEW ==========');
       if (mounted) {
         setState(() {
           _isSubmittingItemReview[itemId] = false;
@@ -140,7 +174,15 @@ class _OrderDetailViewState extends State<OrderDetailView> {
     required String maGianHang,
     required String tenNguyenLieu,
   }) async {
+    debugPrint('🟢 [REVIEW DEBUG] ========== START SUBMIT ORDER REVIEW ==========');
+    debugPrint('🟢 [REVIEW DEBUG] maDonHang: $maDonHang');
+    debugPrint('🟢 [REVIEW DEBUG] maNguyenLieu: $maNguyenLieu');
+    debugPrint('🟢 [REVIEW DEBUG] maGianHang: $maGianHang');
+    debugPrint('🟢 [REVIEW DEBUG] tenNguyenLieu: $tenNguyenLieu');
+    debugPrint('🟢 [REVIEW DEBUG] selectedRating: $_selectedRating');
+    
     if (_selectedRating == 0) {
+      debugPrint('⚠️ [REVIEW DEBUG] Rating is 0, showing warning');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Vui lòng chọn số sao đánh giá'),
@@ -160,6 +202,11 @@ class _OrderDetailViewState extends State<OrderDetailView> {
       final comment = _reviewController.text;
       final binhLuan = [tags, comment].where((s) => s.isNotEmpty).join('. ');
       
+      debugPrint('🟢 [REVIEW DEBUG] tags: $tags');
+      debugPrint('🟢 [REVIEW DEBUG] comment: $comment');
+      debugPrint('🟢 [REVIEW DEBUG] binhLuan: $binhLuan');
+      debugPrint('🟢 [REVIEW DEBUG] Calling ReviewApiService.submitReview...');
+      
       final response = await _reviewApiService.submitReview(
         maDonHang: maDonHang,
         maNguyenLieu: maNguyenLieu,
@@ -167,6 +214,10 @@ class _OrderDetailViewState extends State<OrderDetailView> {
         rating: _selectedRating,
         binhLuan: binhLuan.isNotEmpty ? binhLuan : 'Đánh giá $_selectedRating sao',
       );
+      
+      debugPrint('✅ [REVIEW DEBUG] Response success: ${response.success}');
+      debugPrint('✅ [REVIEW DEBUG] Response danhGiaTb: ${response.danhGiaTb}');
+      debugPrint('✅ [REVIEW DEBUG] Response message: ${response.message}');
       
       if (response.success && mounted) {
         _showThankYouDialog(tenNguyenLieu, response.danhGiaTb);
@@ -178,7 +229,18 @@ class _OrderDetailViewState extends State<OrderDetailView> {
           _reviewController.clear();
         });
       }
+    } on ReviewException catch (e) {
+      debugPrint('❌ [REVIEW DEBUG] ReviewException: ${e.statusCode} - ${e.message}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: e.statusCode == 403 ? Colors.orange : Colors.red,
+          ),
+        );
+      }
     } catch (e) {
+      debugPrint('❌ [REVIEW DEBUG] Error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -188,6 +250,7 @@ class _OrderDetailViewState extends State<OrderDetailView> {
         );
       }
     } finally {
+      debugPrint('🟢 [REVIEW DEBUG] ========== END SUBMIT ORDER REVIEW ==========');
       if (mounted) {
         setState(() {
           _isSubmittingReview = false;
@@ -319,9 +382,9 @@ class _OrderDetailViewState extends State<OrderDetailView> {
                 child: BlocBuilder<OrderDetailCubit, OrderDetailState>(
                   builder: (context, state) {
                     if (state is OrderDetailLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
+                      return const BuyerLoading(
+              message: 'Đang tải chi tiết đơn hàng...',
+            );
                     }
 
                     if (state is OrderDetailLoaded) {
@@ -456,6 +519,13 @@ class _OrderDetailViewState extends State<OrderDetailView> {
           // Review section - chỉ hiển thị cho đơn 1 mặt hàng
           if (orderDetail.items.length == 1)
             _buildReviewInputSection(orderDetail),
+          
+          const SizedBox(height: 16),
+          
+          // Cancel order button - ẩn với đơn đã giao và đã huỷ
+          if (orderDetail.tinhTrangDonHang != 'da_giao' &&
+              orderDetail.tinhTrangDonHang != 'da_huy')
+            _buildCancelOrderButton(context, orderDetail.maDonHang),
           
           const SizedBox(height: 32),
         ],
@@ -1393,6 +1463,125 @@ class _OrderDetailViewState extends State<OrderDetailView> {
 
   
   
+
+  /// Cancel order button
+  Widget _buildCancelOrderButton(BuildContext context, String maDonHang) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      child: BlocBuilder<OrderDetailCubit, OrderDetailState>(
+        builder: (context, state) {
+          final isProcessing = state is OrderDetailProcessing;
+          
+          return GestureDetector(
+            onTap: isProcessing ? null : () => _showCancelConfirmDialog(context, maDonHang),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: const Color(0xFFFF4444), width: 1.5),
+              ),
+              child: Center(
+                child: isProcessing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFFF4444),
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Huỷ đơn hàng',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Color(0xFFFF4444),
+                        ),
+                      ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  /// Show cancel confirmation dialog
+  void _showCancelConfirmDialog(BuildContext context, String maDonHang) {
+    final cubit = context.read<OrderDetailCubit>();
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFFF4444), size: 28),
+            SizedBox(width: 12),
+            Text(
+              'Xác nhận huỷ đơn',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: Color(0xFF202020),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Bạn có chắc chắn muốn huỷ đơn hàng này?\n\nSản phẩm sẽ được khôi phục về giỏ hàng của bạn.',
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 15,
+            color: Color(0xFF666666),
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text(
+              'Không',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+                color: Color(0xFF666666),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              cubit.cancelOrder(maDonHang);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF4444),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            ),
+            child: const Text(
+              'Huỷ đơn',
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   /// Format price helper
   String _formatPrice(double price) {

@@ -4,6 +4,7 @@ import '../cubit/cart_cubit.dart';
 
 import '../../../../../core/utils/price_formatter.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/buyer_loading.dart';
 
 /// Màn hình giỏ hàng - Code lại với design đẹp hơn
 class CartPage extends StatelessWidget {
@@ -77,11 +78,9 @@ class _CartViewState extends State<CartView> {
                 child: BlocBuilder<CartCubit, CartState>(
                   builder: (context, state) {
                     if (state is CartLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF00B40F),
-                        ),
-                      );
+                      return const BuyerLoading(
+              message: 'Đang tải giỏ hàng...',
+            );
                     }
 
                     if (state is CartLoaded) {

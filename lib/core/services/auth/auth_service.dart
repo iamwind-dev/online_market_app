@@ -277,8 +277,8 @@ class AuthService {
       final now = DateTime.now();
       final difference = now.difference(loginTime);
       
-      // Token hết hạn sau 24 giờ (có thể điều chỉnh)
-      const tokenDuration = Duration(hours: 24);
+      // Token hết hạn sau 7 ngày (có thể điều chỉnh)
+      const tokenDuration = Duration(days: 7);
       final isExpired = difference > tokenDuration;
       
       if (AppConfig.enableApiLogging) {

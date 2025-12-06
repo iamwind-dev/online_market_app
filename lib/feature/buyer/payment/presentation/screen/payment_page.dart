@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../../core/widgets/buyer_loading.dart';
 import '../cubit/payment_cubit.dart';
 import '../../../../../core/config/route_name.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -115,11 +116,9 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
               child: BlocBuilder<PaymentCubit, PaymentState>(
                 builder: (context, state) {
                   if (state is PaymentLoading || state is PaymentProcessing) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF00B40F),
-                      ),
-                    );
+                    return const BuyerLoading(
+              message: 'Đang đặt hàng...',
+            );
                   }
 
                   if (state is PaymentLoaded) {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/nguyen_lieu_model.dart';
 import '../models/nguyen_lieu_detail_model.dart';
@@ -18,6 +19,7 @@ class NguyenLieuService {
     String sort = 'ten_nguyen_lieu',
     String order = 'asc',
     String? maCho, // Thêm parameter mã chợ
+    String? maNhomNguyenLieu, // Thêm parameter mã nhóm nguyên liệu
     bool hinhAnh = true, // Thêm parameter hình ảnh
   }) async {
     try {
@@ -28,18 +30,18 @@ class NguyenLieuService {
         'limit': limit.toString(),
         'sort': sort,
         'order': order,
-        'hinh_anh': hinhAnh.toString(), // Thêm parameter hình ảnh
-        if (maCho != null && maCho.isNotEmpty) 'ma_cho': maCho, // Thêm mã chợ vào query
-        
+        'hinh_anh': hinhAnh.toString(),
+        if (maCho != null && maCho.isNotEmpty) 'ma_cho': maCho,
+        if (maNhomNguyenLieu != null && maNhomNguyenLieu.isNotEmpty) 'ma_nhom_nguyen_lieu': maNhomNguyenLieu,
       };
       
       final uri = Uri.parse('$baseUrl/nguyen-lieu').replace(
         queryParameters: queryParams,
       );
 
-      print('🔍 [NguyenLieuService] Fetching nguyen lieu...');
-      print('   URL: $uri');
-      print('   Ma cho: $maCho');
+      debugPrint('🔍 [NguyenLieuService] Fetching nguyen lieu...');
+      debugPrint('   URL: $uri');
+      debugPrint('   Ma cho: $maCho');
 
       final response = await http.get(
         uri,
@@ -49,12 +51,12 @@ class NguyenLieuService {
         },
       );
 
-      print('🔍 [NguyenLieuService] Response status: ${response.statusCode}');
+      debugPrint('🔍 [NguyenLieuService] Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(utf8.decode(response.bodyBytes));
         final result = NguyenLieuResponse.fromJson(jsonData);
-        print('✅ [NguyenLieuService] Fetched ${result.data.length} nguyen lieu');
+        debugPrint('✅ [NguyenLieuService] Fetched ${result.data.length} nguyen lieu');
         return result;
       } else if (response.statusCode == 401) {
         throw UnauthorizedException('Token hết hạn hoặc không hợp lệ');
@@ -62,7 +64,7 @@ class NguyenLieuService {
         throw ServerException('Lỗi server: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ [NguyenLieuService] Error: $e');
+      debugPrint('❌ [NguyenLieuService] Error: $e');
       if (e is UnauthorizedException || e is ServerException) {
         rethrow;
       }

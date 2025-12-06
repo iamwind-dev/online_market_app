@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/config/route_name.dart';
@@ -32,16 +33,18 @@ class SplashView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<SplashCubit, SplashState>(
       listener: (context, state) {
+        debugPrint('[SPLASH_PAGE] 📥 State received: ${state.runtimeType}');
         if (state is SplashAuthenticated) {
-          // TODO: Navigate to Login screen
-          // Navigator.of(context).pushReplacementNamed(LoginPage.routeName);
-          _navigateToLogin(context);
+          // User đã đăng nhập -> Navigate theo vai trò
+          debugPrint('[SPLASH_PAGE] ✅ SplashAuthenticated - role: ${state.role}');
+          _navigateByRole(context, state.role);
         } else if (state is SplashUnauthenticated) {
-          // TODO: Navigate to Onboarding or Login screen
-          // Navigator.of(context).pushReplacementNamed(OnboardingPage.routeName);
+          // User chưa đăng nhập -> Navigate to Login screen
+          debugPrint('[SPLASH_PAGE] 🔒 SplashUnauthenticated - navigating to login');
           _navigateToLogin(context);
         } else if (state is SplashError) {
           // Show error dialog
+          debugPrint('[SPLASH_PAGE] ❌ SplashError: ${state.message}');
           _showErrorDialog(context, state.message);
         }
       },
@@ -160,6 +163,34 @@ class SplashView extends StatelessWidget {
     });
   }
 
+  /// Navigate theo vai trò người dùng
+  void _navigateByRole(BuildContext context, String role) {
+    debugPrint('[SPLASH_PAGE] 🎯 _navigateByRole called with role: $role');
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (context.mounted) {
+        if (role == 'nguoi_mua') {
+          // Người mua -> Buyer Home
+          debugPrint('[SPLASH_PAGE] ➡️ Navigating to BUYER home (RouteName.main)');
+          AppRouter.navigateAndRemoveUntil(
+            context,
+            RouteName.main,
+          );
+        } else if (role == 'nguoi_ban') {
+          // Người bán -> Seller Home
+          debugPrint('[SPLASH_PAGE] ➡️ Navigating to SELLER home (RouteName.sellerMain)');
+          AppRouter.navigateAndRemoveUntil(
+            context,
+            RouteName.sellerMain,
+          );
+        } else {
+          // Vai trò không xác định -> Login
+          debugPrint('[SPLASH_PAGE] ⚠️ Unknown role: $role, navigating to login');
+          _navigateToLogin(context);
+        }
+      }
+    });
+  }
+
   /// Show error dialog
   void _showErrorDialog(BuildContext context, String message) {
     showDialog(
@@ -180,4 +211,5 @@ class SplashView extends StatelessWidget {
       ),
     );
   }
+
 }

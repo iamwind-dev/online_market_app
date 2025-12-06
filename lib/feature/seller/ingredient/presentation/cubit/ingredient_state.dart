@@ -5,30 +5,65 @@ class SellerIngredient extends Equatable {
   final String id;
   final String name;
   final double price;
+  final double finalPrice;
   final String unit;
   final int availableQuantity;
   final String imageUrl;
+  final int discountPercent;
+  final DateTime? updatedAt;
 
   const SellerIngredient({
     required this.id,
     required this.name,
     required this.price,
+    required this.finalPrice,
     required this.unit,
     required this.availableQuantity,
     required this.imageUrl,
+    this.discountPercent = 0,
+    this.updatedAt,
   });
+
+  /// Parse từ API response
+  factory SellerIngredient.fromJson(Map<String, dynamic> json) {
+    return SellerIngredient(
+      id: json['ma_nguyen_lieu'] ?? '',
+      name: json['ten_nguyen_lieu'] ?? '',
+      price: (json['gia_goc'] ?? 0).toDouble(),
+      finalPrice: double.tryParse(json['gia_cuoi']?.toString() ?? '0') ?? 0,
+      unit: json['don_vi_ban'] ?? '',
+      availableQuantity: json['so_luong_ban'] ?? 0,
+      imageUrl: json['hinh_anh'] ?? '',
+      discountPercent: json['phan_tram_giam_gia'] ?? 0,
+      updatedAt: json['ngay_cap_nhat'] != null 
+          ? DateTime.tryParse(json['ngay_cap_nhat']) 
+          : null,
+    );
+  }
 
   /// Format giá tiền
   String get formattedPrice {
-    final formatted = price.toStringAsFixed(0).replaceAllMapped(
+    final formatted = finalPrice.toStringAsFixed(0).replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match m) => '${m[1]},',
         );
     return '$formatted ₫ / $unit';
   }
 
+  /// Format giá gốc (nếu có giảm giá)
+  String get formattedOriginalPrice {
+    final formatted = price.toStringAsFixed(0).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
+    return '$formatted ₫';
+  }
+
+  /// Có giảm giá không
+  bool get hasDiscount => discountPercent > 0;
+
   @override
-  List<Object?> get props => [id, name, price, unit, availableQuantity, imageUrl];
+  List<Object?> get props => [id, name, price, finalPrice, unit, availableQuantity, imageUrl, discountPercent, updatedAt];
 }
 
 /// State chính của Seller Ingredient
@@ -38,6 +73,9 @@ class SellerIngredientState extends Equatable {
   final List<SellerIngredient> ingredients;
   final String searchQuery;
   final int currentTabIndex;
+  final int currentPage;
+  final int totalItems;
+  final bool hasNextPage;
 
   const SellerIngredientState({
     this.isLoading = false,
@@ -45,6 +83,9 @@ class SellerIngredientState extends Equatable {
     this.ingredients = const [],
     this.searchQuery = '',
     this.currentTabIndex = 1, // Tab Sản phẩm mặc định
+    this.currentPage = 1,
+    this.totalItems = 0,
+    this.hasNextPage = false,
   });
 
   /// Factory tạo state ban đầu
@@ -68,6 +109,9 @@ class SellerIngredientState extends Equatable {
     List<SellerIngredient>? ingredients,
     String? searchQuery,
     int? currentTabIndex,
+    int? currentPage,
+    int? totalItems,
+    bool? hasNextPage,
   }) {
     return SellerIngredientState(
       isLoading: isLoading ?? this.isLoading,
@@ -75,6 +119,9 @@ class SellerIngredientState extends Equatable {
       ingredients: ingredients ?? this.ingredients,
       searchQuery: searchQuery ?? this.searchQuery,
       currentTabIndex: currentTabIndex ?? this.currentTabIndex,
+      currentPage: currentPage ?? this.currentPage,
+      totalItems: totalItems ?? this.totalItems,
+      hasNextPage: hasNextPage ?? this.hasNextPage,
     );
   }
 
@@ -85,5 +132,8 @@ class SellerIngredientState extends Equatable {
         ingredients,
         searchQuery,
         currentTabIndex,
+        currentPage,
+        totalItems,
+        hasNextPage,
       ];
 }

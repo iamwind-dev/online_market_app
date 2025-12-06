@@ -43,7 +43,7 @@ class HomeSearchBar extends StatelessWidget {
                 color: Colors.black,
               ),
               decoration:  InputDecoration(
-                hintText: 'Nhập món ăn hoặc nguyên liệu cần tìm tại đây ...',
+                hintText: 'Nhập câu hỏi ...',
                 hintStyle: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 16,

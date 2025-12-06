@@ -84,10 +84,13 @@ Future<bool> logIn(BuildContext context, String username, String password) async
         await prefs.setString(SimpleAuthHelper._tokenKey, token);
         await prefs.setString(SimpleAuthHelper._userDataKey, jsonEncode(userData));
         await prefs.setBool(SimpleAuthHelper._isLoggedInKey, true);
+        // Lưu login_time để kiểm tra token expiration
+        await prefs.setString('login_time', DateTime.now().toIso8601String());
         
         final userDisplayName = userData['ten_dang_nhap'] ?? username;
         print('[LOGIN] ✅ Success - username: $userDisplayName');
         print('[LOGIN] 🎫 Token saved: ${token.substring(0, 20)}...');
+        print('[LOGIN] ⏰ Login time saved: ${DateTime.now().toIso8601String()}');
         
         // Show success SnackBar (GREEN)
         if (context.mounted) {
@@ -243,6 +246,7 @@ Future<void> logOut() async {
     await prefs.remove(SimpleAuthHelper._tokenKey);
     await prefs.remove(SimpleAuthHelper._userDataKey);
     await prefs.remove(SimpleAuthHelper._isLoggedInKey);
+    await prefs.remove('login_time');
     
     print('[LOGOUT] ✅ Đăng xuất thành công - Đã xóa token và user data');
     

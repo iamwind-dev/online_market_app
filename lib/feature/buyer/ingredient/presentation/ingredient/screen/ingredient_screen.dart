@@ -7,6 +7,9 @@ import '../../../../../../core/widgets/shop_card.dart';
 import '../../../../../../core/widgets/category_card.dart';
 import '../../../../../../core/widgets/cart_badge_icon.dart';
 import '../../../../../../core/widgets/market_selector.dart';
+import '../../../../../../core/widgets/buyer_loading.dart';
+import '../../../../../../core/config/route_name.dart';
+import '../../../../../../core/router/app_router.dart';
 
 class IngredientScreen extends StatelessWidget {
   const IngredientScreen({super.key});
@@ -63,7 +66,9 @@ class _IngredientViewState extends State<_IngredientView> {
       body: BlocBuilder<IngredientCubit, IngredientState>(
         builder: (context, state) {
           if (state is IngredientLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const BuyerLoading(
+              message: 'Đang tải nguyên liệu...',
+            );
           }
 
           if (state is IngredientError) {
@@ -193,48 +198,53 @@ class _IngredientViewState extends State<_IngredientView> {
   }
 
   Widget _buildScrollableContent(BuildContext context, IngredientLoaded state) {
-    return SingleChildScrollView(
-      controller: _scrollController,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 16),
-          _buildCategorySection(context, state),
-          const SizedBox(height: 24),
-          _buildShopsSection(context, state),
-          const SizedBox(height: 20),
-          _buildProductsSection(context, state),
-          
-          // Loading indicator khi đang load more
-          if (state.isLoadingMore)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Color(0xFF00B40F),
-                ),
-              ),
-            ),
-          
-          // Thông báo khi hết sản phẩm
-          if (!state.hasMoreProducts && state.products.isNotEmpty)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Center(
-                child: Text(
-                  'Đã hiển thị tất cả sản phẩm',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 14,
-                    color: Color(0xFF8E8E93),
+    return RefreshIndicator(
+      onRefresh: () => context.read<IngredientCubit>().refreshData(),
+      color: const Color(0xFF00B40F),
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            _buildCategorySection(context, state),
+            const SizedBox(height: 24),
+            _buildShopsSection(context, state),
+            const SizedBox(height: 20),
+            _buildProductsSection(context, state),
+            
+            // Loading indicator khi đang load more
+            if (state.isLoadingMore)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF00B40F),
                   ),
                 ),
               ),
-            ),
-          
-          const SizedBox(height: 20),
-        ],
+            
+            // Thông báo khi hết sản phẩm
+            if (!state.hasMoreProducts && state.products.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Center(
+                  child: Text(
+                    'Đã hiển thị tất cả sản phẩm',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 14,
+                      color: Color(0xFF8E8E93),
+                    ),
+                  ),
+                ),
+              ),
+            
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
@@ -261,21 +271,7 @@ class _IngredientViewState extends State<_IngredientView> {
                   letterSpacing: 0.25,
                 ),
               ),
-              GestureDetector(
-                onTap: () {
-                  // Navigate to all categories
-                  print('Xem tất cả danh mục');
-                },
-                child: const Text(
-                  'Xem tất cả',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF008EDB),
-                  ),
-                ),
-              ),
+              
             ],
           ),
         ),
@@ -293,8 +289,20 @@ class _IngredientViewState extends State<_IngredientView> {
               return CategoryCard(
                 name: category.name,
                 imagePath: category.imagePath,
-                isSelected: false, // TODO: Add selected state
-                onTap: () => context.read<IngredientCubit>().selectCategory(category.name),
+                isSelected: false,
+                onTap: () {
+                  // Navigate to category ingredients screen
+                  if (category.maNhomNguyenLieu != null) {
+                    AppRouter.navigateTo(
+                      context,
+                      RouteName.categoryIngredients,
+                      arguments: {
+                        'categoryId': category.maNhomNguyenLieu,
+                        'categoryName': category.name,
+                      },
+                    );
+                  }
+                },
               );
             },
           ),
@@ -325,7 +333,7 @@ class _IngredientViewState extends State<_IngredientView> {
               GestureDetector(
                 onTap: () {
                   // Navigate to all shops screen
-                  print('Xem tất cả gian hàng');
+                  AppRouter.navigateTo(context, RouteName.allShops);
                 },
                 child: const Text(
                   'Xem tất cả',
@@ -358,10 +366,10 @@ class _IngredientViewState extends State<_IngredientView> {
                 rating: shop.rating,
                 distance: shop.distance,
                 onTap: () {
-                  // Navigate to shop page
-                  Navigator.pushNamed(
+                  // Navigate to shop detail
+                  AppRouter.navigateTo(
                     context,
-                    '/shop',
+                    RouteName.shop,
                     arguments: shop.id,
                   );
                 },
@@ -395,6 +403,21 @@ class _IngredientViewState extends State<_IngredientView> {
   }
 
   Widget _buildProductItem(BuildContext context, Product product, String shopName) {
+    // Hàm navigate đến trang chi tiết
+    void navigateToDetail() {
+      Navigator.pushNamed(
+        context,
+        '/ingredient-detail',
+        arguments: {
+          'maNguyenLieu': product.maNguyenLieu,
+          'name': product.name,
+          'image': product.imagePath,
+          'price': product.price,
+          'shopName': shopName,
+        },
+      );
+    }
+
     return IngredientCard(
       name: product.name,
       price: product.price,
@@ -402,21 +425,9 @@ class _IngredientViewState extends State<_IngredientView> {
       shopName: shopName,
       hasDiscount: product.hasDiscount,
       originalPrice: product.originalPrice,
-      onAddToCart: () => context.read<IngredientCubit>().addToCart(product),
-      onBuyNow: () => context.read<IngredientCubit>().buyNow(product),
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/ingredient-detail',
-          arguments: {
-            'maNguyenLieu': product.maNguyenLieu,
-            'name': product.name,
-            'image': product.imagePath,
-            'price': product.price,
-            'shopName': shopName,
-          },
-        );
-      },
+      onAddToCart: navigateToDetail, // Navigate để chọn gian hàng trước khi thêm
+      onBuyNow: navigateToDetail, // Navigate để chọn gian hàng trước khi mua
+      onTap: navigateToDetail,
     );
   }
 }

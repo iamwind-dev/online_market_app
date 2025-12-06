@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/widgets/buyer_loading.dart';
 import 'shop_cubit.dart';
 import '../../../../core/utils/price_formatter.dart';
 import '../../../../core/config/route_name.dart';
@@ -31,9 +32,11 @@ class _ShopPageState extends State<ShopPage> {
       body: BlocBuilder<ShopCubit, ShopState>(
         builder: (context, state) {
           if (state is ShopLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF00B40F)),
+            
+              return const BuyerLoading(
+              message: 'Đang tải gian hàng...',
             );
+
           }
 
           if (state is ShopFailure) {

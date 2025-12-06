@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../../core/widgets/buyer_loading.dart';
 import '../cubit/edit_profile_cubit.dart';
 
 /// Trang chỉnh sửa thông tin cá nhân
@@ -131,7 +132,9 @@ class _EditProfileViewState extends State<EditProfileView> {
 
   Widget _buildContent(BuildContext context, EditProfileState state) {
     if (state is EditProfileLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const BuyerLoading(
+              message: 'Đang tải cập nhật...',
+            );
     }
 
     return SingleChildScrollView(

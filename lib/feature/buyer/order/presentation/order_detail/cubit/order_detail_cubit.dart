@@ -51,26 +51,26 @@ class OrderDetailCubit extends Cubit<OrderDetailState> {
   }
 
   /// Hủy đơn hàng
-  Future<void> cancelOrder(String orderId, String reason) async {
+  Future<void> cancelOrder(String orderId) async {
     if (AppConfig.enableApiLogging) {
-      AppLogger.info('Cancelling order: $orderId, reason: $reason');
+      AppLogger.info('Cancelling order: $orderId');
     }
 
     emit(const OrderDetailProcessing());
 
     try {
-      // TODO: Implement cancel order API
-      await Future.delayed(const Duration(seconds: 1));
+      final response = await _orderService.cancelOrder(orderId);
 
       if (isClosed) return;
 
       if (AppConfig.enableApiLogging) {
-        AppLogger.info('Order cancelled successfully');
+        AppLogger.info('Order cancelled successfully: ${response.message}');
       }
 
       emit(OrderDetailCancelled(
-        message: 'Đơn hàng đã được hủy thành công',
+        message: response.message,
         orderId: orderId,
+        restoredItemsCount: response.soMatHang,
       ));
 
       // Reload order detail to show updated status
@@ -82,7 +82,7 @@ class OrderDetailCubit extends Cubit<OrderDetailState> {
 
       if (!isClosed) {
         emit(OrderDetailFailure(
-          errorMessage: 'Không thể hủy đơn hàng. Vui lòng thử lại.',
+          errorMessage: e.toString().replaceAll('Exception: ', ''),
         ));
       }
     }

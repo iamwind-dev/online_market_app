@@ -341,4 +341,46 @@ class ProductCubit extends Cubit<ProductState> {
       ));
     }
   }
+
+  /// Refresh dữ liệu (pull to refresh)
+  Future<void> refreshData() async {
+    print('🔄 [ProductCubit] Refreshing data...');
+    
+    try {
+      // 1. Fetch categories từ API
+      final categories = await _categoryService.getDanhMucMonAn(page: 1, limit: 20);
+      
+      if (isClosed) return;
+      
+      // 2. Fetch danh sách món ăn từ API (trang 1)
+      final response = await _monAnService.getMonAnListWithMeta(
+        page: 1,
+        limit: 12,
+        sort: 'ten_mon_an',
+        order: 'asc',
+      );
+      
+      if (isClosed) return;
+      
+      print('✅ [ProductCubit] Refresh: ${response.data.length} products');
+      
+      // 3. Fetch chi tiết (ảnh) cho từng món ăn
+      final monAnWithImages = await _fetchMonAnImages(response.data);
+      
+      if (isClosed) return;
+      
+      // 4. Emit loaded state với dữ liệu mới
+      emit(ProductLoaded(
+        categories: categories,
+        monAnList: monAnWithImages,
+        currentPage: 1,
+        hasMore: response.meta.hasNext,
+      ));
+      
+      print('✅ [ProductCubit] Refresh completed');
+    } catch (e) {
+      print('❌ [ProductCubit] Refresh error: $e');
+      // Không emit error state khi refresh, giữ nguyên dữ liệu cũ
+    }
+  }
 }

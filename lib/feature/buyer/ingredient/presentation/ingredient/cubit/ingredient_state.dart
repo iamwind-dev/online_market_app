@@ -124,16 +124,18 @@ class IngredientError extends IngredientState {
 
 /// Category model
 class Category extends Equatable {
+  final String? maNhomNguyenLieu; // Mã nhóm nguyên liệu
   final String name;
   final String imagePath;
 
   const Category({
+    this.maNhomNguyenLieu,
     required this.name,
     required this.imagePath,
   });
 
   @override
-  List<Object?> get props => [name, imagePath];
+  List<Object?> get props => [maNhomNguyenLieu, name, imagePath];
 }
 
 /// Product model

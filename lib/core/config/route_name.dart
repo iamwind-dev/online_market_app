@@ -8,6 +8,14 @@ class RouteName {
   static const String onboarding = '/onboarding';
   static const String main = '/main';
   static const String home = '/home';
+  
+  // Seller Routes
+  static const String sellerMain = '/seller/main';
+  static const String sellerHome = '/seller/home';
+  static const String sellerAddIngredient = '/seller/add-ingredient';
+  static const String sellerEditIngredient = '/seller/edit-ingredient';
+  static const String sellerUpdateIngredient = '/seller/update-ingredient';
+  static const String sellerUser = '/seller/user';
 
   // Authentication Routes
   static const String login = '/login';
@@ -24,6 +32,8 @@ class RouteName {
   static const String menuDetail = '/menu-detail';
   static const String search = '/search';
   static const String categoryProducts = '/category-products';
+  static const String categoryIngredients = '/category-ingredients';
+  static const String allShops = '/all-shops';
   static const String ingredient = '/ingredient';
   static const String ingredientDetail = '/ingredient-detail';
   static const String shop = '/shop';

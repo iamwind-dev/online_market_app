@@ -111,8 +111,10 @@ class DanhMucDetail {
 
   factory DanhMucDetail.fromJson(Map<String, dynamic> json) {
     return DanhMucDetail(
-      maDanhMuc: json['ma_danh_muc'] as String?,
-      tenDanhMuc: json['ten_danh_muc'] as String?,
+      // Hỗ trợ cả 2 format: ma_danh_muc và ma_danh_muc_mon_an
+      maDanhMuc: json['ma_danh_muc_mon_an'] as String? ?? json['ma_danh_muc'] as String?,
+      // Hỗ trợ cả 2 format: ten_danh_muc và ten_danh_muc_mon_an
+      tenDanhMuc: json['ten_danh_muc_mon_an'] as String? ?? json['ten_danh_muc'] as String?,
     );
   }
 
@@ -125,31 +127,97 @@ class DanhMucDetail {
 }
 
 /// Model nguyên liệu trong chi tiết món ăn
-/// Bỏ qua ma_nguyen_lieu, sử dụng: ten_nguyen_lieu, don_vi_goc, dinh_luong
 class NguyenLieuDetail {
+  final String? maNguyenLieu; // Mã nguyên liệu để navigate
   final String? tenNguyenLieu; // VD: "đỏ"
   final String? donViGoc; // VD: null hoặc "gram"
   final String? dinhLuong; // VD: "50\r"
+  final String? hinhAnh; // URL hình ảnh nguyên liệu
+  final double? gia; // Giá nguyên liệu
+  final String? donViBan; // Đơn vị bán (VD: "kg", "gram")
+  final double? soLuongBan; // Số lượng bán
+  final int? soGianHang; // Số gian hàng bán nguyên liệu này
+  final List<GianHangInfo>? gianHang; // Danh sách gian hàng
 
   NguyenLieuDetail({
+    this.maNguyenLieu,
     this.tenNguyenLieu,
     this.donViGoc,
     this.dinhLuong,
+    this.hinhAnh,
+    this.gia,
+    this.donViBan,
+    this.soLuongBan,
+    this.soGianHang,
+    this.gianHang,
   });
 
   factory NguyenLieuDetail.fromJson(Map<String, dynamic> json) {
     return NguyenLieuDetail(
+      maNguyenLieu: json['ma_nguyen_lieu'] as String?,
       tenNguyenLieu: json['ten_nguyen_lieu'] as String?,
       donViGoc: json['don_vi_goc'] as String?,
       dinhLuong: json['dinh_luong'] as String?,
+      hinhAnh: json['hinh_anh'] as String?,
+      gia: _parseDouble(json['gia_cuoi']) ?? _parseDouble(json['gia_goc']) ?? _parseDouble(json['gia']),
+      donViBan: json['don_vi_ban'] as String?,
+      soLuongBan: _parseDouble(json['so_luong_ban']),
+      soGianHang: (json['so_gian_hang'] as num?)?.toInt(),
+      gianHang: (json['gian_hang'] as List<dynamic>?)
+          ?.map((item) => GianHangInfo.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'ma_nguyen_lieu': maNguyenLieu,
+      'ten_nguyen_lieu': tenNguyenLieu,
+      'don_vi_goc': donViGoc,
+      'dinh_luong': dinhLuong,
+      'hinh_anh': hinhAnh,
+      'gia': gia,
+      'don_vi_ban': donViBan,
+      'so_luong_ban': soLuongBan,
+      'so_gian_hang': soGianHang,
+      'gian_hang': gianHang?.map((item) => item.toJson()).toList(),
+    };
+  }
+}
+
+/// Model thông tin gian hàng trong nguyên liệu
+class GianHangInfo {
+  final String? maGianHang;
+  final String? tenGianHang;
+  final String? maCho;
+
+  GianHangInfo({
+    this.maGianHang,
+    this.tenGianHang,
+    this.maCho,
+  });
+
+  factory GianHangInfo.fromJson(Map<String, dynamic> json) {
+    return GianHangInfo(
+      maGianHang: json['ma_gian_hang'] as String?,
+      tenGianHang: json['ten_gian_hang'] as String?,
+      maCho: json['ma_cho'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'ten_nguyen_lieu': tenNguyenLieu,
-      'don_vi_goc': donViGoc,
-      'dinh_luong': dinhLuong,
+      'ma_gian_hang': maGianHang,
+      'ten_gian_hang': tenGianHang,
+      'ma_cho': maCho,
     };
   }
 }

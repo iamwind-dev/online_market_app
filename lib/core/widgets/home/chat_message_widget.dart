@@ -32,9 +32,13 @@ class ChatMessageWidget extends StatelessWidget {
               height: 28,
               margin: const EdgeInsets.only(right: 8),
               decoration: const BoxDecoration(
-                color: Color(0xFFFFD503),
                 shape: BoxShape.circle,
-                border: Border.fromBorderSide(BorderSide(color: Color(0xFF008EDB), width: 1)),
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/img/logo.png',
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ],

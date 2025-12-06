@@ -1,66 +1,38 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/services/nhom_nguyen_lieu_service.dart';
 import 'ingredient_state.dart';
 
 class SellerIngredientCubit extends Cubit<SellerIngredientState> {
   SellerIngredientCubit() : super(SellerIngredientState.initial());
 
-  /// Khởi tạo và load danh sách nguyên liệu
-  Future<void> loadIngredients() async {
+  /// Khởi tạo và load danh sách nguyên liệu từ API
+  Future<void> loadIngredients({int page = 1}) async {
     emit(state.copyWith(isLoading: true));
 
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 800));
+      final response = await NhomNguyenLieuService.getSellerProducts(
+        page: page,
+        limit: 12,
+        sort: 'ngay_cap_nhat',
+        order: 'desc',
+      );
 
-      // Mock data theo Figma design
-      final mockIngredients = [
-        const SellerIngredient(
-          id: '1713091230134',
-          name: 'Cá diêu hồng',
-          price: 91000,
-          unit: 'Ký',
-          availableQuantity: 9,
-          imageUrl: 'assets/img/seller_ingredient_fish1.png',
-        ),
-        const SellerIngredient(
-          id: '1713091230135',
-          name: 'Cá diêu hồng',
-          price: 91000,
-          unit: 'Ký',
-          availableQuantity: 9,
-          imageUrl: 'assets/img/seller_ingredient_fish2.png',
-        ),
-        const SellerIngredient(
-          id: '1713091230136',
-          name: 'Cá diêu hồng',
-          price: 91000,
-          unit: 'Ký',
-          availableQuantity: 9,
-          imageUrl: 'assets/img/seller_ingredient_fish2.png',
-        ),
-        const SellerIngredient(
-          id: '1713091230137',
-          name: 'Cá diêu hồng',
-          price: 91000,
-          unit: 'Ký',
-          availableQuantity: 9,
-          imageUrl: 'assets/img/seller_ingredient_fish2.png',
-        ),
-        const SellerIngredient(
-          id: '1713091230138',
-          name: 'Cá diêu hồng',
-          price: 91000,
-          unit: 'Ký',
-          availableQuantity: 9,
-          imageUrl: 'assets/img/seller_ingredient_fish2.png',
-        ),
-      ];
+      debugPrint('[SELLER_CUBIT] Loaded ${response.data.length} products');
+
+      final ingredients = response.data
+          .map((json) => SellerIngredient.fromJson(json))
+          .toList();
 
       emit(state.copyWith(
         isLoading: false,
-        ingredients: mockIngredients,
+        ingredients: ingredients,
+        currentPage: response.meta.page,
+        totalItems: response.meta.total,
+        hasNextPage: response.meta.hasNext,
       ));
     } catch (e) {
+      debugPrint('[SELLER_CUBIT] Error: $e');
       emit(state.copyWith(
         isLoading: false,
         errorMessage: 'Không thể tải danh sách sản phẩm: ${e.toString()}',
@@ -95,18 +67,37 @@ class SellerIngredientCubit extends Cubit<SellerIngredientState> {
   }
 
   /// Xóa sản phẩm
-  Future<void> deleteIngredient(String id) async {
+  Future<bool> deleteIngredient(String id) async {
+    debugPrint('[SELLER_CUBIT] Deleting product: $id');
+    
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      final updatedList = state.ingredients.where((item) => item.id != id).toList();
-      emit(state.copyWith(ingredients: updatedList));
+      final response = await NhomNguyenLieuService.deleteProduct(id);
+      
+      if (response.success) {
+        debugPrint('[SELLER_CUBIT] ✅ Delete success');
+        // Xóa khỏi danh sách local
+        final updatedList = state.ingredients.where((item) => item.id != id).toList();
+        emit(state.copyWith(ingredients: updatedList));
+        return true;
+      } else {
+        debugPrint('[SELLER_CUBIT] ❌ Delete failed: ${response.message}');
+        emit(state.copyWith(
+          errorMessage: response.message ?? 'Không thể xóa sản phẩm',
+        ));
+        return false;
+      }
     } catch (e) {
+      debugPrint('[SELLER_CUBIT] ❌ Delete exception: $e');
       emit(state.copyWith(
         errorMessage: 'Không thể xóa sản phẩm: ${e.toString()}',
       ));
+      return false;
     }
+  }
+  
+  /// Clear error message
+  void clearError() {
+    emit(state.copyWith(errorMessage: null));
   }
 
   /// Quay lại trang trước

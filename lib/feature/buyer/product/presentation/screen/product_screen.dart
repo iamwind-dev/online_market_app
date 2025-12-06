@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/widgets/product_list_item.dart';
 import '../../../../../core/widgets/cart_badge_icon.dart';
-import '../../../../../core/widgets/market_selector.dart';
+import '../../../../../core/widgets/buyer_loading.dart';
 import '../../../../../core/config/route_name.dart';
 import '../../../../../core/router/app_router.dart';
 import '../cubit/product_cubit.dart';
@@ -61,43 +61,106 @@ class _ProductViewState extends State<ProductView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ProductCubit, ProductState>(
+    return BlocConsumer<ProductCubit, ProductState>(
       listener: (context, state) {
         if (state is ProductError && state.requiresLogin) {
-          // Navigate to login screen
           Navigator.of(context).pushNamedAndRemoveUntil(
             '/login',
             (route) => false,
           );
         }
       },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: CustomScrollView(
-                controller: _scrollController,
-                slivers: [
-                  SliverToBoxAdapter(
+      builder: (context, state) {
+        // Hiển thị loading chung khi đang load dữ liệu ban đầu
+        if (state is ProductLoading) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Column(
+              children: [
+                _buildHeader(context),
+                const Expanded(
+                  child: BuyerLoading(message: 'Đang tải món ăn...'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Hiển thị lỗi
+        if (state is ProductError) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Column(
+              children: [
+                _buildHeader(context),
+                Expanded(
+                  child: Center(
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
                         const SizedBox(height: 16),
-                        _buildCategoryTitle(),
-                        const SizedBox(height: 16),
-                        _buildCategoryTabs(context),
-                        const SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Text(
+                            state.message,
+                            style: const TextStyle(color: Colors.red, fontSize: 16),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => context.read<ProductCubit>().loadProductData(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Thử lại'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00B40F),
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  _buildProductList(context),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          );
+        }
+
+        // Hiển thị nội dung khi đã load xong
+        return Scaffold(
+          backgroundColor: Colors.white,
+          body: Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => context.read<ProductCubit>().refreshData(),
+                  color: const Color(0xFF00B40F),
+                  child: CustomScrollView(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 16),
+                            _buildCategoryTitle(),
+                            const SizedBox(height: 16),
+                            _buildCategoryTabs(context),
+                            const SizedBox(height: 10),
+                          ],
+                        ),
+                      ),
+                      _buildProductList(context),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -105,10 +168,6 @@ class _ProductViewState extends State<ProductView> {
     return BlocBuilder<ProductCubit, ProductState>(
       builder: (context, state) {
         final searchQuery = state is ProductLoaded ? state.searchQuery : '';
-        final selectedRegion = state is ProductLoaded ? state.selectedRegion : null;
-        final selectedRegionMa = state is ProductLoaded ? state.selectedRegionMa : null;
-        final selectedMarket = state is ProductLoaded ? state.selectedMarket : null;
-        final selectedMarketMa = state is ProductLoaded ? state.selectedMarketMa : null;
         
         return SafeArea(
           child: Container(
@@ -150,9 +209,6 @@ class _ProductViewState extends State<ProductView> {
                     const SizedBox(width: 12),
                     
                     // Cart Icon with Badge
-                    const CartBadgeIcon(
-                iconSize: 26,
-              ),
                   ],
                 ),
               ],
@@ -220,12 +276,6 @@ class _ProductViewState extends State<ProductView> {
                 
                 return GestureDetector(
                   onTap: () {
-                    // Debug: Print category info
-                    print('🔍 [CATEGORY] Bấm vào danh mục');
-                    print('   Mã danh mục: ${category.maDanhMucMonAn}');
-                    print('   Tên danh mục: ${category.tenDanhMucMonAn}');
-                    
-                    // Navigate to category product screen
                     AppRouter.navigateTo(
                       context,
                       RouteName.categoryProducts,
@@ -260,18 +310,8 @@ class _ProductViewState extends State<ProductView> {
           );
         }
         
-        // Loading state
-        return Container(
-          height: 35,
-          margin: const EdgeInsets.only(left: 25),
-          child: const Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
-        );
+        // Không hiển thị gì nếu chưa có categories (đã có loading chung)
+        return const SizedBox(height: 35);
       },
     );
   }
@@ -301,41 +341,25 @@ class _ProductViewState extends State<ProductView> {
   Widget _buildProductList(BuildContext context) {
     return BlocBuilder<ProductCubit, ProductState>(
       builder: (context, state) {
-        if (state is ProductLoading) {
-          return const SliverFillRemaining(
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-
-        if (state is ProductError) {
-          return SliverFillRemaining(
-            child: Center(
-              child: Text(
-                state.message,
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          );
-        }
-
         if (state is ProductLoaded) {
-          // Lấy danh sách món ăn từ state
           final monAnList = state.monAnList;
 
           if (monAnList.isEmpty) {
-            return const SliverFillRemaining(
+            return SliverFillRemaining(
               child: Center(
-                child: Text(
-                  'Chưa có món ăn nào',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.restaurant_menu, size: 64, color: Colors.grey[300]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Chưa có món ăn nào',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -346,12 +370,17 @@ class _ProductViewState extends State<ProductView> {
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  // Hiển thị loading indicator ở cuối danh sách
+                  // Hiển thị loading indicator ở cuối danh sách khi load more
                   if (index >= monAnList.length) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Center(
-                        child: CircularProgressIndicator(),
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child:  const BuyerLoading(
+            )
+                        ),
                       ),
                     );
                   }

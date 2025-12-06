@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../../core/services/auth/simple_auth_helper.dart';
@@ -5,6 +6,14 @@ import '../../../../core/services/auth/auth_service.dart';
 import '../../../../core/dependency/injection.dart';
 
 part 'splash_state.dart';
+
+/// Kết quả kiểm tra authentication
+class AuthCheckResult {
+  final bool isAuthenticated;
+  final String? role; // nguoi_mua hoặc nguoi_ban
+
+  AuthCheckResult({required this.isAuthenticated, this.role});
+}
 
 /// Splash Cubit quản lý logic nghiệp vụ của màn hình Splash
 /// 
@@ -40,14 +49,18 @@ class SplashCubit extends Cubit<SplashState> {
       // - Check app version
       // - Load initial data
 
-      // For now, just check authentication (mock)
-      final isAuthenticated = await _checkAuthentication();
+      // Check authentication and role
+      final authResult = await _checkAuthenticationAndRole();
 
       // Check again if cubit is still open before emitting final state
       if (!isClosed) {
-        if (isAuthenticated) {
-          emit(SplashAuthenticated());
+        if (authResult.isAuthenticated && authResult.role != null) {
+          // Đã đăng nhập với vai trò hợp lệ (nguoi_mua hoặc nguoi_ban)
+          debugPrint('[SPLASH] 🚀 Emitting SplashAuthenticated with role: ${authResult.role}');
+          emit(SplashAuthenticated(role: authResult.role!));
         } else {
+          // Chưa đăng nhập
+          debugPrint('[SPLASH] 🚀 Emitting SplashUnauthenticated');
           emit(SplashUnauthenticated());
         }
       }
@@ -58,10 +71,8 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
-  /// Kiểm tra trạng thái đăng nhập
-  /// 
-  /// Returns: true nếu người dùng đã đăng nhập và token còn hạn, false nếu chưa hoặc token hết hạn
-  Future<bool> _checkAuthentication() async {
+  /// Kiểm tra trạng thái đăng nhập và vai trò người dùng
+  Future<AuthCheckResult> _checkAuthenticationAndRole() async {
     try {
       // Check if user is logged in using simple_auth_helper
       final loggedIn = await isLoggedIn();
@@ -70,7 +81,7 @@ class SplashCubit extends Cubit<SplashState> {
         print('[SPLASH] ℹ️ User is not logged in');
         await _loadAppConfiguration();
         await _checkAppVersion();
-        return false;
+        return AuthCheckResult(isAuthenticated: false);
       }
       
       // User is logged in, verify token is still valid
@@ -86,17 +97,28 @@ class SplashCubit extends Cubit<SplashState> {
         await authService.logout();
         await _loadAppConfiguration();
         await _checkAppVersion();
-        return false;
+        return AuthCheckResult(isAuthenticated: false);
       }
       
-      // Token is still valid
-      print('[SPLASH] ✅ Token is valid');
+      // Check user role - cho phép nguoi_mua và nguoi_ban
+      final vaiTro = userData?['vai_tro'] as String?;
+      print('[SPLASH] 👤 User role: $vaiTro');
+      
+      if (vaiTro != 'nguoi_mua' && vaiTro != 'nguoi_ban') {
+        print('[SPLASH] ⚠️ Invalid role: $vaiTro (expected: nguoi_mua or nguoi_ban)');
+        // Logout user với vai trò không hợp lệ
+        await authService.logout();
+        return AuthCheckResult(isAuthenticated: false);
+      }
+      
+      // Token is still valid and role is correct
+      print('[SPLASH] ✅ Token is valid and role is $vaiTro');
       await _loadAppConfiguration();
       await _checkAppVersion();
-      return true;
+      return AuthCheckResult(isAuthenticated: true, role: vaiTro);
     } catch (e) {
       print('[SPLASH] ❌ Error checking authentication: $e');
-      return false;
+      return AuthCheckResult(isAuthenticated: false);
     }
   }
 

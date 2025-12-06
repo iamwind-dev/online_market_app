@@ -37,22 +37,8 @@ class NavigationStateService {
 
   /// Lấy initial route dựa trên trạng thái
   String getInitialRoute() {
-    // Nếu là lần đầu mở app, hiển thị splash
-    if (isFirstLaunch()) {
-      return RouteName.splash;
-    }
-
-    // Nếu có route đã lưu, sử dụng route đó
-    final savedRoute = getSavedRoute();
-    if (savedRoute != null && savedRoute.isNotEmpty) {
-      // Chỉ khôi phục các route chính, không khôi phục splash/login
-      if (_isMainRoute(savedRoute)) {
-        return savedRoute;
-      }
-    }
-
-    // Mặc định về main (home tab)
-    return RouteName.main;
+    // Luôn hiển thị splash khi khởi động app
+    return RouteName.splash;
   }
 
   /// Kiểm tra có phải route chính không

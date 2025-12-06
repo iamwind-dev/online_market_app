@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/config/route_name.dart';
@@ -392,10 +393,28 @@ class _LoginViewState extends State<LoginView> {
                       
                       // Chỉ navigate khi đăng nhập thành công
                       if (success && mounted) {
-                        AppRouter.navigateAndRemoveUntil(
-                          context,
-                          RouteName.home,
-                        );
+                        // Lấy vai trò người dùng để navigate đúng trang
+                        final userData = await getUserData();
+                        final vaiTro = userData?['vai_tro'] as String?;
+                        debugPrint('[LOGIN] 👤 User role: $vaiTro');
+                        
+                        if (!mounted) return;
+                        
+                        if (vaiTro == 'nguoi_ban') {
+                          // Người bán -> Seller Home
+                          debugPrint('[LOGIN] ➡️ Navigating to SELLER home');
+                          AppRouter.navigateAndRemoveUntil(
+                            context,
+                            RouteName.sellerMain,
+                          );
+                        } else {
+                          // Người mua hoặc vai trò khác -> Buyer Home
+                          debugPrint('[LOGIN] ➡️ Navigating to BUYER home');
+                          AppRouter.navigateAndRemoveUntil(
+                            context,
+                            RouteName.main,
+                          );
+                        }
                       }
                     }
                   },

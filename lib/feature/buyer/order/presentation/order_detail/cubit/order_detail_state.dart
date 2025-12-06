@@ -39,14 +39,16 @@ class OrderDetailProcessing extends OrderDetailState {
 class OrderDetailCancelled extends OrderDetailState {
   final String message;
   final String orderId;
+  final int restoredItemsCount;
 
   const OrderDetailCancelled({
     required this.message,
     required this.orderId,
+    this.restoredItemsCount = 0,
   });
 
   @override
-  List<Object?> get props => [message, orderId];
+  List<Object?> get props => [message, orderId, restoredItemsCount];
 }
 
 /// State đặt lại đơn hàng thành công

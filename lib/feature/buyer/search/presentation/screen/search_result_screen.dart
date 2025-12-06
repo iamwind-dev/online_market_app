@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/widgets/buyer_loading.dart';
 import '../cubit/search_cubit.dart';
 import '../cubit/search_state.dart';
 import '../../../../../core/widgets/search_result_card.dart';
@@ -65,11 +66,9 @@ class _SearchResultScreenView extends StatelessWidget {
   }
 
   Widget _buildLoadingView() {
-    return const Center(
-      child: CircularProgressIndicator(
-        color: Color(0xFF00B40F),
-      ),
-    );
+    return const BuyerLoading(
+              message: 'Đang tải...',
+            );
   }
 
   Widget _buildSuccessView(BuildContext context, SearchSuccess state) {

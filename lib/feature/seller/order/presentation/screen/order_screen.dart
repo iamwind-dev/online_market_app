@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/widgets/buyer_loading.dart';
 import '../cubit/order_cubit.dart';
 import '../cubit/order_state.dart';
 
@@ -26,7 +27,9 @@ class SellerOrderView extends StatelessWidget {
         child: BlocBuilder<SellerOrderCubit, SellerOrderState>(
           builder: (context, state) {
             if (state.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const BuyerLoading(
+              message: 'Đang tải danh sách đơn hàng...',
+            );
             }
 
             if (state.errorMessage != null) {

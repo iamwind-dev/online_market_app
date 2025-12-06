@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/widgets/buyer_loading.dart';
 import '../cubit/productdetail_cubit.dart';
 import '../cubit/productdetail_state.dart';
 import '../../../../../core/widgets/ingredient_list_item.dart';
-import '../../../../../core/widgets/ingredient_card.dart';
+import '../../../../../core/widgets/ingredient_grid_card.dart';
 import '../../../../../core/widgets/shared_bottom_navigation.dart';
 
 class ProductDetailScreen extends StatelessWidget {
@@ -29,8 +30,15 @@ class ProductDetailScreen extends StatelessWidget {
   }
 }
 
-class _ProductDetailView extends StatelessWidget {
+class _ProductDetailView extends StatefulWidget {
   const _ProductDetailView();
+
+  @override
+  State<_ProductDetailView> createState() => _ProductDetailViewState();
+}
+
+class _ProductDetailViewState extends State<_ProductDetailView> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +47,9 @@ class _ProductDetailView extends StatelessWidget {
       body: BlocBuilder<ProductDetailCubit, ProductDetailState>(
         builder: (context, state) {
           if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const BuyerLoading(
+              message: 'Đang tải chi tiết món ăn...',
+            );
           }
 
           return Stack(
@@ -68,11 +78,8 @@ class _ProductDetailView extends StatelessWidget {
           _buildText(state),
           _buildProductInfo(context, state),
           _buildExpandButton(),
-          _buildRelatedProductsTitle(),
+          _buildRelatedProductsTitle(context),
           _buildRelatedProducts(context),
-          // const SizedBox(height: 20),
-          // _buildReviewSection(state),
-          // const SizedBox(height: 100),
         ],
       ),
     );
@@ -89,7 +96,7 @@ class _ProductDetailView extends StatelessWidget {
         color: Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey.withValues(alpha: 0.3),
             width: 0.8,
           ),
         ),
@@ -116,7 +123,7 @@ class _ProductDetailView extends StatelessWidget {
               const Icon(
                 Icons.more_vert,
                 size: 22,
-                color: Color(0xFF008EDB), // màu xanh bạn dùng trong app
+                color: Color(0xFF2F8000), // màu xanh bạn dùng trong app
               ),
             ],
           ),
@@ -146,7 +153,7 @@ class _ProductDetailView extends StatelessWidget {
             height: 308,
             color: Colors.grey[200],
             child: const Center(
-              child: CircularProgressIndicator(),
+              child: BuyerLoading(),
             ),
           );
         },
@@ -214,7 +221,7 @@ class _ProductDetailView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Thông tin cơ bản
+          // Thông tin cơ bản (luôn hiển thị)
           if (state.doKho != null)
             _buildInfoRow('Độ khó', state.doKho!),
           if (state.khoangThoiGian != null)
@@ -226,7 +233,7 @@ class _ProductDetailView extends StatelessWidget {
           
           const SizedBox(height: 12),
           
-          // Nguyên liệu
+          // Nguyên liệu (luôn hiển thị)
           if (state.nguyenLieu != null && state.nguyenLieu!.isNotEmpty) ...[
             const Text(
               'Nguyên liệu:',
@@ -244,119 +251,136 @@ class _ProductDetailView extends StatelessWidget {
                 dinhLuong: nl.dinhLuong,
                 donViGoc: nl.donVi,
               );
-            }).toList(),
+            }),
             const SizedBox(height: 12),
           ],
           
-          // Số chế
-          if (state.soChe != null && state.soChe!.isNotEmpty) ...[
-            const Text(
-              'Sơ chế:',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                height: 1.21,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              state.soChe!,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                height: 1.33,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          
-          // Cách thực hiện
-          if (state.cachThucHien != null && state.cachThucHien!.isNotEmpty) ...[
-            const Text(
-              'Cách thực hiện:',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                height: 1.21,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              state.cachThucHien!,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                height: 1.33,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          
-          // Cách dùng
-          if (state.cachDung != null && state.cachDung!.isNotEmpty) ...[
-            const Text(
-              'Cách dùng:',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                height: 1.21,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              state.cachDung!,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                height: 1.33,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          
-          // Danh mục
-          if (state.danhMuc != null && state.danhMuc!.isNotEmpty) ...[
-            const Text(
-              'Danh mục:',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                height: 1.21,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: state.danhMuc!.map((dm) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    dm.ten,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF2F8000),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
+          // Phần chi tiết (chỉ hiển thị khi mở rộng)
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: _buildExpandedContent(state),
+            crossFadeState: _isExpanded 
+                ? CrossFadeState.showSecond 
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 300),
+          ),
         ],
       ),
+    );
+  }
+  
+  Widget _buildExpandedContent(ProductDetailState state) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Sơ chế
+        if (state.soChe != null && state.soChe!.isNotEmpty) ...[
+          const Text(
+            'Sơ chế:',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              height: 1.21,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            state.soChe!,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              height: 1.33,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        
+        // Cách thực hiện
+        if (state.cachThucHien != null && state.cachThucHien!.isNotEmpty) ...[
+          const Text(
+            'Cách thực hiện:',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              height: 1.21,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            state.cachThucHien!,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              height: 1.33,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        
+        // Cách dùng
+        if (state.cachDung != null && state.cachDung!.isNotEmpty) ...[
+          const Text(
+            'Cách dùng:',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              height: 1.21,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            state.cachDung!,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              height: 1.33,
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        
+        // Danh mục
+        if (state.danhMuc != null && state.danhMuc!.isNotEmpty) ...[
+          const Text(
+            'Danh mục:',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              height: 1.21,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: state.danhMuc!.map((dm) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  dm.ten,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF2F8000),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ],
     );
   }
   
@@ -422,7 +446,7 @@ class _ProductDetailView extends StatelessWidget {
                   height: 28,
                   decoration: BoxDecoration(
                     color: state.currentKhauPhan > 1 
-                        ? const Color(0xFF008EDB) 
+                        ? const Color(0xFF2F8000) 
                         : Colors.grey[300],
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -460,7 +484,7 @@ class _ProductDetailView extends StatelessWidget {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF008EDB),
+                    color: const Color(0xFF2F8000),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Icon(
@@ -488,44 +512,144 @@ class _ProductDetailView extends StatelessWidget {
   }
 
   Widget _buildExpandButton() {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _isExpanded = !_isExpanded;
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 155, vertical: 10),
+        child: Row(
+          children: [
+            Text(
+              _isExpanded ? 'Thu gọn' : 'Xem thêm',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(width: 5),
+            AnimatedRotation(
+              turns: _isExpanded ? 0.5 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                Icons.keyboard_arrow_down,
+                size: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRelatedProductsTitle(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 155, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text(
-            'Xem thêm',
+            'Nguyên liệu cần mua',
             style: TextStyle(
               fontFamily: 'Inter',
-              fontSize: 11,
-              fontWeight: FontWeight.w400,
-              height: 1.45,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              height: 1.21,
+              color: Color(0xFF020202),
             ),
           ),
-          const SizedBox(width: 5),
-          Icon(
-            Icons.keyboard_arrow_down,
-            size: 16,
-            color: Colors.grey[600],
+          BlocBuilder<ProductDetailCubit, ProductDetailState>(
+            builder: (context, state) {
+              // Chỉ hiển thị nút nếu có nguyên liệu
+              if (state.nguyenLieu == null || state.nguyenLieu!.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return GestureDetector(
+                onTap: () => _addAllToCart(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2F8000),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_shopping_cart, size: 14, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text(
+                        'Thêm tất cả',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRelatedProductsTitle() {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, 12),
-      child: Text(
-        'Nguyên liệu cần mua',
-        style: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-          height: 1.21,
-          color: Color(0xFF020202),
-        ),
+  Future<void> _addAllToCart(BuildContext context) async {
+    // Hiển thị loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
+
+    try {
+      final result = await context.read<ProductDetailCubit>().addAllIngredientsToCart();
+      
+      // Đóng loading
+      if (context.mounted) Navigator.pop(context);
+
+      // Hiển thị kết quả
+      if (context.mounted) {
+        String message;
+        if (result.success > 0 && result.failed == 0) {
+          message = 'Đã thêm ${result.success} nguyên liệu vào giỏ hàng';
+        } else if (result.success > 0 && result.failed > 0) {
+          message = 'Đã thêm ${result.success} nguyên liệu, ${result.failed} thất bại';
+        } else {
+          message = 'Không thể thêm nguyên liệu vào giỏ hàng';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: result.success > 0 ? Colors.green : Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      // Đóng loading
+      if (context.mounted) Navigator.pop(context);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildRelatedProducts(BuildContext context) {
@@ -545,21 +669,46 @@ class _ProductDetailView extends StatelessWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 0.85,
+              childAspectRatio: 0.75,
             ),
             itemCount: state.nguyenLieu!.length,
             itemBuilder: (context, index) {
               final nl = state.nguyenLieu![index];
-              return IngredientCard(
+              return IngredientGridCard(
                 name: nl.ten,
-                price: nl.dinhLuong != null && nl.donVi != null
+                price: nl.giaDisplay ?? (nl.dinhLuong.isNotEmpty && nl.donVi != null
                     ? '${nl.dinhLuong} ${nl.donVi}'
-                    : 'N/A',
-                imagePath: '', // Không có ảnh
-                isGridLayout: true, // Grid layout cho ProductDetail
+                    : null),
+                imagePath: nl.hinhAnh,
+                onTap: () {
+                  // Navigate to ingredient detail
+                  if (nl.maNguyenLieu != null) {
+                    Navigator.pushNamed(
+                      context,
+                      '/ingredient-detail',
+                      arguments: {
+                        'maNguyenLieu': nl.maNguyenLieu,
+                        'ingredientName': nl.ten,
+                      },
+                    );
+                  }
+                },
+                onAddToCart: () {
+                  // TODO: Add to cart
+                  debugPrint('Thêm vào giỏ: ${nl.ten}');
+                },
                 onBuyNow: () {
-                  // Navigate to ingredient detail or add to cart
-                  print('Bấm vào nguyên liệu: ${nl.ten}');
+                  // Navigate to ingredient detail for buying
+                  if (nl.maNguyenLieu != null) {
+                    Navigator.pushNamed(
+                      context,
+                      '/ingredient-detail',
+                      arguments: {
+                        'maNguyenLieu': nl.maNguyenLieu,
+                        'ingredientName': nl.ten,
+                      },
+                    );
+                  }
                 },
               );
             },

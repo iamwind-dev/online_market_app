@@ -164,15 +164,10 @@ class Order extends Equatable {
   /// Check trạng thái thanh toán
   bool get isPaid => paymentStatus == 'da_thanh_toan';
   
+  /// Hiển thị trạng thái thanh toán đã format
   String get paymentStatusDisplay {
-    switch (paymentStatus) {
-      case 'da_thanh_toan':
-        return 'Đã thanh toán';
-      case 'cho_thanh_toan':
-        return 'Chờ thanh toán';
-      default:
-        return paymentStatus ?? 'N/A';
-    }
+    if (paymentStatus == null || paymentStatus!.isEmpty) return 'N/A';
+    return StatusFormatter.formatOrderStatus(paymentStatus);
   }
 
   @override

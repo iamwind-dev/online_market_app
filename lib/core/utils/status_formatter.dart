@@ -2,6 +2,76 @@
 class StatusFormatter {
   StatusFormatter._();
 
+  /// Map các từ tiếng Việt không dấu sang có dấu
+  static const Map<String, String> _vietnameseWords = {
+    'chua': 'Chưa',
+    'da': 'Đã',
+    'dang': 'Đang',
+    'cho': 'Chờ',
+    'thanh': 'thanh',
+    'toan': 'toán',
+    'xac': 'xác',
+    'nhan': 'nhận',
+    'xu': 'xử',
+    'ly': 'lý',
+    'giao': 'giao',
+    'hang': 'hàng',
+    'hoan': 'hoàn',
+    'huy': 'hủy',
+    'tra': 'trả',
+    'tien': 'tiền',
+    'that': 'thất',
+    'bai': 'bại',
+    'mat': 'mặt',
+    'chuyen': 'chuyển',
+    'khoan': 'khoản',
+    'nguoi': 'người',
+    'mua': 'mua',
+    'ban': 'bán',
+    'quan': 'quản',
+    'tri': 'trị',
+    'vien': 'viên',
+    'nam': 'Nam',
+    'nu': 'Nữ',
+    'khac': 'Khác',
+    'xong': 'xong',
+    'moi': 'mới',
+    'cu': 'cũ',
+    'tot': 'tốt',
+    'xau': 'xấu',
+    'lon': 'lớn',
+    'nho': 'nhỏ',
+    'nhieu': 'nhiều',
+    'it': 'ít',
+    'het': 'hết',
+    'con': 'còn',
+    'san': 'sẵn',
+    'sang': 'sàng',
+    'doi': 'đợi',
+    'duyet': 'duyệt',
+    'tu': 'từ',
+    'choi': 'chối',
+    'dong': 'đóng',
+    'mo': 'mở',
+    'bat': 'bật',
+    'tat': 'tắt',
+    'hoat': 'hoạt',
+    'khong': 'không',
+    'co': 'có',
+    'la': 'là',
+    'va': 'và',
+    'cua': 'của',
+    'trong': 'trong',
+    'ngoai': 'ngoài',
+    'tren': 'trên',
+    'duoi': 'dưới',
+    'truoc': 'trước',
+    'sau': 'sau',
+    'giua': 'giữa',
+    'ben': 'bên',
+    'canh': 'cạnh',
+  };
+
   /// Format trạng thái đơn hàng
   /// Ví dụ: 'chua_thanh_toan' -> 'Chưa thanh toán'
   static String formatOrderStatus(String? status) {
@@ -20,7 +90,8 @@ class StatusFormatter {
 
       // Trạng thái đơn hàng
       case 'chua_xac_nhan':
-        return 'Chưa xác nhận';
+      case 'cho_xac_nhan':
+        return 'Chờ xác nhận';
       case 'da_xac_nhan':
         return 'Đã xác nhận';
       case 'dang_xu_ly':
@@ -54,9 +125,43 @@ class StatusFormatter {
         return 'Chưa thanh toán';
 
       default:
-        // Nếu không match, convert snake_case thành Title Case
-        return _snakeCaseToTitleCase(status);
+        // Nếu không match, convert snake_case thành tiếng Việt có dấu
+        return formatSnakeCaseToVietnamese(status);
     }
+  }
+
+  /// Format bất kỳ snake_case nào thành tiếng Việt có dấu
+  /// Ví dụ: 'chua_thanh_toan' -> 'Chưa thanh toán'
+  static String formatSnakeCaseToVietnamese(String text) {
+    if (text.isEmpty) return text;
+
+    final words = text.toLowerCase().split('_');
+    final result = <String>[];
+
+    for (int i = 0; i < words.length; i++) {
+      final word = words[i];
+      if (word.isEmpty) continue;
+
+      // Tìm từ trong map
+      final vietnameseWord = _vietnameseWords[word];
+      if (vietnameseWord != null) {
+        // Viết hoa chữ cái đầu nếu là từ đầu tiên
+        if (i == 0) {
+          result.add(vietnameseWord[0].toUpperCase() + vietnameseWord.substring(1));
+        } else {
+          result.add(vietnameseWord.toLowerCase());
+        }
+      } else {
+        // Nếu không tìm thấy, giữ nguyên và viết hoa chữ đầu nếu là từ đầu
+        if (i == 0) {
+          result.add(word[0].toUpperCase() + word.substring(1));
+        } else {
+          result.add(word);
+        }
+      }
+    }
+
+    return result.join(' ');
   }
 
   /// Format phương thức thanh toán
@@ -118,15 +223,11 @@ class StatusFormatter {
     }
   }
 
-  /// Convert snake_case thành Title Case
+  /// Convert snake_case thành Title Case (fallback)
   /// Ví dụ: 'chua_thanh_toan' -> 'Chua Thanh Toan'
   static String _snakeCaseToTitleCase(String text) {
-    return text
-        .split('_')
-        .map((word) => word.isNotEmpty
-            ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
-            : '')
-        .join(' ');
+    // Sử dụng formatSnakeCaseToVietnamese để có dấu tiếng Việt
+    return formatSnakeCaseToVietnamese(text);
   }
 
   /// Lấy màu cho trạng thái đơn hàng

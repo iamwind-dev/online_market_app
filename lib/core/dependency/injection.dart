@@ -13,6 +13,7 @@ import '../services/cho_service.dart';
 import '../services/chat_ai_service.dart';
 import '../services/search_service.dart';
 import '../services/search_history_service.dart';
+import '../services/cart_api_service.dart';
 import '../../feature/shop/presentation/shop_cubit.dart';
 import '../utils/app_logger.dart';
 
@@ -102,6 +103,12 @@ Future<void> initDependencies() async {
     () => SearchHistoryService(getIt<LocalStorageService>().prefs),
   );
   AppLogger.info('✅ SearchHistoryService registered');
+
+  // Cart API Service - Singleton
+  getIt.registerLazySingleton<CartApiService>(
+    () => CartApiService(),
+  );
+  AppLogger.info('✅ CartApiService registered');
 
   // NavigationState Service - Singleton
   getIt.registerLazySingleton<NavigationStateService>(

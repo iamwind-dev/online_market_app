@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'ingredient_detail_state.dart';
@@ -7,17 +8,18 @@ import '../../../../../../core/dependency/injection.dart';
 import '../../../../../../core/utils/price_formatter.dart';
 import '../../../../../../core/services/cart_api_service.dart';
 import '../../../../../../core/widgets/cart_badge_icon.dart';
+import '../../../../../../core/models/nguyen_lieu_model.dart';
 
 /// Cubit quản lý state cho IngredientDetail
 class IngredientDetailCubit extends Cubit<IngredientDetailState> {
   NguyenLieuService? _nguyenLieuService;
-  final ReviewApiService _reviewApiService = ReviewApiService();
+  final ReviewApiService _reviewService = ReviewApiService();
 
   IngredientDetailCubit() : super(const IngredientDetailState()) {
     try {
       _nguyenLieuService = getIt<NguyenLieuService>();
     } catch (e) {
-      print('⚠️ NguyenLieuService not registered');
+      debugPrint('⚠️ NguyenLieuService not registered');
     }
   }
 
@@ -70,7 +72,9 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
             ? sellers.first.unit!
             : (detail.donVi ?? 'Ký');
         
-        print('✅ Loaded ingredient detail: ${detail.tenNguyenLieu} with ${sellers.length} sellers');
+        debugPrint('✅ Loaded ingredient detail: ${detail.tenNguyenLieu} with ${sellers.length} sellers');
+        
+        final firstSeller = sellers.isNotEmpty ? sellers.first : null;
         
         emit(state.copyWith(
           maNguyenLieu: detail.maNguyenLieu,
@@ -81,16 +85,20 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
           shopName: detail.tenNhomNguyenLieu,
           soldCount: totalSold,
           sellers: sellers,
-          selectedSeller: sellers.isNotEmpty ? sellers.first : null, // Chọn seller đầu tiên mặc định
+          selectedSeller: firstSeller,
           description: 'Có ${detail.soGianHang} gian hàng đang bán sản phẩm này',
+          relatedProducts: const [],
+          recommendedProducts: const [],
           isLoading: false,
         ));
-
-        // Load related products và reviews
-        await Future.wait([
-          loadRelatedProducts(detail.maNguyenLieu),
-          if (sellers.isNotEmpty) loadStoreReviews(sellers.first.maGianHang),
-        ]);
+        
+        // Load reviews cho seller đầu tiên
+        if (firstSeller != null) {
+          loadReviewsForSeller(firstSeller.maGianHang);
+        }
+        
+        // Load random products cho related và recommended
+        _loadRandomProducts(detail.maNguyenLieu);
       } else {
         throw Exception('NguyenLieuService not available');
       }
@@ -270,8 +278,7 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
 
   /// Select seller (chọn gian hàng để mua)
   void selectSeller(Seller seller) {
-    print('🏪 [SELECT SELLER] Before: ${state.selectedSeller?.maGianHang}');
-    print('🏪 [SELECT SELLER] Selecting: ${seller.maGianHang} - ${seller.tenGianHang}');
+    debugPrint('🏪 [SELECT SELLER] Selecting: ${seller.maGianHang} - ${seller.tenGianHang}');
     
     // Cập nhật thông tin hiển thị và lưu seller được chọn
     emit(state.copyWith(
@@ -279,26 +286,29 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
       price: seller.price,
       unit: seller.unit ?? state.unit,
       shopName: seller.tenGianHang,
+      // Reset reviews khi đổi gian hàng
+      reviews: const [],
+      totalReviews: 0,
+      avgRating: 0.0,
     ));
     
-    // Load reviews cho seller mới
-    loadStoreReviews(seller.maGianHang);
+    debugPrint('✅ Đã chọn gian hàng: ${seller.tenGianHang} (${seller.maGianHang}) - ${seller.price}');
     
-    print('🏪 [SELECT SELLER] After: ${state.selectedSeller?.maGianHang}');
-    print('✅ Đã chọn gian hàng: ${seller.tenGianHang} (${seller.maGianHang}) - ${seller.price}');
+    // Load reviews cho gian hàng mới
+    loadReviewsForSeller(seller.maGianHang);
   }
 
-  /// Load reviews của gian hàng
-  Future<void> loadStoreReviews(String maGianHang) async {
-    print('⭐ [REVIEWS] Loading reviews for store: $maGianHang');
+  /// Load đánh giá cho gian hàng được chọn
+  Future<void> loadReviewsForSeller(String maGianHang) async {
+    debugPrint('⭐ [REVIEWS] Loading reviews for shop: $maGianHang');
     
     emit(state.copyWith(isLoadingReviews: true));
     
     try {
-      final response = await _reviewApiService.getStoreReviews(maGianHang);
+      final response = await _reviewService.getStoreReviews(maGianHang);
       
       if (response.success) {
-        print('✅ [REVIEWS] Loaded ${response.total} reviews, avg: ${response.avg}');
+        debugPrint('✅ [REVIEWS] Loaded ${response.items.length} reviews, avg: ${response.avg}');
         emit(state.copyWith(
           reviews: response.items,
           totalReviews: response.total,
@@ -306,17 +316,18 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
           isLoadingReviews: false,
         ));
       } else {
+        debugPrint('⚠️ [REVIEWS] Failed to load reviews');
         emit(state.copyWith(
-          reviews: [],
+          reviews: const [],
           totalReviews: 0,
           avgRating: 0.0,
           isLoadingReviews: false,
         ));
       }
     } catch (e) {
-      print('⚠️ [REVIEWS] Error loading reviews: $e');
+      debugPrint('❌ [REVIEWS] Error loading reviews: $e');
       emit(state.copyWith(
-        reviews: [],
+        reviews: const [],
         totalReviews: 0,
         avgRating: 0.0,
         isLoadingReviews: false,
@@ -338,64 +349,84 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
     }
   }
 
-  /// Load sản phẩm liên quan và gợi ý từ API
-  Future<void> loadRelatedProducts(String currentMaNguyenLieu) async {
-    print('🔄 [RELATED] Loading related products...');
+  /// Load random products từ API cho related và recommended
+  Future<void> _loadRandomProducts(String currentMaNguyenLieu) async {
+    if (_nguyenLieuService == null) return;
     
     try {
-      if (_nguyenLieuService == null) {
-        print('⚠️ NguyenLieuService not available');
-        return;
-      }
-
-      // Fetch nguyên liệu từ API
+      debugPrint('🔄 [RANDOM] Loading random products...');
+      
+      // Fetch danh sách nguyên liệu từ API
       final response = await _nguyenLieuService!.getNguyenLieuList(
         page: 1,
-        limit: 20,
+        limit: 20, // Lấy 20 sản phẩm để random
+        sort: 'ten_nguyen_lieu',
+        order: 'asc',
         hinhAnh: true,
       );
-
+      
+      if (isClosed) return;
+      
       // Lọc bỏ sản phẩm hiện tại
-      final filteredList = response.data
-          .where((item) => item.maNguyenLieu != currentMaNguyenLieu)
+      final filteredProducts = response.data
+          .where((p) => p.maNguyenLieu != currentMaNguyenLieu)
           .toList();
-
-      // Shuffle để lấy random
-      filteredList.shuffle();
-
-      // Lấy 6 sản phẩm cho related, 6 sản phẩm cho recommended
-      final relatedItems = filteredList.take(6).toList();
-      final recommendedItems = filteredList.skip(6).take(6).toList();
-
-      // Convert to RelatedProduct
-      final relatedProducts = relatedItems.map((item) => RelatedProduct(
-        maNguyenLieu: item.maNguyenLieu,
-        name: item.tenNguyenLieu,
-        price: _formatPrice(item.giaCuoi, item.giaGoc),
-        imagePath: item.hinhAnh ?? '',
-        shopName: item.tenNhomNguyenLieu,
-        soldCount: item.soGianHang,
-        unit: item.donVi,
+      
+      // Shuffle để random
+      filteredProducts.shuffle();
+      
+      // Lấy 6 sản phẩm đầu cho related, 6 sản phẩm sau cho recommended
+      final relatedList = filteredProducts.take(6).toList();
+      final recommendedList = filteredProducts.skip(6).take(6).toList();
+      
+      // Convert sang RelatedProduct
+      final relatedProducts = relatedList.map((p) => RelatedProduct(
+        maNguyenLieu: p.maNguyenLieu,
+        name: p.tenNguyenLieu,
+        price: _formatPriceFromModel(p),
+        imagePath: p.hinhAnh ?? '',
+        shopName: p.tenNhomNguyenLieu, // Dùng tên nhóm nguyên liệu
+        soldCount: p.soGianHang, // Dùng số gian hàng
+        unit: p.donVi,
       )).toList();
-
-      final recommendedProducts = recommendedItems.map((item) => RelatedProduct(
-        maNguyenLieu: item.maNguyenLieu,
-        name: item.tenNguyenLieu,
-        price: _formatPrice(item.giaCuoi, item.giaGoc),
-        imagePath: item.hinhAnh ?? '',
-        shopName: item.tenNhomNguyenLieu,
-        soldCount: item.soGianHang,
-        unit: item.donVi,
+      
+      final recommendedProducts = recommendedList.map((p) => RelatedProduct(
+        maNguyenLieu: p.maNguyenLieu,
+        name: p.tenNguyenLieu,
+        price: _formatPriceFromModel(p),
+        imagePath: p.hinhAnh ?? '',
+        shopName: p.tenNhomNguyenLieu, // Dùng tên nhóm nguyên liệu
+        soldCount: p.soGianHang, // Dùng số gian hàng
+        unit: p.donVi,
       )).toList();
-
-      print('✅ [RELATED] Loaded ${relatedProducts.length} related, ${recommendedProducts.length} recommended');
-
+      
+      debugPrint('✅ [RANDOM] Loaded ${relatedProducts.length} related, ${recommendedProducts.length} recommended');
+      
       emit(state.copyWith(
         relatedProducts: relatedProducts,
         recommendedProducts: recommendedProducts,
       ));
     } catch (e) {
-      print('⚠️ [RELATED] Error loading related products: $e');
+      debugPrint('❌ [RANDOM] Error loading random products: $e');
+      // Không emit error, giữ nguyên state
     }
+  }
+
+  /// Format giá từ NguyenLieuModel
+  String _formatPriceFromModel(NguyenLieuModel product) {
+    // Ưu tiên giaCuoi
+    if (product.giaCuoi != null) {
+      final parsed = PriceFormatter.parsePrice(product.giaCuoi!);
+      if (parsed != null && parsed > 0) {
+        return PriceFormatter.formatPrice(parsed);
+      }
+    }
+    
+    // Nếu không có giaCuoi, dùng giaGoc
+    if (product.giaGoc != null && product.giaGoc! > 0) {
+      return PriceFormatter.formatPrice(product.giaGoc!);
+    }
+    
+    return '0đ';
   }
 }

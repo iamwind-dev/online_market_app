@@ -310,6 +310,16 @@ class MonAnService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         // 5. Parse response
         final data = response.data as Map<String, dynamic>;
+        
+        // Debug: In ra nguyên liệu để xem cấu trúc
+        if (data['detail'] != null && data['detail']['nguyen_lieu'] != null) {
+          final nguyenLieuList = data['detail']['nguyen_lieu'] as List<dynamic>;
+          _logger.i('🔍 [DEBUG] Số nguyên liệu: ${nguyenLieuList.length}');
+          for (var nl in nguyenLieuList) {
+            _logger.i('🔍 [DEBUG] Nguyên liệu: $nl');
+          }
+        }
+        
         final detail = MonAnDetailModel.fromJson(data);
 
         _logger.i('API trả về chi tiết món ăn: ${detail.tenMonAn}');

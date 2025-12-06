@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/widgets/seller_bottom_navigation.dart';
 import '../cubit/home_cubit.dart';
 import '../cubit/home_state.dart';
 
@@ -71,7 +72,10 @@ class _SellerHomeView extends StatelessWidget {
       ),
       bottomNavigationBar: BlocBuilder<SellerHomeCubit, SellerHomeState>(
         builder: (context, state) {
-          return _buildBottomNavigation(context, state);
+          return SellerBottomNavigation(
+            currentIndex: state.currentTabIndex,
+            onTap: (index) => context.read<SellerHomeCubit>().changeTab(index),
+          );
         },
       ),
     );
@@ -658,117 +662,4 @@ class _SellerHomeView extends StatelessWidget {
     );
   }
 
-  /// Bottom Navigation Bar
-  Widget _buildBottomNavigation(BuildContext context, SellerHomeState state) {
-    final cubit = context.read<SellerHomeCubit>();
-
-    return Container(
-      height: 69,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Colors.grey.shade200),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          // Đơn hàng
-          _buildNavItem(
-            context,
-            icon: Icons.receipt_long,
-            label: 'Đơn hàng',
-            isSelected: state.currentTabIndex == 0,
-            onTap: () => cubit.changeTab(0),
-          ),
-          // Sản phẩm
-          _buildNavItem(
-            context,
-            icon: Icons.shopping_bag,
-            label: 'Sản phẩm',
-            isSelected: state.currentTabIndex == 1,
-            onTap: () => cubit.changeTab(1),
-          ),
-          // Avatar (Home)
-          GestureDetector(
-            onTap: () => cubit.changeTab(2),
-            child: Container(
-              width: 58,
-              height: 58,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: state.currentTabIndex == 2 ? const Color(0xFF00B40F) : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  'assets/img/seller_home_avatar.png',
-                  width: 58,
-                  height: 58,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 58,
-                      height: 58,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.person, size: 30),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-          // Doanh số
-          _buildNavItem(
-            context,
-            icon: Icons.attach_money,
-            label: 'Doanh số',
-            isSelected: state.currentTabIndex == 3,
-            onTap: () => cubit.changeTab(3),
-          ),
-          // Tài khoản
-          _buildNavItem(
-            context,
-            icon: Icons.account_circle,
-            label: 'Tài khoản',
-            isSelected: state.currentTabIndex == 4,
-            onTap: () => cubit.changeTab(4),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            size: 28,
-            color: isSelected ? const Color(0xFF00B40F) : Colors.black54,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 12,
-              color: isSelected ? const Color(0xFF00B40F) : Colors.black,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

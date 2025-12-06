@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'auth/simple_auth_helper.dart';
 import '../utils/status_formatter.dart';
@@ -8,9 +9,9 @@ class OrderService {
   static const String _baseUrl =
       'https://subtle-seat-475108-v5.et.r.appspot.com/api/buyer';
 
-  /// Fetch chi tiết đơn hàng
-  Future<OrderDetailResponse> getOrderDetail(String maDonHang) async {
-    print('📦 [ORDER SERVICE] Fetching order detail: $maDonHang');
+  /// Huỷ đơn hàng
+  Future<CancelOrderResponse> cancelOrder(String maDonHang) async {
+    debugPrint('📦 [ORDER SERVICE] Cancelling order: $maDonHang');
 
     try {
       final token = await getToken();
@@ -21,7 +22,46 @@ class OrderService {
 
       final url = Uri.parse('$_baseUrl/orders/$maDonHang');
 
-      print('📦 [ORDER SERVICE] Request URL: $url');
+      debugPrint('📦 [ORDER SERVICE] DELETE Request URL: $url');
+
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint('📦 [ORDER SERVICE] Response status: ${response.statusCode}');
+      debugPrint('📦 [ORDER SERVICE] Response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonData = json.decode(utf8.decode(response.bodyBytes));
+        return CancelOrderResponse.fromJson(jsonData);
+      } else {
+        final errorData = json.decode(utf8.decode(response.bodyBytes));
+        throw Exception(errorData['message'] ?? 'Không thể huỷ đơn hàng');
+      }
+    } catch (e) {
+      debugPrint('❌ [ORDER SERVICE] Cancel order error: $e');
+      rethrow;
+    }
+  }
+
+  /// Fetch chi tiết đơn hàng
+  Future<OrderDetailResponse> getOrderDetail(String maDonHang) async {
+    debugPrint('📦 [ORDER SERVICE] Fetching order detail: $maDonHang');
+
+    try {
+      final token = await getToken();
+
+      if (token == null) {
+        throw Exception('User not logged in');
+      }
+
+      final url = Uri.parse('$_baseUrl/orders/$maDonHang');
+
+      debugPrint('📦 [ORDER SERVICE] Request URL: $url');
 
       final response = await http.get(
         url,
@@ -31,7 +71,7 @@ class OrderService {
         },
       );
 
-      print('📦 [ORDER SERVICE] Response status: ${response.statusCode}');
+      debugPrint('📦 [ORDER SERVICE] Response status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonData = json.decode(utf8.decode(response.bodyBytes));
@@ -41,7 +81,7 @@ class OrderService {
             'Failed to fetch order detail: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      print('❌ [ORDER SERVICE] Error: $e');
+      debugPrint('❌ [ORDER SERVICE] Error: $e');
       rethrow;
     }
   }
@@ -51,7 +91,7 @@ class OrderService {
     int page = 1,
     int limit = 12,
   }) async {
-    print('📦 [ORDER SERVICE] Fetching orders...');
+    debugPrint('📦 [ORDER SERVICE] Fetching orders...');
 
     try {
       final token = await getToken();
@@ -67,7 +107,7 @@ class OrderService {
         },
       );
 
-      print('📦 [ORDER SERVICE] Request URL: $url');
+      debugPrint('📦 [ORDER SERVICE] Request URL: $url');
 
       final response = await http.get(
         url,
@@ -77,8 +117,8 @@ class OrderService {
         },
       );
 
-      print('📦 [ORDER SERVICE] Response status: ${response.statusCode}');
-      print('📦 [ORDER SERVICE] Response body: ${response.body}');
+      debugPrint('📦 [ORDER SERVICE] Response status: ${response.statusCode}');
+      debugPrint('📦 [ORDER SERVICE] Response body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonData = json.decode(utf8.decode(response.bodyBytes));
@@ -88,7 +128,7 @@ class OrderService {
             'Failed to fetch orders: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      print('❌ [ORDER SERVICE] Error: $e');
+      debugPrint('❌ [ORDER SERVICE] Error: $e');
       rethrow;
     }
   }
@@ -155,7 +195,7 @@ class OrderModel {
         final addressJson = jsonDecode(json['dia_chi_giao_hang']);
         address = DeliveryAddress.fromJson(addressJson);
       } catch (e) {
-        print('Error parsing address: $e');
+        debugPrint('Error parsing address: $e');
       }
     }
 
@@ -299,7 +339,7 @@ class OrderDetailData {
         final addressJson = jsonDecode(json['dia_chi_giao_hang']);
         address = DeliveryAddress.fromJson(addressJson);
       } catch (e) {
-        print('Error parsing address: $e');
+        debugPrint('Error parsing address: $e');
       }
     }
 
@@ -428,6 +468,58 @@ class ShopInfo {
       tenGianHang: json['ten_gian_hang'] ?? '',
       viTri: json['vi_tri'],
       hinhAnh: json['hinh_anh'],
+    );
+  }
+}
+
+
+/// Model cho response huỷ đơn hàng
+class CancelOrderResponse {
+  final bool success;
+  final String maDonHang;
+  final List<RestoredItem> restoredItems;
+  final int soMatHang;
+  final String message;
+
+  CancelOrderResponse({
+    required this.success,
+    required this.maDonHang,
+    required this.restoredItems,
+    required this.soMatHang,
+    required this.message,
+  });
+
+  factory CancelOrderResponse.fromJson(Map<String, dynamic> json) {
+    return CancelOrderResponse(
+      success: json['success'] ?? false,
+      maDonHang: json['ma_don_hang'] ?? '',
+      restoredItems: (json['restored_items'] as List<dynamic>?)
+              ?.map((item) => RestoredItem.fromJson(item))
+              .toList() ??
+          [],
+      soMatHang: json['so_mat_hang'] ?? 0,
+      message: json['message'] ?? '',
+    );
+  }
+}
+
+/// Model cho item được khôi phục về giỏ hàng
+class RestoredItem {
+  final String maNguyenLieu;
+  final String maGianHang;
+  final int soLuong;
+
+  RestoredItem({
+    required this.maNguyenLieu,
+    required this.maGianHang,
+    required this.soLuong,
+  });
+
+  factory RestoredItem.fromJson(Map<String, dynamic> json) {
+    return RestoredItem(
+      maNguyenLieu: json['ma_nguyen_lieu'] ?? '',
+      maGianHang: json['ma_gian_hang'] ?? '',
+      soLuong: (json['so_luong'] as num?)?.toInt() ?? 0,
     );
   }
 }

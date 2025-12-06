@@ -5,6 +5,7 @@ import '../cubit/user_state.dart';
 import '../../../../core/dependency/injection.dart';
 import '../../../../core/services/auth/auth_service.dart';
 import '../../../../core/config/route_name.dart';
+import '../../../../core/widgets/buyer_loading.dart';
 
 class UserScreen extends StatelessWidget {
   const UserScreen({super.key});
@@ -55,7 +56,9 @@ class _UserView extends StatelessWidget {
         },
         builder: (context, state) {
           if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const BuyerLoading(
+              message: 'Đang tải thông tin người dùng...',
+            );
           }
 
           return Stack(

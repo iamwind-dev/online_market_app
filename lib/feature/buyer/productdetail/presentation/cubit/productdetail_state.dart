@@ -146,18 +146,67 @@ class ProductDetailState extends Equatable {
 
 /// Model cho thông tin nguyên liệu
 class NguyenLieuInfo extends Equatable {
+  final String? maNguyenLieu;
   final String ten;
   final String dinhLuong;
   final String? donVi;
+  final String? hinhAnh;
+  final double? gia;
+  final String? donViBan;
+  final List<GianHangSimple>? gianHang; // Danh sách gian hàng
 
   const NguyenLieuInfo({
+    this.maNguyenLieu,
     required this.ten,
     required this.dinhLuong,
     this.donVi,
+    this.hinhAnh,
+    this.gia,
+    this.donViBan,
+    this.gianHang,
+  });
+
+  /// Format giá hiển thị
+  String? get giaDisplay {
+    if (gia == null) return null;
+    final formatted = gia!.toStringAsFixed(0).replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
+    return '$formattedđ${donViBan != null ? '/$donViBan' : ''}';
+  }
+
+  @override
+  List<Object?> get props => [maNguyenLieu, ten, dinhLuong, donVi, hinhAnh, gia, donViBan, gianHang];
+}
+
+/// Model đơn giản cho gian hàng
+class GianHangSimple extends Equatable {
+  final String? maGianHang;
+  final String? tenGianHang;
+  final String? maCho;
+
+  const GianHangSimple({
+    this.maGianHang,
+    this.tenGianHang,
+    this.maCho,
   });
 
   @override
-  List<Object?> get props => [ten, dinhLuong, donVi];
+  List<Object?> get props => [maGianHang, tenGianHang, maCho];
+}
+
+/// Kết quả thêm tất cả nguyên liệu vào giỏ hàng
+class AddAllResult {
+  final int success;
+  final int failed;
+  final List<String> errors;
+
+  AddAllResult({
+    required this.success,
+    required this.failed,
+    required this.errors,
+  });
 }
 
 /// Model cho thông tin danh mục

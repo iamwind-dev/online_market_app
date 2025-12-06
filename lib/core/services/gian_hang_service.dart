@@ -23,7 +23,7 @@ class GianHangService {
   /// - order: Thứ tự sort 'asc' hoặc 'desc' (default: 'asc')
   Future<GianHangResponse> getGianHangList({
     int page = 1,
-    int limit = 12,
+    int limit = 30,
     String sort = 'ten_gian_hang',
     String order = 'asc',
   }) async {

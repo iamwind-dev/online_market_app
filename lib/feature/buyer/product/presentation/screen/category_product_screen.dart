@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/widgets/buyer_loading.dart';
 import '../../../../../core/widgets/shared_bottom_navigation.dart';
 import '../../../../../core/widgets/product_list_item.dart';
 import '../../../../../core/config/route_name.dart';
@@ -134,9 +135,9 @@ class _CategoryProductViewState extends State<CategoryProductView> {
     return BlocBuilder<CategoryProductCubit, CategoryProductState>(
       builder: (context, state) {
         if (state is CategoryProductLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const BuyerLoading(
+              message: 'Đang tải món ăn...',
+            );
         }
 
         if (state is CategoryProductError) {

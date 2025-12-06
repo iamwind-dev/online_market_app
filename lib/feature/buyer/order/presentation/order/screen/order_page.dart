@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../cubit/order_cubit.dart';
 import '../../order_detail/screen/order_detail_page.dart';
 import '../../../../../../core/theme/app_colors.dart';
+import '../../../../../../core/widgets/buyer_loading.dart';
 
 /// Màn hình đơn hàng
 /// 
@@ -49,11 +50,9 @@ class _OrderViewState extends State<OrderView> {
               child: BlocBuilder<OrderCubit, OrderState>(
                 builder: (context, state) {
                   if (state is OrderLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF00B40F),
-                      ),
-                    );
+                    return const BuyerLoading(
+              message: 'Đang tải đơn hàng...',
+            );
                   }
 
                   if (state is OrderLoaded) {
@@ -117,10 +116,7 @@ class _OrderViewState extends State<OrderView> {
             onTap: () => Navigator.of(context).pop(),
             child: Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(10),
-              ),
+              
               child: const Icon(
                 Icons.arrow_back,
                 color: Color(0xFF000000),

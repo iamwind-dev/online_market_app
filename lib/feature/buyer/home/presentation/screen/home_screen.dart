@@ -70,7 +70,7 @@ class _HomeViewState extends State<_HomeView> with AutomaticKeepAliveClientMixin
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                 child: Text(
-                  'Chào buổi sáng ${state.userName}, bạn muốn nấu món gì hôm nay?',
+                  'DNGO Xin chào!',
                   style: const TextStyle(
                     fontFamily: 'Fraunces',
                     fontSize: 25,
