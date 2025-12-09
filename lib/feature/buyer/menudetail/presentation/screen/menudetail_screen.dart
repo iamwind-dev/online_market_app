@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:DNGO/core/widgets/shared_bottom_navigation.dart';
+import 'package:dngo/core/widgets/shared_bottom_navigation.dart';
 import '../../../../../../feature/buyer/menudetail/presentation/cubit/menudetail_cubit.dart';
 import '../../../../../../feature/buyer/menudetail/presentation/cubit/menudetail_state.dart';
 

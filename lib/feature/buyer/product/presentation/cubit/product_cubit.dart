@@ -1,12 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:DNGO/core/dependency/injection.dart';
-import 'package:DNGO/core/services/category_service.dart';
-import 'package:DNGO/core/services/mon_an_service.dart';
-import 'package:DNGO/core/services/auth/auth_service.dart';
-import 'package:DNGO/core/services/khu_vuc_service.dart';
-import 'package:DNGO/core/services/cho_service.dart';
-import 'package:DNGO/core/error/exceptions.dart';
-import 'package:DNGO/core/models/mon_an_model.dart';
+import 'package:dngo/core/dependency/injection.dart';
+import 'package:dngo/core/services/category_service.dart';
+import 'package:dngo/core/services/mon_an_service.dart';
+import 'package:dngo/core/services/auth/auth_service.dart';
+import 'package:dngo/core/services/khu_vuc_service.dart';
+import 'package:dngo/core/services/cho_service.dart';
+import 'package:dngo/core/error/exceptions.dart';
+import 'package:dngo/core/models/mon_an_model.dart';
 import 'product_state.dart';
 
 class ProductCubit extends Cubit<ProductState> {

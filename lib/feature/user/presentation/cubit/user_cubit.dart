@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:DNGO/feature/user/presentation/cubit/user_state.dart';
+import 'package:dngo/feature/user/presentation/cubit/user_state.dart';
 import '../../../../core/services/auth/auth_service.dart';
 import '../../../../core/services/home_state_service.dart';
 import '../../../../core/error/app_exception.dart';
