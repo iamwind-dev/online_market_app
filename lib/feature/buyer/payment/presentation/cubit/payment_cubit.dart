@@ -57,6 +57,9 @@ class PaymentCubit extends Cubit<PaymentState> {
         _orderSummary = _generateMockOrderSummary();
       }
 
+      // Gắn thông tin user từ /auth/me nếu có
+      _orderSummary = await _attachUserInfo(_orderSummary!);
+
       if (AppConfig.enableApiLogging) {
         AppLogger.info('✅ [PAYMENT] Tải thành công thông tin đơn hàng');
         AppLogger.info('💰 [PAYMENT] Tổng tiền: ${_orderSummary!.total}đ');
@@ -505,6 +508,22 @@ class PaymentCubit extends Cubit<PaymentState> {
                 })
             .toList();
 
+        if (selectedItems.isEmpty) {
+          throw Exception('Không có sản phẩm nào được chọn để thanh toán');
+        }
+
+        // Với Mua ngay, đảm bảo item đã có trong giỏ trước khi checkout
+        if (_isBuyNow) {
+          final cartApiService = CartApiService();
+          for (final item in _orderSummary!.items) {
+            await cartApiService.addToCart(
+              maNguyenLieu: item.id,
+              maGianHang: item.shopId,
+              soLuong: item.quantity.toDouble(),
+            );
+          }
+        }
+
         // Lấy thông tin người nhận từ user profile
         final userProfileService = UserProfileService();
         String userName = _orderSummary!.customerName;
@@ -653,6 +672,41 @@ class PaymentCubit extends Cubit<PaymentState> {
     _selectedPaymentMethod = PaymentMethod.cashOnDelivery;
     _orderSummary = null;
     emit(PaymentInitial());
+  }
+
+  /// Lấy thông tin user từ /auth/me và gắn vào order summary
+  Future<OrderSummary> _attachUserInfo(OrderSummary order) async {
+    try {
+      final profileResponse = await UserProfileService().getProfile();
+      final profile = profileResponse.data;
+
+      final name = profile.tenNguoiDung.isNotEmpty
+          ? profile.tenNguoiDung
+          : order.customerName;
+
+      final phoneRaw = profile.sdt ?? order.phoneNumber;
+      final phoneNormalized =
+          _normalizePhoneNumber(phoneRaw).isNotEmpty ? _normalizePhoneNumber(phoneRaw) : order.phoneNumber;
+
+      final address = profile.diaChi?.isNotEmpty == true
+          ? profile.diaChi!
+          : order.deliveryAddress;
+
+      return OrderSummary(
+        customerName: name,
+        phoneNumber: phoneNormalized,
+        deliveryAddress: address,
+        estimatedDelivery: order.estimatedDelivery,
+        items: order.items,
+        subtotal: order.subtotal,
+        total: order.total,
+      );
+    } catch (e) {
+      if (AppConfig.enableApiLogging) {
+        AppLogger.warning('⚠️ [PAYMENT] Không lấy được thông tin user: $e');
+      }
+      return order;
+    }
   }
 
   /// Chuẩn hóa số điện thoại theo regex /^(0|\+84)\d{9,10}$/

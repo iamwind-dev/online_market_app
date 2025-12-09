@@ -208,88 +208,9 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
               
               const SizedBox(height: 8),
               
-              // Order code row
-              BlocBuilder<PaymentCubit, PaymentState>(
-                builder: (context, state) {
-                  if (state is PaymentLoaded && state.orderCode != null && state.orderCode!.isNotEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.receipt_long,
-                            size: 16,
-                            color: Color(0xFF8E8E93),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Mã đơn: ${state.orderCode}',
-                            style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF8E8E93),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
               
-              // Address row
-              BlocBuilder<PaymentCubit, PaymentState>(
-                builder: (context, state) {
-                  if (state is PaymentLoaded) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF00B40F).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Image.asset(
-                            'assets/img/location_icon_small.png',
-                            width: 20,
-                            height: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            '${state.orderSummary.customerName} ${state.orderSummary.phoneNumber}',
-                            style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                              height: 1.29,
-                              color: Color(0xFF000000),
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        SvgPicture.asset(
-                          'assets/img/chevron_right.svg',
-                          width: 18,
-                          height: 18,
-                          colorFilter: const ColorFilter.mode(
-                            Color(0xFF999999),
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                  return const SizedBox(height: 30);
-                },
-              ),
+              
+              
             ],
           ),
         ),
@@ -388,6 +309,26 @@ class _PaymentViewState extends State<PaymentView> with WidgetsBindingObserver {
                     color: Color(0xFF666666),
                   ),
                 ),
+              const SizedBox(height: 6),
+              Text(
+                orderSummary.customerName,
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: Color(0xFF000000),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                orderSummary.phoneNumber,
+                style: const TextStyle(
+                  fontFamily: 'Roboto',
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  color: Color(0xFF555555),
+                ),
+              ),
                 const SizedBox(height: 4),
                 Text(
                   orderSummary.deliveryAddress,

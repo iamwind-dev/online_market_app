@@ -71,34 +71,47 @@ class _CartViewState extends State<CartView> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
         body: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              _buildHeader(context),
-              Expanded(
-                child: BlocBuilder<CartCubit, CartState>(
-                  builder: (context, state) {
-                    if (state is CartLoading) {
-                      return const BuyerLoading(
-              message: 'Đang tải giỏ hàng...',
-            );
-                    }
+              Column(
+                children: [
+                  _buildHeader(context),
+                  Expanded(
+                    child: BlocBuilder<CartCubit, CartState>(
+                      builder: (context, state) {
+                        if (state is CartLoading) {
+                          return const BuyerLoading(
+                            message: 'Đang tải giỏ hàng...',
+                          );
+                        }
 
-                    if (state is CartLoaded) {
-                      if (state.items.isEmpty) {
-                        return _buildEmptyCart(context);
-                      }
-                      return _buildCartList(context, state);
-                    }
+                        if (state is CartLoaded) {
+                          if (state.items.isEmpty) {
+                            return _buildEmptyCart(context);
+                          }
+                          return _buildCartList(context, state);
+                        }
 
-                    return const SizedBox.shrink();
-                  },
-                ),
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ),
+                  _buildBottomSection(context),
+                ],
               ),
-              _buildBottomSection(context),
+              BlocBuilder<CartCubit, CartState>(
+                builder: (context, state) {
+                  if (state is CartUpdating) {
+                    return const Positioned.fill(
+                      child: BuyerLoading(message: 'Đang cập nhật...'),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
             ],
           ),
         ),
-        
       ),
     );
   }
@@ -283,6 +296,7 @@ class _CartViewState extends State<CartView> {
   }
 
   /// Section chọn tất cả
+  // ignore: unused_element
   Widget _buildSelectAllSection(BuildContext context, CartLoaded state) {
     final cubit = context.read<CartCubit>();
     
@@ -539,14 +553,7 @@ class _CartViewState extends State<CartView> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'x${item.quantity}',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
-                ),
+                _buildQuantityControl(context, cubit, item),
                 const SizedBox(height: 8),
                 Text(
                   PriceFormatter.formatPrice(item.price),
@@ -578,6 +585,68 @@ class _CartViewState extends State<CartView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuantityControl(BuildContext context, CartCubit cubit, CartItem item) {
+    final isDecrementDisabled = item.quantity <= 1;
+
+    return Row(
+      children: [
+        _buildQtyButton(
+          icon: Icons.remove,
+          enabled: !isDecrementDisabled,
+          onTap: () {
+            if (!isDecrementDisabled) {
+              cubit.updateQuantity(item.id, item.quantity - 1);
+            }
+          },
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            '${item.quantity}',
+            style: const TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1C1C1E),
+            ),
+          ),
+        ),
+        _buildQtyButton(
+          icon: Icons.add,
+          enabled: true,
+          onTap: () => cubit.updateQuantity(item.id, item.quantity + 1),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQtyButton({
+    required IconData icon,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: enabled ? const Color(0xFF00B40F).withValues(alpha: 0.1) : Colors.grey[200],
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: enabled ? const Color(0xFF00B40F) : Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: enabled ? const Color(0xFF00B40F) : Colors.grey[400],
+        ),
       ),
     );
   }

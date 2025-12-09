@@ -34,11 +34,12 @@ class CartApiService {
         throw Exception('User not logged in');
       }
 
-      final url = Uri.parse('$_baseUrl/cart/items');
+    final url = Uri.parse('$_baseUrl/cart/items');
       
       final requestBody = {
         'ma_nguyen_lieu': maNguyenLieu,
         'ma_gian_hang': maGianHang,
+        // Cho phép số lượng lẻ (ví dụ 0.5). Backend cần hỗ trợ giá trị này.
         'so_luong': soLuong,
         'ma_cho': maCho,
       };
