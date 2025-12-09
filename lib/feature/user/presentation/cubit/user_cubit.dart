@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:DNGO/feature/user/presentation/cubit/user_state.dart';
 import '../../../../core/services/auth/auth_service.dart';
+import '../../../../core/services/home_state_service.dart';
 import '../../../../core/error/app_exception.dart';
 import '../../../../core/utils/app_logger.dart';
 
@@ -115,11 +116,16 @@ class UserCubit extends Cubit<UserState> {
       await _authService.logout();
       AppLogger.info('🚪 [USER] Logout successful');
       
+      // Reset HomeCubit (bao gồm cả chat messages và conversationId)
+      HomeStateService.reset();
+      AppLogger.info('🔄 [USER] HomeCubit reset on logout');
+      
       // Reset state
       emit(const UserState());
     } catch (e) {
       AppLogger.error('💥 [USER] Logout error: ${e.toString()}');
-      // Vẫn reset state ngay cả khi có lỗi
+      // Vẫn reset HomeCubit và state ngay cả khi có lỗi
+      HomeStateService.reset();
       emit(const UserState());
     }
   }

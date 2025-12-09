@@ -157,7 +157,7 @@ class ShopCubit extends Cubit<ShopState> {
         await _cartApiService.addToCart(
           maNguyenLieu: productId,
           maGianHang: _currentShopId!,
-          soLuong: quantity,
+          soLuong: quantity.toDouble(),
         );
 
         if (AppConfig.enableApiLogging) {

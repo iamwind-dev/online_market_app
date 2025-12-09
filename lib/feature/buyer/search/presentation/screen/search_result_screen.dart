@@ -97,7 +97,11 @@ class _SearchResultScreenView extends StatelessWidget {
                 imageUrl: stall.image,
                 defaultIcon: Icons.store,
                 onTap: () {
-                  // TODO: Navigate to stall detail
+                  AppRouter.navigateTo(
+                    context,
+                    RouteName.shop,
+                    arguments: stall.id,
+                  );
                 },
               )),
           const SizedBox(height: 16),

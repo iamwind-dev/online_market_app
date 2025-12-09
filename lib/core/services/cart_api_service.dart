@@ -14,7 +14,7 @@ class CartApiService {
   Future<AddToCartResponse> addToCart({
     required String maNguyenLieu,
     required String maGianHang,
-    required int soLuong,
+    required double soLuong,
     String maCho = 'C01',
   }) async {
     print('🛒 [CART API] ========== ADD TO CART REQUEST ==========');

@@ -60,7 +60,7 @@ class _ProductDetailViewState extends State<_ProductDetailView> {
           );
         },
       ),
-      bottomNavigationBar: const SharedBottomNavigation(currentIndex: 1),
+      
     );
   }
 
@@ -607,9 +607,9 @@ class _ProductDetailViewState extends State<_ProductDetailView> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const BuyerLoading(
+              message: 'Đang thêm nguyên liệu vào giỏ hàng...',
+            ),
     );
 
     try {

@@ -13,7 +13,7 @@ class CartHelper {
     required BuildContext context,
     required String maNguyenLieu,
     required String maGianHang,
-    int soLuong = 1,
+    double soLuong = 1,
     String maCho = 'C01',
     bool showSuccessMessage = true,
   }) async {

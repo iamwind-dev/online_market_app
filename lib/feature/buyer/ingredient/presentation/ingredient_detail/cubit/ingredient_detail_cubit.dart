@@ -208,7 +208,7 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
       final response = await cartService.addToCart(
         maNguyenLieu: state.maNguyenLieu!,
         maGianHang: maGianHang,
-        soLuong: state.quantity,
+        soLuong: state.quantity.toDouble(),
       );
 
       if (response.success) {

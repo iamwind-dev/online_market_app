@@ -129,7 +129,7 @@ class ChatMessageWidget extends StatelessWidget {
                             onAddToCart: nguyenLieu.canAddToCart && nguyenLieu.gianHangSuggest != null
                                 ? () async {
                                     try {
-                                      await CartApiService().addToCart(maNguyenLieu: nguyenLieu.maNguyenLieu, maGianHang: nguyenLieu.gianHangSuggest!.maGianHang, soLuong: 1);
+                                      await CartApiService().addToCart(maNguyenLieu: nguyenLieu.maNguyenLieu, maGianHang: nguyenLieu.gianHangSuggest!.maGianHang, soLuong: 1.0);
                                       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã thêm vào giỏ hàng'), duration: Duration(seconds: 2)));
                                     } catch (e) {
                                       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: ${e.toString()}'), duration: const Duration(seconds: 2)));

@@ -209,8 +209,8 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
   }
 
   /// Parse số lượng từ định lượng
-  /// VD: "200g" -> 200, "100" -> 100, "1.5kg" -> 1.5, "50\r" -> 50
-  int _parseSoLuong(String dinhLuong) {
+  /// VD: "200g" -> 200, "100" -> 100, "1.5kg" -> 1.5, "0.5" -> 0.5
+  double _parseSoLuong(String dinhLuong) {
     if (dinhLuong.isEmpty) return 1;
     
     // Loại bỏ ký tự đặc biệt như \r, \n, khoảng trắng
@@ -221,9 +221,8 @@ class ProductDetailCubit extends Cubit<ProductDetailState> {
     
     if (match != null) {
       final number = double.tryParse(match.group(1) ?? '');
-      if (number != null) {
-        // Làm tròn lên, tối thiểu là 1
-        return number.ceil().clamp(1, 9999);
+      if (number != null && number > 0) {
+        return number;
       }
     }
     

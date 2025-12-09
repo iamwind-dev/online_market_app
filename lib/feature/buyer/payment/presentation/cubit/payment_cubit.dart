@@ -19,6 +19,7 @@ class PaymentCubit extends Cubit<PaymentState> {
   PaymentMethod _selectedPaymentMethod = PaymentMethod.cashOnDelivery;
   OrderSummary? _orderSummary;
   String? _maDonHang; // Mã đơn hàng từ API cart hoặc tạo mới
+  bool _isBuyNow = false;
   
   PaymentCubit() : super(PaymentInitial());
 
@@ -35,6 +36,8 @@ class PaymentCubit extends Cubit<PaymentState> {
 
     try {
       emit(PaymentLoading());
+
+      _isBuyNow = isBuyNow;
 
       if (isBuyNow && orderData != null) {
         // Mua ngay - tạo order summary từ dữ liệu truyền vào
@@ -80,6 +83,9 @@ class PaymentCubit extends Cubit<PaymentState> {
   OrderSummary _createOrderFromBuyNowData(Map<String, dynamic> data) {
     print('💳 [PAYMENT CUBIT] Buy now data: $data');
     
+    final shopId = data['maGianHang'] as String? ?? '';
+    final shopName = data['tenGianHang'] as String? ?? '';
+
     // Parse giá từ string (ví dụ: "89,000 đ" -> 89000)
     final priceStr = data['gia'] as String? ?? '0';
     final priceValue = double.tryParse(
@@ -97,7 +103,8 @@ class PaymentCubit extends Cubit<PaymentState> {
       items: [
         OrderItem(
           id: data['maNguyenLieu'] as String? ?? '',
-          shopName: data['tenGianHang'] as String? ?? '',
+          shopId: shopId,
+          shopName: shopName,
           productName: data['tenNguyenLieu'] as String? ?? '',
           productImage: data['hinhAnh'] as String? ?? 'assets/img/payment_product.png',
           price: priceValue,
@@ -346,14 +353,77 @@ class PaymentCubit extends Cubit<PaymentState> {
           'ma_nguyen_lieu': item.id,
           'ma_gian_hang': item.shopId,
         }).toList();
+
+        if (selectedItems.isEmpty) {
+          throw Exception('Không có sản phẩm nào được chọn để thanh toán');
+        }
+
+        // Chuẩn bị thông tin người nhận (re-use logic với COD)
+        final userProfileService = UserProfileService();
+        String userName = _orderSummary!.customerName;
+        String phoneNumber =
+            _normalizePhoneNumber(_orderSummary?.phoneNumber ?? '');
+        if (phoneNumber.isEmpty) {
+          phoneNumber = '0912345678';
+        }
+        String address = _orderSummary!.deliveryAddress;
+
+        try {
+          final profileResponse = await userProfileService.getProfile();
+          final profile = profileResponse.data;
+
+          if (profile.tenNguoiDung.isNotEmpty) {
+            userName = profile.tenNguoiDung;
+          }
+
+          if (profile.sdt != null && profile.sdt!.isNotEmpty) {
+            final normalized = _normalizePhoneNumber(profile.sdt!);
+            if (normalized.isNotEmpty) {
+              phoneNumber = normalized;
+            }
+          }
+
+          if (profile.diaChi != null && profile.diaChi!.isNotEmpty) {
+            address = profile.diaChi!;
+          }
+        } catch (_) {
+          // bỏ qua, giữ fallback
+        }
+
+        if (_normalizePhoneNumber(phoneNumber).isEmpty) {
+          phoneNumber = '0912345678';
+        }
+
+        final recipient = {
+          'name': userName,
+          'phone': phoneNumber,
+          'address': address,
+        };
         
         if (AppConfig.enableApiLogging) {
           AppLogger.info('💳 [PAYMENT] Selected items: $selectedItems');
+          AppLogger.info('💳 [PAYMENT] Recipient: $recipient');
         }
         
         final cartApiService = CartApiService();
+
+        // Nếu là Mua ngay, đảm bảo item đã vào giỏ trước khi checkout
+        if (_isBuyNow) {
+          for (final item in _orderSummary!.items) {
+            await cartApiService.addToCart(
+              maNguyenLieu: item.id,
+              maGianHang: item.shopId,
+              soLuong: item.quantity.toDouble(),
+            );
+          }
+        }
+
         final checkoutResponse = await cartApiService.checkout(
           selectedItems: selectedItems,
+          // Backend chỉ chấp nhận 'chuyen_khoan' hoặc 'tien_mat'.
+          // Dùng 'chuyen_khoan' để tạo đơn cho VNPay.
+          paymentMethod: 'chuyen_khoan',
+          recipient: recipient,
         );
         
         if (!checkoutResponse.success || checkoutResponse.maDonHang.isEmpty) {
@@ -438,7 +508,12 @@ class PaymentCubit extends Cubit<PaymentState> {
         // Lấy thông tin người nhận từ user profile
         final userProfileService = UserProfileService();
         String userName = _orderSummary!.customerName;
-        String phoneNumber = '0912345678'; // Default
+        // Ưu tiên số điện thoại từ order summary, fallback sau khi chuẩn hóa
+        String phoneNumber =
+            _normalizePhoneNumber(_orderSummary?.phoneNumber ?? '');
+        if (phoneNumber.isEmpty) {
+          phoneNumber = '0912345678'; // fallback an toàn
+        }
         String address = _orderSummary!.deliveryAddress;
 
         try {
@@ -452,11 +527,9 @@ class PaymentCubit extends Cubit<PaymentState> {
 
           // Lấy số điện thoại từ profile
           if (profile.sdt != null && profile.sdt!.isNotEmpty) {
-            phoneNumber = profile.sdt!;
-            // Đảm bảo format đúng
-            if (!phoneNumber.startsWith('0') &&
-                !phoneNumber.startsWith('+84')) {
-              phoneNumber = '0$phoneNumber';
+            final normalized = _normalizePhoneNumber(profile.sdt!);
+            if (normalized.isNotEmpty) {
+              phoneNumber = normalized;
             }
           }
 
@@ -476,6 +549,15 @@ class PaymentCubit extends Cubit<PaymentState> {
             AppLogger.warning(
                 '⚠️ [PAYMENT] Could not load user profile, using defaults: $e');
           }
+        }
+
+        // Đảm bảo số điện thoại cuối cùng hợp lệ, nếu không fallback mặc định
+        if (_normalizePhoneNumber(phoneNumber).isEmpty) {
+          if (AppConfig.enableApiLogging) {
+            AppLogger.warning(
+                '⚠️ [PAYMENT] Invalid phone after normalization, using fallback');
+          }
+          phoneNumber = '0912345678';
         }
 
         final recipient = {
@@ -571,5 +653,27 @@ class PaymentCubit extends Cubit<PaymentState> {
     _selectedPaymentMethod = PaymentMethod.cashOnDelivery;
     _orderSummary = null;
     emit(PaymentInitial());
+  }
+
+  /// Chuẩn hóa số điện thoại theo regex /^(0|\+84)\d{9,10}$/
+  String _normalizePhoneNumber(String phone) {
+    var normalized = phone.trim();
+    // Loại bỏ khoảng trắng, dấu, giữ lại số và +
+    normalized = normalized.replaceAll(RegExp(r'[^\d\+]'), '');
+
+    if (normalized.startsWith('+84')) {
+      normalized = '0${normalized.substring(3)}';
+    }
+
+    if (!normalized.startsWith('0')) {
+      normalized = '0$normalized';
+    }
+
+    // Đảm bảo độ dài 10-11 chữ số
+    if (normalized.length < 10 || normalized.length > 11) {
+      return '';
+    }
+
+    return normalized;
   }
 }

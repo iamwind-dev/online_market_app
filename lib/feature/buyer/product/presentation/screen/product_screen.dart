@@ -372,15 +372,10 @@ class _ProductViewState extends State<ProductView> {
                 (context, index) {
                   // Hiển thị loading indicator ở cuối danh sách khi load more
                   if (index >= monAnList.length) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
                       child: Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child:  const BuyerLoading(
-            )
-                        ),
+                        child: BuyerLoadingSmall(size: 32),
                       ),
                     );
                   }

@@ -116,6 +116,86 @@ class _BuyerLoadingState extends State<BuyerLoading>
   }
 }
 
+/// Loading nhỏ gọn cho các trường hợp như load more, inline loading
+class BuyerLoadingSmall extends StatefulWidget {
+  final double size;
+  final Color? color;
+
+  const BuyerLoadingSmall({
+    super.key,
+    this.size = 24,
+    this.color,
+  });
+
+  @override
+  State<BuyerLoadingSmall> createState() => _BuyerLoadingSmallState();
+}
+
+class _BuyerLoadingSmallState extends State<BuyerLoadingSmall>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _rotationAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    )..repeat();
+
+    _rotationAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.linear),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryColor = widget.color ?? const Color(0xFF00B40F);
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Transform.rotate(
+            angle: _rotationAnimation.value * 2 * 3.14159,
+            child: Container(
+              width: widget.size,
+              height: widget.size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: primaryColor.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.shopping_basket_outlined,
+                  size: widget.size * 0.5,
+                  color: primaryColor,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// Loading overlay - hiển thị loading phủ lên màn hình
 class BuyerLoadingOverlay extends StatelessWidget {
   final bool isLoading;

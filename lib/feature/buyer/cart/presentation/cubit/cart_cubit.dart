@@ -117,12 +117,25 @@ class CartCubit extends Cubit<CartState> {
     if (AppConfig.enableApiLogging) AppLogger.info('🗑️ [CART] Xóa item: $itemId');
 
     try {
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Tìm item để lấy maNguyenLieu và maGianHang
+      final item = _cartItems.firstWhere(
+        (item) => item.id == itemId,
+        orElse: () => throw Exception('Không tìm thấy sản phẩm'),
+      );
+
+      // Gọi API xóa
+      final cartApiService = CartApiService();
+      await cartApiService.deleteCartItem(
+        maNguyenLieu: item.productId,
+        maGianHang: item.shopId ?? '',
+      );
+
+      // Xóa khỏi local state
       _cartItems = _cartItems.where((item) => item.id != itemId).toList();
       _selectedItemIds.remove(itemId);
 
       emit(CartItemRemoved());
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 300));
       emit(CartLoaded(items: _cartItems, totalAmount: _calculateTotalAmount(), selectedItemIds: _selectedItemIds));
     } catch (e) {
       if (AppConfig.enableApiLogging) AppLogger.error('❌ [CART] Lỗi khi xóa sản phẩm: ${e.toString()}');
