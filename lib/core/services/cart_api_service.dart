@@ -66,7 +66,14 @@ class CartApiService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonData = json.decode(utf8.decode(response.bodyBytes));
-        return AddToCartResponse.fromJson(jsonData);
+        final result = AddToCartResponse.fromJson(jsonData);
+        
+        // Kiểm tra success từ API response
+        if (!result.success) {
+          throw Exception(result.message ?? 'Không thể thêm vào giỏ hàng');
+        }
+        
+        return result;
       } else {
         throw Exception(
             'Failed to add to cart: ${response.statusCode} - ${response.body}');

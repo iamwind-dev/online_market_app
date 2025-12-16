@@ -62,21 +62,40 @@ class ChatMessage extends Equatable {
   final String message;
   final bool isBot;
   final DateTime timestamp;
+  final String? responseType; // 'text', 'menu_selection', 'suggestions', 'menu_detail'
   final List<ChatOption>? options;
-  final List<MonAnSuggestion>? monAnSuggestions; // Thêm suggestions món ăn
-  final List<NguyenLieuSuggestion>? nguyenLieuSuggestions; // Thêm suggestions nguyên liệu
+  final List<MonAnSuggestion>? monAnSuggestions;
+  final List<NguyenLieuSuggestion>? nguyenLieuSuggestions;
+  final List<MenuSelection>? menus; // Menu selection
+  final SelectedMenuDetail? selectedMenu; // Menu detail after selection
+  final String? hint;
 
   const ChatMessage({
     required this.message,
     required this.isBot,
     required this.timestamp,
+    this.responseType,
     this.options,
     this.monAnSuggestions,
     this.nguyenLieuSuggestions,
+    this.menus,
+    this.selectedMenu,
+    this.hint,
   });
 
   @override
-  List<Object?> get props => [message, isBot, timestamp, options, monAnSuggestions, nguyenLieuSuggestions];
+  List<Object?> get props => [
+        message,
+        isBot,
+        timestamp,
+        responseType,
+        options,
+        monAnSuggestions,
+        nguyenLieuSuggestions,
+        menus,
+        selectedMenu,
+        hint,
+      ];
 }
 
 /// Model cho món ăn suggestion từ AI
@@ -167,4 +186,135 @@ class ChatOption extends Equatable {
 
   @override
   List<Object?> get props => [label, value, isSelected];
+}
+
+
+/// Model cho menu selection
+class MenuSelection extends Equatable {
+  final String menuId;
+  final String tenMenu;
+  final String moTa;
+  final String phuHopVoi;
+  final String icon;
+  final List<MenuDish> monAn;
+
+  const MenuSelection({
+    required this.menuId,
+    required this.tenMenu,
+    required this.moTa,
+    required this.phuHopVoi,
+    required this.icon,
+    required this.monAn,
+  });
+
+  @override
+  List<Object?> get props => [menuId, tenMenu, moTa, phuHopVoi, icon, monAn];
+}
+
+/// Model cho món ăn trong menu
+class MenuDish extends Equatable {
+  final String maMonAn;
+  final String tenMonAn;
+  final String vaiTro;
+
+  const MenuDish({
+    required this.maMonAn,
+    required this.tenMonAn,
+    required this.vaiTro,
+  });
+
+  @override
+  List<Object?> get props => [maMonAn, tenMonAn, vaiTro];
+}
+
+/// Model cho menu detail (sau khi chọn menu)
+class SelectedMenuDetail extends Equatable {
+  final String menuId;
+  final String tenMenu;
+  final String moTa;
+  final String phuHopVoi;
+  final String icon;
+  final List<MonAnDetail> monAn;
+
+  const SelectedMenuDetail({
+    required this.menuId,
+    required this.tenMenu,
+    required this.moTa,
+    required this.phuHopVoi,
+    required this.icon,
+    required this.monAn,
+  });
+
+  @override
+  List<Object?> get props => [menuId, tenMenu, moTa, phuHopVoi, icon, monAn];
+}
+
+/// Model cho món ăn chi tiết
+class MonAnDetail extends Equatable {
+  final String maMonAn;
+  final String tenMonAn;
+  final String hinhAnh;
+  final int khoangThoiGian;
+  final String doKho;
+  final int khauPhanTieuChuan;
+  final int calories;
+  final List<NguyenLieuDetail> nguyenLieu;
+
+  const MonAnDetail({
+    required this.maMonAn,
+    required this.tenMonAn,
+    required this.hinhAnh,
+    required this.khoangThoiGian,
+    required this.doKho,
+    required this.khauPhanTieuChuan,
+    required this.calories,
+    required this.nguyenLieu,
+  });
+
+  @override
+  List<Object?> get props => [maMonAn, tenMonAn, hinhAnh, khoangThoiGian, doKho, khauPhanTieuChuan, calories, nguyenLieu];
+}
+
+/// Model cho nguyên liệu chi tiết trong món ăn
+class NguyenLieuDetail extends Equatable {
+  final String maNguyenLieu;
+  final String ten;
+  final String? dinhLuong;
+  final String? donVi;
+  final List<GianHangDetail> gianHang;
+
+  const NguyenLieuDetail({
+    required this.maNguyenLieu,
+    required this.ten,
+    this.dinhLuong,
+    this.donVi,
+    required this.gianHang,
+  });
+
+  @override
+  List<Object?> get props => [maNguyenLieu, ten, dinhLuong, donVi, gianHang];
+}
+
+/// Model cho gian hàng chi tiết
+class GianHangDetail extends Equatable {
+  final String maGianHang;
+  final String tenGianHang;
+  final String viTri;
+  final String maCho;
+  final String gia;
+  final String donViBan;
+  final double soLuong;
+
+  const GianHangDetail({
+    required this.maGianHang,
+    required this.tenGianHang,
+    required this.viTri,
+    required this.maCho,
+    required this.gia,
+    required this.donViBan,
+    required this.soLuong,
+  });
+
+  @override
+  List<Object?> get props => [maGianHang, tenGianHang, viTri, maCho, gia, donViBan, soLuong];
 }

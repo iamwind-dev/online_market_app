@@ -429,26 +429,40 @@ class PaymentCubit extends Cubit<PaymentState> {
           recipient: recipient,
         );
         
+        if (AppConfig.enableApiLogging) {
+          AppLogger.info('📦 [PAYMENT] Checkout response:');
+          AppLogger.info('   success: ${checkoutResponse.success}');
+          AppLogger.info('   maDonHang: "${checkoutResponse.maDonHang}"');
+          AppLogger.info('   maThanhToan: "${checkoutResponse.maThanhToan}"');
+          AppLogger.info('   tongTien: ${checkoutResponse.tongTien}');
+        }
+        
         if (!checkoutResponse.success || checkoutResponse.maDonHang.isEmpty) {
           throw Exception('Checkout failed: Không nhận được mã đơn hàng');
         }
         
+        if (checkoutResponse.maThanhToan.isEmpty) {
+          throw Exception('Checkout failed: Không nhận được mã thanh toán');
+        }
+        
         final maDonHang = checkoutResponse.maDonHang;
+        final maThanhToan = checkoutResponse.maThanhToan;
         _maDonHang = maDonHang; // Lưu lại để dùng sau
         
         if (AppConfig.enableApiLogging) {
           AppLogger.info('✅ [PAYMENT] Checkout success!');
           AppLogger.info('📝 [PAYMENT] ma_don_hang: $maDonHang');
+          AppLogger.info('💳 [PAYMENT] ma_thanh_toan: $maThanhToan');
           AppLogger.info('💰 [PAYMENT] tong_tien: ${checkoutResponse.tongTien}');
           AppLogger.info('📦 [PAYMENT] items_checkout: ${checkoutResponse.itemsCheckout}');
           AppLogger.info('💳 [PAYMENT] Step 2: Creating VNPay payment...');
         }
         
-        // Bước 2: Gọi API /api/payment/vnpay/checkout với ma_don_hang từ bước 1
-        // Input: { "ma_don_hang": "DHABC123", "bankCode": "NCB" }
+        // Bước 2: Gọi API /api/payment/vnpay/checkout với ma_thanh_toan từ bước 1
+        // Input: { "ma_thanh_toan": "TTE4X3PXWT", "bankCode": "NCB" }
         final vnpayService = VNPayService();
         final vnpayResponse = await vnpayService.createVNPayCheckout(
-          maDonHang: maDonHang,
+          maThanhToan: maThanhToan,
           bankCode: 'NCB',
         );
         
@@ -599,6 +613,14 @@ class PaymentCubit extends Cubit<PaymentState> {
         );
 
         if (isClosed) return;
+
+        if (AppConfig.enableApiLogging) {
+          AppLogger.info('📦 [PAYMENT] Checkout response:');
+          AppLogger.info('   success: ${checkoutResponse.success}');
+          AppLogger.info('   maDonHang: "${checkoutResponse.maDonHang}"');
+          AppLogger.info('   maThanhToan: "${checkoutResponse.maThanhToan}"');
+          AppLogger.info('   tongTien: ${checkoutResponse.tongTien}');
+        }
 
         if (!checkoutResponse.success || checkoutResponse.maDonHang.isEmpty) {
           throw Exception('Checkout failed: Không nhận được mã đơn hàng');

@@ -3,6 +3,8 @@ import '../../../feature/buyer/home/presentation/cubit/home_state.dart';
 import 'chat_option_widget.dart';
 import 'mon_an_suggestion_card.dart';
 import 'nguyen_lieu_suggestion_card.dart';
+import 'menu_selection_card.dart';
+import 'menu_detail_card.dart';
 import '../../router/app_router.dart';
 import '../../config/route_name.dart';
 import '../../models/chat_ai_model.dart' as chat_model;
@@ -12,11 +14,13 @@ import '../../services/cart_api_service.dart';
 class ChatMessageWidget extends StatelessWidget {
   final ChatMessage message;
   final Function(ChatOption) onOptionTap;
+  final Function(String)? onMenuSelected;
 
   const ChatMessageWidget({
     super.key,
     required this.message,
     required this.onOptionTap,
+    this.onMenuSelected,
   });
 
   @override
@@ -49,14 +53,15 @@ class ChatMessageWidget extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: message.isBot ? const Color(0xFFDEDEDE) : const Color(0x4D008EDB),
+                    color: message.isBot ? Colors.white : const Color(0x4D008EDB),
                     borderRadius: message.isBot
                         ? const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20), bottomRight: Radius.circular(20))
                         : const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20), bottomLeft: Radius.circular(20)),
+                    border: message.isBot ? Border.all(color: const Color(0xFFE0E0E0), width: 1) : null,
                   ),
                   child: Text(
                     message.message,
-                    style: const TextStyle(fontFamily: 'Roboto', fontSize: 17, fontWeight: FontWeight.w300, height: 1.33, color: Color.fromARGB(255, 0, 0, 0)),
+                    style: const TextStyle(fontFamily: 'Roboto', fontSize: 17, fontWeight: FontWeight.w300, height: 1.33, color: Colors.black),
                   ),
                 ),
                 if (message.options != null && message.options!.isNotEmpty)
@@ -139,6 +144,79 @@ class ChatMessageWidget extends StatelessWidget {
                           );
                         },
                       ),
+                    ),
+                  ),
+                // Menu selection cards
+                if (message.menus != null && message.menus!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          height: 320,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: message.menus!.length,
+                            itemBuilder: (context, index) {
+                              final menu = message.menus![index];
+                              return MenuSelectionCard(
+                                menu: menu,
+                                onTap: () {
+                                  if (onMenuSelected != null) {
+                                    onMenuSelected!('Menu ${menu.menuId}');
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        if (message.hint != null && message.hint!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              message.hint!,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: const Color.fromARGB(255, 255, 255, 255),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                // Menu detail cards (after selection) - scroll ngang
+                if (message.selectedMenu != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          height: 580,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: message.selectedMenu!.monAn.length,
+                            itemBuilder: (context, index) {
+                              final monAn = message.selectedMenu!.monAn[index];
+                              return MenuDetailCard(monAn: monAn);
+                            },
+                          ),
+                        ),
+                        if (message.hint != null && message.hint!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              message.hint!,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
               ],

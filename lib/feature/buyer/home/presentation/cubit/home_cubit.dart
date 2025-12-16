@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'home_state.dart';
 import '../../../../../core/services/chat_ai_service.dart';
@@ -109,22 +110,89 @@ class HomeCubit extends Cubit<HomeState> {
             .toList();
       }
 
+      // Convert menus từ API sang model của HomeState
+      List<MenuSelection>? menus;
+      if (response.menus != null && response.menus!.isNotEmpty) {
+        menus = response.menus!
+            .map((item) => MenuSelection(
+                  menuId: item.menuId,
+                  tenMenu: item.tenMenu,
+                  moTa: item.moTa,
+                  phuHopVoi: item.phuHopVoi,
+                  icon: item.icon,
+                  monAn: item.monAn
+                      .map((dish) => MenuDish(
+                            maMonAn: dish.maMonAn,
+                            tenMonAn: dish.tenMonAn,
+                            vaiTro: dish.vaiTro,
+                          ))
+                      .toList(),
+                ))
+            .toList();
+      }
+
+      // Convert selected menu từ API sang model của HomeState
+      SelectedMenuDetail? selectedMenu;
+      if (response.selectedMenu != null) {
+        selectedMenu = SelectedMenuDetail(
+          menuId: response.selectedMenu!.menuId,
+          tenMenu: response.selectedMenu!.tenMenu,
+          moTa: response.selectedMenu!.moTa,
+          phuHopVoi: response.selectedMenu!.phuHopVoi,
+          icon: response.selectedMenu!.icon,
+          monAn: response.selectedMenu!.monAn
+              .map((dish) => MonAnDetail(
+                    maMonAn: dish.maMonAn,
+                    tenMonAn: dish.tenMonAn,
+                    hinhAnh: dish.hinhAnh,
+                    khoangThoiGian: dish.khoangThoiGian,
+                    doKho: dish.doKho,
+                    khauPhanTieuChuan: dish.khauPhanTieuChuan,
+                    calories: dish.calories,
+                    nguyenLieu: dish.nguyenLieu
+                        .map((nl) => NguyenLieuDetail(
+                              maNguyenLieu: nl.maNguyenLieu,
+                              ten: nl.ten,
+                              dinhLuong: nl.dinhLuong,
+                              donVi: nl.donVi,
+                              gianHang: nl.gianHang
+                                  .map((gh) => GianHangDetail(
+                                        maGianHang: gh.maGianHang,
+                                        tenGianHang: gh.tenGianHang,
+                                        viTri: gh.viTri,
+                                        maCho: gh.maCho,
+                                        gia: gh.gia,
+                                        donViBan: gh.donViBan,
+                                        soLuong: gh.soLuong,
+                                      ))
+                                  .toList(),
+                            ))
+                        .toList(),
+                  ))
+              .toList(),
+        );
+      }
+
       final botMessage = ChatMessage(
         message: response.message,
         isBot: true,
         timestamp: DateTime.now(),
+        responseType: response.responseType,
         monAnSuggestions: monAnSuggestions,
         nguyenLieuSuggestions: nguyenLieuSuggestions,
+        menus: menus,
+        selectedMenu: selectedMenu,
+        hint: response.hint,
       );
 
       final updatedMessages = [...state.chatMessages, botMessage];
       emit(state.copyWith(
         chatMessages: updatedMessages,
         isTyping: false,
-        conversationId: response.conversationId, // Lưu conversation ID
+        conversationId: response.conversationId,
       ));
     } catch (e) {
-      print('❌ Error sending message to AI: $e');
+      debugPrint('❌ Error sending message to AI: $e');
       
       if (isClosed) return;
 

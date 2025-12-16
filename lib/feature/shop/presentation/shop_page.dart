@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/widgets/buyer_loading.dart';
 import 'shop_cubit.dart';
 
 class ShopPage extends StatefulWidget {
@@ -35,8 +36,8 @@ class _ShopPageState extends State<ShopPage> {
       body: BlocBuilder<ShopCubit, ShopState>(
         builder: (context, state) {
           if (state is ShopLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
+            return const BuyerLoading(
+              message: 'Đang tải gian hàng...',
             );
           }
 

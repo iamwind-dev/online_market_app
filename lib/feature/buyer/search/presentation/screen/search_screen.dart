@@ -1,3 +1,4 @@
+import 'package:dngo/core/widgets/buyer_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/search_cubit.dart';
@@ -139,7 +140,9 @@ class _SearchViewState extends State<_SearchView> {
   }
 
   Widget _buildLoadingView() {
-    return const Center(child: CircularProgressIndicator());
+    return const BuyerLoading(
+              message: 'Đang tải...',
+            );
   }
 
   Widget _buildSuggestionsView(BuildContext context, SearchSuggestionsLoaded state) {

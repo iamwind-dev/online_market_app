@@ -147,7 +147,7 @@ class Seller extends Equatable {
   final String? originalPrice;
   final bool hasDiscount;
   final String? imagePath;
-  final int soldCount;
+  final int soLuongBan; // Số lượng: > 0 còn hàng, <= 0 hết hàng
   final String? unit;
 
   const Seller({
@@ -158,9 +158,12 @@ class Seller extends Equatable {
     this.originalPrice,
     this.hasDiscount = false,
     this.imagePath,
-    required this.soldCount,
+    required this.soLuongBan,
     this.unit,
   });
+
+  /// Kiểm tra còn hàng không (so_luong_ban > 0 = còn hàng)
+  bool get conHang => soLuongBan > 0;
 
   @override
   List<Object?> get props => [
@@ -171,7 +174,7 @@ class Seller extends Equatable {
         originalPrice,
         hasDiscount,
         imagePath,
-        soldCount,
+        soLuongBan,
         unit,
       ];
 }

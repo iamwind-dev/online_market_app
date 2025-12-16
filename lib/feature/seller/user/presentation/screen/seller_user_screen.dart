@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../../core/widgets/seller_bottom_navigation.dart';
+import '../../../../../core/widgets/buyer_loading.dart';
 import '../../../../../core/dependency/injection.dart';
 import '../../../../../core/services/auth/auth_service.dart';
-import '../../../../../core/config/route_name.dart';
-import '../../../../../core/router/app_router.dart';
 import '../../../../user/presentation/cubit/user_cubit.dart';
 import '../../../../user/presentation/cubit/user_state.dart';
 
@@ -26,7 +24,7 @@ class _SellerUserView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF0F0F0),
       body: BlocConsumer<UserCubit, UserState>(
         listener: (context, state) {
           if (state.requiresLogin) {
@@ -48,207 +46,375 @@ class _SellerUserView extends StatelessWidget {
         },
         builder: (context, state) {
           if (state.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF00B40F)),
+            return const BuyerLoading(
+              message: 'Đang tải thông tin...',
             );
           }
 
-          return Stack(
+          return Column(
             children: [
-              _buildScrollableContent(context, state),
-              _buildHeader(),
+              _buildHeader(context),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _buildProfileSection(context, state),
+                      const SizedBox(height: 16),
+                      _buildInformationSection(context, state),
+                      const SizedBox(height: 24),
+                      _buildLogoutButton(context),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
+                ),
+              ),
             ],
           );
         },
       ),
-      bottomNavigationBar: SellerBottomNavigation(
-        currentIndex: 4,
-        onTap: (index) => _handleNavigation(context, index),
+    );
+  }
+
+  /// Header với back button và title
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(top: 50, bottom: 16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back, size: 16, color: Colors.black),
+                  padding: const EdgeInsets.only(left: 16, right: 8),
+                ),
+                const Expanded(
+                  child: Text(
+                    'GIAN HÀNG CỦA TÔI',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                      height: 1.0,
+                      letterSpacing: 0.51,
+                      color: Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(width: 40), // Spacer để căn giữa
+              ],
+            ),
+            const Divider(
+              height: 2,
+              thickness: 2,
+              color: Color(0xFFD9D9D9),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void _handleNavigation(BuildContext context, int index) {
-    switch (index) {
-      case 0: // Đơn hàng
-        // TODO: Navigate to seller orders
-        break;
-      case 1: // Sản phẩm
-        AppRouter.navigateAndReplace(context, RouteName.sellerMain);
-        break;
-      case 2: // Home/Avatar
-        AppRouter.navigateAndReplace(context, RouteName.sellerHome);
-        break;
-      case 3: // Doanh số
-        // TODO: Navigate to seller statistics
-        break;
-      case 4: // Tài khoản - đang ở đây
-        break;
-    }
-  }
-
-  Widget _buildHeader() {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF00B40F), Color(0xFF4CAF50)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
+  /// Profile Section với avatar, tên, rating, stats
+  Widget _buildProfileSection(BuildContext context, UserState state) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 7),
+      child: Column(
+        children: [
+          // Main profile card với image và info
+          Container(
+            height: 179,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5),
+              color: Colors.grey[300], // Fallback color
+            ),
+            child: Stack(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.account_circle,
-                    color: Colors.white,
-                    size: 24,
+                // Background image placeholder
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(5),
+                  child: Image.asset(
+                    'assets/img/seller_shop_bg.png',
+                    width: double.infinity,
+                    height: 179,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: double.infinity,
+                        height: 179,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.green[300]!,
+                              Colors.green[500]!,
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(width: 12),
-                const Text(
-                  'TÀI KHOẢN',
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
+                // Category badges
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: Colors.black, width: 0.3),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Gia vị',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w400,
+                            fontSize: 12,
+                            height: 1.83,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Text(
+                          'Thịt heo',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w400,
+                            fontSize: 12,
+                            height: 1.83,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Avatar circle
+                Positioned(
+                  bottom: 8,
+                  left: 7,
+                  child: Container(
+                    width: 48,
+                    height: 49,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF8F959E),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'N',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 30,
+                          height: 0.73,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // Name and rating
+                Positioned(
+                  bottom: 8,
+                  left: 69,
+                  child: Row(
+                    children: [
+                      const Text(
+                        'Cô Nhi',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
+                          height: 1.1,
+                          color: Color(0xFF202020),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        '5',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontWeight: FontWeight.w400,
+                          fontSize: 18,
+                          height: 0.89,
+                          color: Color(0xFF0C0D0D),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Image.asset(
+                        'assets/img/star.png',
+                        width: 21,
+                        height: 19,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.star,
+                            size: 19,
+                            color: Colors.amber,
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-        ),
+          const SizedBox(height: 8),
+          // Stats row
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '30 sản phẩm',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w400,
+                    fontSize: 16,
+                    height: 1.375,
+                    color: Color(0xFF202020),
+                  ),
+                ),
+                Row(
+                  children: [
+                    const Text(
+                      'Danh mục',
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                        height: 1.375,
+                        color: Color(0xFF202020),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 20,
+                      color: Colors.black.withValues(alpha: 0.7),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Orders stat
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: const Row(
+              children: [
+                Text(
+                  'Đã bán hơn 120 đơn hàng',
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontWeight: FontWeight.w400,
+                    fontSize: 16,
+                    height: 1.375,
+                    color: Color(0xFF202020),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildScrollableContent(BuildContext context, UserState state) {
-    return SingleChildScrollView(
+  /// Information Section với các thông tin và edit icons
+  Widget _buildInformationSection(BuildContext context, UserState state) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 7),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(5),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 100),
-          _buildProfileSection(context, state),
-          const SizedBox(height: 24),
-          _buildMenuSection(context),
-          const SizedBox(height: 40),
-          _buildLogoutButton(context),
-          const SizedBox(height: 100),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileSection(BuildContext context, UserState state) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: const Color(0xFF00B40F).withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.store,
-                size: 32,
-                color: Color(0xFF00B40F),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    state.userName,
-                    style: const TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
-                      color: Color(0xFF202020),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Người bán',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 14,
-                      color: Color(0xFF00B40F),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMenuSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: [
-          _buildMenuItem(
+          // Tên người dùng
+          _buildInfoRow(
             context,
-            icon: Icons.person_outline,
-            iconColor: const Color(0xFF00B40F),
-            label: 'Cập nhật thông tin cá nhân',
-            onTap: () {
-              Navigator.pushNamed(context, RouteName.editProfile);
+            label: state.userName,
+            showEdit: false,
+            showArrow: false,
+          ),
+          const Divider(height: 32),
+          // Chợ
+          _buildInfoRow(
+            context,
+            label: 'Chợ: Bắc Mỹ An',
+            showEdit: true,
+            showArrow: false,
+            onEdit: () {
+              // TODO: Edit market
             },
           ),
-          const SizedBox(height: 12),
-          _buildMenuItem(
+          const Divider(height: 32),
+          // Số lô
+          _buildInfoRow(
             context,
-            icon: Icons.store_outlined,
-            iconColor: const Color(0xFF2196F3),
-            label: 'Quản lý gian hàng',
+            label: 'Số lô: STK12',
+            showEdit: false,
+            showArrow: true,
             onTap: () {
-              // TODO: Navigate to shop management
+              // TODO: Navigate to lot details
             },
           ),
-          const SizedBox(height: 12),
-          _buildMenuItem(
+          const Divider(height: 32),
+          // Số tài khoản
+          _buildInfoRow(
             context,
-            icon: Icons.settings_outlined,
-            iconColor: const Color(0xFF9C27B0),
-            label: 'Cài đặt',
-            onTap: () {
-              // TODO: Navigate to settings
+            label: 'Số tài khoản: 0397521031',
+            showEdit: true,
+            showArrow: false,
+            onEdit: () {
+              // TODO: Edit account number
+            },
+          ),
+          const Divider(height: 32),
+          // Ngân hàng
+          _buildInfoRow(
+            context,
+            label: 'Ngân hàng: AB BANK',
+            showEdit: true,
+            showArrow: false,
+            onEdit: () {
+              // TODO: Edit bank
+            },
+          ),
+          const Divider(height: 32),
+          // Số điện thoại
+          _buildInfoRow(
+            context,
+            label: 'Số điện thoại: 039821031',
+            showEdit: true,
+            showArrow: false,
+            onEdit: () {
+              // TODO: Edit phone
             },
           ),
         ],
@@ -256,79 +422,70 @@ class _SellerUserView extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(
+  Widget _buildInfoRow(
     BuildContext context, {
-    required IconData icon,
-    required Color iconColor,
     required String label,
-    required VoidCallback onTap,
+    required bool showEdit,
+    required bool showArrow,
+    VoidCallback? onEdit,
+    VoidCallback? onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w700,
+                fontSize: 17,
+                height: 1.76,
+                letterSpacing: -0.21,
+                color: Color(0xFF202020),
               ),
-              child: Icon(icon, color: iconColor, size: 24),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                  color: Color(0xFF202020),
+          ),
+          if (showEdit)
+            GestureDetector(
+              onTap: onEdit,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                child: const Icon(
+                  Icons.edit,
+                  size: 18,
+                  color: Color(0xFF1C1B1F),
                 ),
               ),
             ),
+          if (showArrow)
             const Icon(
               Icons.arrow_forward_ios,
-              size: 16,
-              color: Color(0xFF999999),
+              size: 9,
+              color: Color(0xFF1C1B1F),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
+  /// Logout Button
   Widget _buildLogoutButton(BuildContext context) {
     return Center(
       child: GestureDetector(
         onTap: () => _showLogoutDialog(context),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFFF5252)),
-            borderRadius: BorderRadius.circular(12),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
           child: const Text(
             'Đăng Xuất',
             style: TextStyle(
               fontFamily: 'Roboto',
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: Color(0xFFFF5252),
+              fontWeight: FontWeight.w700,
+              fontSize: 17,
+              height: 1.29,
+              letterSpacing: -0.18,
+              color: Color(0xFF0F2F63),
             ),
           ),
         ),

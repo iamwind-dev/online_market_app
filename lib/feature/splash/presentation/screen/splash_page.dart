@@ -168,12 +168,12 @@ class SplashView extends StatelessWidget {
     debugPrint('[SPLASH_PAGE] 🎯 _navigateByRole called with role: $role');
     Future.delayed(const Duration(milliseconds: 300), () {
       if (context.mounted) {
-        if (role == 'nguoi_mua') {
-          // Người mua -> Buyer Home
-          debugPrint('[SPLASH_PAGE] ➡️ Navigating to BUYER home (RouteName.main)');
+        if (role == 'quan_ly_cho') {
+          // Quản lý chợ -> Admin Home
+          debugPrint('[SPLASH_PAGE] ➡️ Navigating to ADMIN home (RouteName.adminHome)');
           AppRouter.navigateAndRemoveUntil(
             context,
-            RouteName.main,
+            RouteName.adminHome,
           );
         } else if (role == 'nguoi_ban') {
           // Người bán -> Seller Home
@@ -181,6 +181,13 @@ class SplashView extends StatelessWidget {
           AppRouter.navigateAndRemoveUntil(
             context,
             RouteName.sellerMain,
+          );
+        } else if (role == 'nguoi_mua') {
+          // Người mua -> Buyer Home
+          debugPrint('[SPLASH_PAGE] ➡️ Navigating to BUYER home (RouteName.main)');
+          AppRouter.navigateAndRemoveUntil(
+            context,
+            RouteName.main,
           );
         } else {
           // Vai trò không xác định -> Login

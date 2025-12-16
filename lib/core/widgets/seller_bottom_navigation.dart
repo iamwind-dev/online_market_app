@@ -31,27 +31,31 @@ class SellerBottomNavigation extends StatelessWidget {
         children: [
           _buildNavItem(
             context,
-            icon: Icons.receipt_long,
-            label: 'Đơn hàng',
+            iconAsset: 'assets/img/Vector.png',
+            label: 'Trang chủ',
             index: 0,
           ),
           _buildNavItem(
             context,
-            icon: Icons.shopping_bag,
+            iconAsset: 'assets/img/product.png',
             label: 'Sản phẩm',
             index: 1,
           ),
-          // Avatar/Home ở giữa
-          _buildCenterItem(context),
           _buildNavItem(
             context,
-            icon: Icons.bar_chart,
+            iconAsset: 'assets/img/order.png',
+            label: 'Đơn hàng',
+            index: 2,
+          ),
+          _buildNavItem(
+            context,
+            iconAsset: 'assets/img/doanhso.png',
             label: 'Doanh số',
             index: 3,
           ),
           _buildNavItem(
             context,
-            icon: Icons.account_circle,
+            iconAsset: 'assets/img/usser.png',
             label: 'Tài khoản',
             index: 4,
           ),
@@ -62,45 +66,20 @@ class SellerBottomNavigation extends StatelessWidget {
 
   /// Center item (Avatar/Home)
   Widget _buildCenterItem(BuildContext context) {
-    final isSelected = currentIndex == 2;
+    
     
     return InkWell(
-      onTap: () => onTap?.call(2),
+      onTap: () => {},
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Container(
           width: 58,
           height: 58,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isSelected ? const Color(0xFF00B40F) : Colors.transparent,
-              width: 2,
-            ),
-          ),
-          
             child: Image.asset(
               'assets/img/user_personas_presentation-26cd3a.png',
               width: 58,
               height: 58,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                    color: isSelected 
-                        ? const Color(0xFF00B40F).withValues(alpha: 0.2)
-                        : Colors.grey[300],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.store,
-                    size: 30,
-                    color: isSelected ? const Color(0xFF00B40F) : Colors.grey[600],
-                  ),
-                );
-              },
             ),
           
         ),
@@ -111,7 +90,7 @@ class SellerBottomNavigation extends StatelessWidget {
   /// Bottom Navigation Item
   Widget _buildNavItem(
     BuildContext context, {
-    required IconData icon,
+    required String iconAsset,
     required String label,
     required int index,
   }) {
@@ -128,10 +107,23 @@ class SellerBottomNavigation extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 28,
-              color: isSelected ? const Color(0xFF00B40F) : Colors.black54,
+            ColorFiltered(
+              colorFilter: ColorFilter.mode(
+                isSelected ? const Color(0xFF00B40F) : Colors.black54,
+                BlendMode.srcIn,
+              ),
+              child: Image.asset(
+                iconAsset,
+                width: 28,
+                height: 28,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(
+                    Icons.circle,
+                    size: 28,
+                    color: isSelected ? const Color(0xFF00B40F) : Colors.black54,
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 4),
             Text(

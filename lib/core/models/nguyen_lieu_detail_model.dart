@@ -50,7 +50,7 @@ class SellerModel {
   final String? giaCuoi;
   final String? hinhAnh;
   final String? ngayCapNhat;
-  final int soLuongBan;
+  final int soLuongBan; // Số lượng: > 0 còn hàng, <= 0 hết hàng
   final String? donViBan;
 
   SellerModel({
@@ -65,6 +65,9 @@ class SellerModel {
     required this.soLuongBan,
     this.donViBan,
   });
+
+  /// Kiểm tra còn hàng không (so_luong_ban > 0 = còn hàng)
+  bool get conHang => soLuongBan > 0;
 
   factory SellerModel.fromJson(Map<String, dynamic> json) {
     return SellerModel(

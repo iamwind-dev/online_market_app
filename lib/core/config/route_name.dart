@@ -12,10 +12,20 @@ class RouteName {
   // Seller Routes
   static const String sellerMain = '/seller/main';
   static const String sellerHome = '/seller/home';
+  static const String sellerOrder = '/seller/order';
+  static const String sellerRevenue = '/seller/revenue';
   static const String sellerAddIngredient = '/seller/add-ingredient';
   static const String sellerEditIngredient = '/seller/edit-ingredient';
   static const String sellerUpdateIngredient = '/seller/update-ingredient';
   static const String sellerUser = '/seller/user';
+
+  // Admin Routes
+  static const String adminHome = '/admin/home';
+  static const String adminMap = '/admin/map';
+  static const String adminUpdateStall = '/admin/map/update-stall';
+  static const String adminSellerManagement = '/admin/seller-management';
+  static const String adminUser = '/admin/user';
+  static const String adminMarketInfo = '/admin/market-info';
 
   // Authentication Routes
   static const String login = '/login';

@@ -56,13 +56,13 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
             originalPrice: _formatOriginalPrice(seller.giaGoc, seller.giaCuoi),
             hasDiscount: _hasDiscount(seller.giaGoc, seller.giaCuoi),
             imagePath: seller.hinhAnh,
-            soldCount: seller.soLuongBan,
+            soLuongBan: seller.soLuongBan,
             unit: seller.donViBan,
           );
         }).toList();
         
-        // Tính tổng số lượng bán
-        final totalSold = sellers.fold<int>(0, (sum, seller) => sum + seller.soldCount);
+        // Tính tổng số lượng còn (chỉ tính những gian hàng còn hàng)
+        final totalStock = sellers.where((s) => s.conHang).fold<int>(0, (sum, seller) => sum + seller.soLuongBan);
         
         // Lấy giá từ seller đầu tiên hoặc từ detail
         final displayPrice = sellers.isNotEmpty 
@@ -83,7 +83,7 @@ class IngredientDetailCubit extends Cubit<IngredientDetailState> {
           price: displayPrice,
           unit: displayUnit,
           shopName: detail.tenNhomNguyenLieu,
-          soldCount: totalSold,
+          soldCount: totalStock,
           sellers: sellers,
           selectedSeller: firstSeller,
           description: 'Có ${detail.soGianHang} gian hàng đang bán sản phẩm này',

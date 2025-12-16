@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/config/route_name.dart';
 import '../../../../../core/router/app_router.dart';
-import '../../../../../core/widgets/seller_bottom_navigation.dart';
 import '../cubit/ingredient_cubit.dart';
 import '../cubit/ingredient_state.dart';
 
@@ -21,25 +20,6 @@ class SellerIngredientScreen extends StatelessWidget {
 class _SellerIngredientView extends StatelessWidget {
   const _SellerIngredientView();
 
-  void _handleNavigation(BuildContext context, int index) {
-    switch (index) {
-      case 0: // Đơn hàng
-        // TODO: Navigate to seller orders
-        break;
-      case 1: // Sản phẩm - đang ở đây
-        break;
-      case 2: // Home/Avatar
-        // TODO: Navigate to seller home
-        break;
-      case 3: // Doanh số
-        // TODO: Navigate to seller statistics
-        break;
-      case 4: // Tài khoản
-        AppRouter.navigateAndReplace(context, RouteName.sellerUser);
-        break;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,14 +35,6 @@ class _SellerIngredientView extends StatelessWidget {
                 ),
               ],
             ),
-          );
-        },
-      ),
-      bottomNavigationBar: BlocBuilder<SellerIngredientCubit, SellerIngredientState>(
-        builder: (context, state) {
-          return SellerBottomNavigation(
-            currentIndex: 1, // Tab Sản phẩm
-            onTap: (index) => _handleNavigation(context, index),
           );
         },
       ),
@@ -330,7 +302,21 @@ class _SellerIngredientView extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         itemCount: ingredients.length,
         itemBuilder: (context, index) {
-          return _buildIngredientCard(context, ingredients[index]);
+          return TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: Duration(milliseconds: 300 + (index * 50).clamp(0, 200)),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Transform.translate(
+                offset: Offset(0, 20 * (1 - value)),
+                child: Opacity(
+                  opacity: value,
+                  child: child,
+                ),
+              );
+            },
+            child: _buildIngredientCard(context, ingredients[index]),
+          );
         },
       ),
     );

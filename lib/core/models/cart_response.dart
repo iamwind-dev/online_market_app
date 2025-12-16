@@ -172,6 +172,7 @@ class AddToCartResponse {
 class CheckoutResponse {
   final bool success;
   final String maDonHang;
+  final String maThanhToan;
   final double tongTien;
   final int soMatHang;
   final int itemsCheckout;
@@ -180,6 +181,7 @@ class CheckoutResponse {
   CheckoutResponse({
     required this.success,
     required this.maDonHang,
+    required this.maThanhToan,
     required this.tongTien,
     required this.soMatHang,
     required this.itemsCheckout,
@@ -187,25 +189,55 @@ class CheckoutResponse {
   });
 
   factory CheckoutResponse.fromJson(Map<String, dynamic> json) {
-    // Hỗ trợ cả 2 format: nested (order/totals) và flat
+    // Hỗ trợ 3 format:
+    // 1. Array format: { "orders": [{ "ma_don_hang": "...", ... }], "ma_thanh_toan": "..." }
+    // 2. Nested format: { "order": { "ma_don_hang": "..." }, "totals": { ... } }
+    // 3. Flat format: { "ma_don_hang": "...", ... }
+    
+    final orders = json['orders'] as List<dynamic>?;
     final order = json['order'] as Map<String, dynamic>?;
     final totals = json['totals'] as Map<String, dynamic>?;
     
-    // Lấy ma_don_hang từ order hoặc totals hoặc root
-    final maDonHang = order?['ma_don_hang'] ?? 
-                      totals?['ma_don_hang'] ?? 
-                      json['ma_don_hang'] ?? '';
+    // Lấy ma_don_hang từ orders[0] hoặc order hoặc totals hoặc root
+    String maDonHang = '';
+    if (orders != null && orders.isNotEmpty) {
+      final firstOrder = orders[0] as Map<String, dynamic>;
+      maDonHang = firstOrder['ma_don_hang'] ?? '';
+    } else {
+      maDonHang = order?['ma_don_hang'] ?? 
+                  totals?['ma_don_hang'] ?? 
+                  json['ma_don_hang'] ?? '';
+    }
     
-    // Lấy tong_tien từ order hoặc totals hoặc root
-    final tongTien = order?['tong_tien'] ?? 
-                     totals?['tong_tien'] ?? 
-                     json['tong_tien'];
+    // Lấy ma_thanh_toan từ root hoặc orders[0] hoặc order
+    String maThanhToan = json['ma_thanh_toan'] ?? '';
+    if (maThanhToan.isEmpty && orders != null && orders.isNotEmpty) {
+      final firstOrder = orders[0] as Map<String, dynamic>;
+      maThanhToan = firstOrder['ma_thanh_toan'] ?? '';
+    }
+    if (maThanhToan.isEmpty) {
+      maThanhToan = order?['ma_thanh_toan'] ?? '';
+    }
+    
+    // Lấy tong_tien từ total_amount hoặc orders[0] hoặc order hoặc totals hoặc root
+    dynamic tongTien;
+    if (json['total_amount'] != null) {
+      tongTien = json['total_amount'];
+    } else if (orders != null && orders.isNotEmpty) {
+      final firstOrder = orders[0] as Map<String, dynamic>;
+      tongTien = firstOrder['tong_tien'];
+    } else {
+      tongTien = order?['tong_tien'] ?? 
+                 totals?['tong_tien'] ?? 
+                 json['tong_tien'];
+    }
     
     return CheckoutResponse(
       success: json['success'] ?? false,
       maDonHang: maDonHang,
+      maThanhToan: maThanhToan,
       tongTien: _parseToDouble(tongTien),
-      soMatHang: _parseToInt(json['so_mat_hang']),
+      soMatHang: _parseToInt(json['so_mat_hang'] ?? json['total_orders']),
       itemsCheckout: _parseToInt(json['items_checkout']),
       itemsRemaining: _parseToInt(json['items_remaining']),
     );

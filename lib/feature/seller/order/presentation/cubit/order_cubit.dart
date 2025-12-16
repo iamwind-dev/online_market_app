@@ -1,98 +1,144 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'order_state.dart';
+import '../../../../../core/services/seller_order_service.dart';
+
+import '../../../../../core/models/seller_order_model.dart';
+
+/// Kết quả xác nhận đơn hàng
+class ConfirmOrderResult {
+  final bool success;
+  final String message;
+  final String? shipperName;
+  final String? shipperPhone;
+
+  ConfirmOrderResult({
+    required this.success,
+    required this.message,
+    this.shipperName,
+    this.shipperPhone,
+  });
+}
+
+/// Kết quả từ chối đơn hàng
+class RejectOrderResult {
+  final bool success;
+  final String message;
+  final String? lyDoHuy;
+
+  RejectOrderResult({
+    required this.success,
+    required this.message,
+    this.lyDoHuy,
+  });
+}
 
 class SellerOrderCubit extends Cubit<SellerOrderState> {
-  SellerOrderCubit() : super(const SellerOrderState());
+  final SellerOrderService _orderService = SellerOrderService();
+
+  SellerOrderCubit() : super(SellerOrderState.initial());
 
   Future<void> loadOrders() async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, errorMessage: null));
 
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
+      final response = await _orderService.getOrders(limit: 50);
+      
+      if (response.success) {
+        final orders = response.items.map((item) => SellerOrder.fromApiModel(item)).toList();
+        
+        // Tính tổng tiền hôm nay (đơn hàng trong ngày)
+        final today = DateTime.now();
+        final todayOrders = response.items.where((item) {
+          if (item.thoiGianGiaoHang == null) return false;
+          return item.thoiGianGiaoHang!.year == today.year &&
+                 item.thoiGianGiaoHang!.month == today.month &&
+                 item.thoiGianGiaoHang!.day == today.day;
+        });
+        final totalToday = todayOrders.fold<double>(0, (sum, item) => sum + item.tongTien);
 
-      final orders = [
-        const SellerOrder(
-          id: '1',
-          orderId: '#DN12345',
-          customerName: 'Phạm Thị Quỳnh Như',
-          orderTime: 'Hôm nay, 9:36',
-          items: '300g cà rốt, 1kg khoai lang, 500g bông cải xanh',
-          amount: 150000,
-          status: OrderStatus.pending,
-        ),
-        const SellerOrder(
-          id: '2',
-          orderId: '#DN12346',
-          customerName: 'Phạm Vĩnh Tường',
-          orderTime: 'Hôm nay, 9:36',
-          items: '300g cà rốt, 1kg khoai lang, 500g bông cải xanh',
-          amount: 150000,
-          status: OrderStatus.delivering,
-        ),
-        const SellerOrder(
-          id: '3',
-          orderId: '#DN12346',
-          customerName: 'Nguyễn Ngọc Phương Nhi',
-          orderTime: 'Hôm nay, 9:36',
-          items: '300g cà rốt, 1kg khoai lang, 500g bông cải xanh',
-          amount: 150000,
-          status: OrderStatus.completed,
-        ),
-      ];
-
-      emit(state.copyWith(
-        isLoading: false,
-        orders: orders,
-        totalToday: 1350000,
-      ));
+        emit(state.copyWith(
+          isLoading: false,
+          orders: orders,
+          totalToday: totalToday,
+        ));
+        
+        debugPrint('✅ [SELLER ORDER] Loaded ${orders.length} orders');
+      } else {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: 'Không thể tải danh sách đơn hàng',
+        ));
+      }
     } catch (e) {
+      debugPrint('❌ [SELLER ORDER] Error: $e');
       emit(state.copyWith(
         isLoading: false,
-        errorMessage: 'Không thể tải danh sách đơn hàng',
+        errorMessage: 'Không thể tải danh sách đơn hàng: $e',
       ));
     }
   }
 
-  void confirmOrder(String orderId) {
-    final updatedOrders = state.orders.map((order) {
-      if (order.id == orderId && order.status == OrderStatus.pending) {
-        return SellerOrder(
-          id: order.id,
-          orderId: order.orderId,
-          customerName: order.customerName,
-          orderTime: order.orderTime,
-          items: order.items,
-          amount: order.amount,
-          status: OrderStatus.delivering,
-        );
-      }
-      return order;
-    }).toList();
-
-    emit(state.copyWith(orders: updatedOrders));
+  void selectTab(OrderStatus tab) {
+    emit(state.copyWith(selectedTab: tab));
   }
 
-  void contactCustomer(String orderId) {
-    // TODO: Implement contact customer logic
+  /// Xác nhận đơn hàng và trả về response
+  Future<ConfirmOrderResult?> confirmOrder(String orderId) async {
+    try {
+      final response = await _orderService.confirmOrder(orderId);
+      
+      if (response.success) {
+        await loadOrders();
+        return ConfirmOrderResult(
+          success: true,
+          message: response.message,
+          shipperName: response.shipperAssigned?.tenShipper,
+          shipperPhone: response.shipperAssigned?.sdt,
+        );
+      }
+      return ConfirmOrderResult(success: false, message: response.message);
+    } catch (e) {
+      debugPrint('❌ [SELLER ORDER] Confirm error: $e');
+      return ConfirmOrderResult(success: false, message: 'Có lỗi xảy ra: $e');
+    }
+  }
+
+  /// Lấy danh sách lý do từ chối
+  Future<List<RejectionReason>> getRejectionReasons() async {
+    try {
+      final response = await _orderService.getRejectionReasons();
+      if (response.success) {
+        return response.reasons;
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [SELLER ORDER] Get rejection reasons error: $e');
+      return [];
+    }
+  }
+
+  /// Từ chối đơn hàng
+  Future<RejectOrderResult?> rejectOrder(String orderId, {required String reasonCode}) async {
+    try {
+      final response = await _orderService.rejectOrder(orderId, reasonCode: reasonCode);
+      
+      if (response.success) {
+        await loadOrders();
+        return RejectOrderResult(
+          success: true,
+          message: response.message,
+          lyDoHuy: response.lyDoHuy,
+        );
+      }
+      return RejectOrderResult(success: false, message: response.message);
+    } catch (e) {
+      debugPrint('❌ [SELLER ORDER] Reject error: $e');
+      return RejectOrderResult(success: false, message: 'Có lỗi xảy ra: $e');
+    }
   }
 
   void setSelectedNavIndex(int index) {
     emit(state.copyWith(selectedNavIndex: index));
-  }
-
-  void navigateToHome() {
-    // TODO: Navigate to home
-  }
-
-  void navigateToIngredient() {
-    // TODO: Navigate to ingredient
-  }
-
-  void navigateToAnalytics() {
-    // TODO: Navigate to analytics
-  }
-
-  void navigateToAccount() {
-    // TODO: Navigate to account
   }
 }

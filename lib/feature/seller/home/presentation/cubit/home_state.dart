@@ -34,14 +34,16 @@ class DailyOverview extends Equatable {
 class ProductInfo extends Equatable {
   final int totalProducts;
   final int activeProducts;
+  final int lowStockCount;
 
   const ProductInfo({
     required this.totalProducts,
     required this.activeProducts,
+    this.lowStockCount = 0,
   });
 
   @override
-  List<Object?> get props => [totalProducts, activeProducts];
+  List<Object?> get props => [totalProducts, activeProducts, lowStockCount];
 }
 
 /// Model đại diện cho phân tích 7 ngày gần đây
@@ -70,6 +72,7 @@ class SellerHomeState extends Equatable {
   final AnalyticsInfo analyticsInfo;
   final FinanceInfo financeInfo;
   final int currentTabIndex;
+  final bool isStoreOpen;
 
   const SellerHomeState({
     required this.shopName,
@@ -80,6 +83,7 @@ class SellerHomeState extends Equatable {
     required this.analyticsInfo,
     required this.financeInfo,
     this.currentTabIndex = 0,
+    this.isStoreOpen = true,
   });
 
   /// Factory tạo state ban đầu
@@ -88,7 +92,7 @@ class SellerHomeState extends Equatable {
       shopName: 'PHƯƠNG NHI',
       isLoading: true,
       dailyOverview: DailyOverview(revenue: 0, orderCount: 0),
-      productInfo: ProductInfo(totalProducts: 0, activeProducts: 0),
+      productInfo: const ProductInfo(totalProducts: 0, activeProducts: 0, lowStockCount: 0),
       analyticsInfo: AnalyticsInfo(
         totalRevenue: 0,
         totalOrders: 0,
@@ -111,6 +115,7 @@ class SellerHomeState extends Equatable {
     AnalyticsInfo? analyticsInfo,
     FinanceInfo? financeInfo,
     int? currentTabIndex,
+    bool? isStoreOpen,
   }) {
     return SellerHomeState(
       shopName: shopName ?? this.shopName,
@@ -121,6 +126,7 @@ class SellerHomeState extends Equatable {
       analyticsInfo: analyticsInfo ?? this.analyticsInfo,
       financeInfo: financeInfo ?? this.financeInfo,
       currentTabIndex: currentTabIndex ?? this.currentTabIndex,
+      isStoreOpen: isStoreOpen ?? this.isStoreOpen,
     );
   }
 
@@ -134,5 +140,6 @@ class SellerHomeState extends Equatable {
         analyticsInfo,
         financeInfo,
         currentTabIndex,
+        isStoreOpen,
       ];
 }

@@ -5,11 +5,20 @@ import '../../feature/buyer/ingredient/presentation/category_ingredient/screen/c
 import '../../feature/buyer/shops/presentation/screen/all_shops_screen.dart';
 import '../../feature/buyer/shop/presentation/shop_page.dart';
 import '../../feature/buyer/shop/presentation/shop_cubit.dart';
-import '../../feature/seller/ingredient/presentation/screen/ingredient_screen.dart';
 import '../../feature/seller/ingredient/presentation/cubit/ingredient_state.dart';
 import '../../feature/seller/ingredient/add/presentation/screen/add_ingredient_screen.dart';
 import '../../feature/seller/ingredient/update/presentation/screen/update_ingredient_screen.dart';
 import '../../feature/seller/user/presentation/screen/seller_user_screen.dart';
+import '../../feature/seller/main/presentation/screen/seller_main_screen.dart';
+import '../../feature/seller/order/presentation/screen/order_screen.dart';
+import '../../feature/seller/revenue/presentation/screen/revenue_screen.dart';
+import '../../feature/admin/home/presentation/screen/admin_home_screen.dart';
+import '../../feature/admin/map/presentation/screen/admin_map_screen.dart';
+import '../../feature/admin/map/update/presentation/screen/update_stall_screen.dart';
+import '../models/market_map_model.dart';
+import '../../feature/admin/seller/presentation/screen/seller_management_screen.dart';
+import '../../feature/admin/user/presentation/screen/admin_user_screen.dart';
+import '../../feature/admin/market/presentation/screen/market_info_screen.dart';
 import '../config/route_name.dart';
 import '../../feature/splash/presentation/screen/splash_page.dart';
 import '../../feature/login/presentation/screen/login_page.dart';
@@ -143,7 +152,8 @@ class AppRouter {
       // Seller Routes
       case RouteName.sellerMain:
       case RouteName.sellerHome:
-        return _buildRoute(settings, const SellerIngredientScreen());
+        final initialIndex = settings.arguments as int? ?? 0;
+        return _buildRoute(settings, SellerMainScreen(initialIndex: initialIndex));
 
       case RouteName.sellerAddIngredient:
         return _buildRoute(settings, const AddIngredientScreen());
@@ -154,6 +164,32 @@ class AppRouter {
 
       case RouteName.sellerUser:
         return _buildRoute(settings, const SellerUserScreen());
+
+      case RouteName.sellerOrder:
+        return _buildRoute(settings, const SellerOrderScreen());
+
+      case RouteName.sellerRevenue:
+        return _buildRoute(settings, const SellerRevenueScreen());
+
+      // Admin Routes
+      case RouteName.adminHome:
+        return _buildRoute(settings, const AdminHomeScreen());
+
+      case RouteName.adminMap:
+        return _buildRoute(settings, const AdminMapScreen());
+
+      case RouteName.adminUpdateStall:
+        final store = settings.arguments as MapStoreInfo?;
+        return _buildRoute(settings, UpdateStallScreen(store: store));
+
+      case RouteName.adminSellerManagement:
+        return _buildRoute(settings, const SellerManagementScreen());
+
+      case RouteName.adminUser:
+        return _buildRoute(settings, const AdminUserScreen());
+
+      case RouteName.adminMarketInfo:
+        return _buildRoute(settings, const MarketInfoScreen());
 
       default:
         return _buildRoute(settings, const _NotFoundScreen());

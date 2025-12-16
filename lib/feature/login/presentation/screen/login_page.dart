@@ -400,7 +400,14 @@ class _LoginViewState extends State<LoginView> {
                         
                         if (!mounted) return;
                         
-                        if (vaiTro == 'nguoi_ban') {
+                        if (vaiTro == 'quan_ly_cho') {
+                          // Quản lý chợ -> Admin Home
+                          debugPrint('[LOGIN] ➡️ Navigating to ADMIN home');
+                          AppRouter.navigateAndRemoveUntil(
+                            context,
+                            RouteName.adminHome,
+                          );
+                        } else if (vaiTro == 'nguoi_ban') {
                           // Người bán -> Seller Home
                           debugPrint('[LOGIN] ➡️ Navigating to SELLER home');
                           AppRouter.navigateAndRemoveUntil(

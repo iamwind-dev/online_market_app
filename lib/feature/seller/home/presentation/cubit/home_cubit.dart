@@ -22,6 +22,7 @@ class SellerHomeCubit extends Cubit<SellerHomeState> {
         productInfo: const ProductInfo(
           totalProducts: 34,
           activeProducts: 34,
+          lowStockCount: 8,
         ),
         analyticsInfo: const AnalyticsInfo(
           totalRevenue: 1350000,
@@ -75,6 +76,11 @@ class SellerHomeCubit extends Cubit<SellerHomeState> {
   /// Điều hướng đến trang tài chính
   void navigateToFinance() {
     // TODO: Implement navigation
+  }
+
+  /// Toggle trạng thái cửa hàng (mở/đóng)
+  void toggleStoreStatus() {
+    emit(state.copyWith(isStoreOpen: !state.isStoreOpen));
   }
 
   /// Refresh dữ liệu

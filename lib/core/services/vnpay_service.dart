@@ -95,11 +95,11 @@ class VNPayService {
 
   /// Tạo checkout VNPay
   Future<VNPayCheckoutResponse> createVNPayCheckout({
-    required String maDonHang,
+    required String maThanhToan,
     String bankCode = 'NCB',
   }) async {
     print('💳 [VNPAY] Creating checkout...');
-    print('💳 [VNPAY] ma_don_hang: $maDonHang');
+    print('💳 [VNPAY] ma_thanh_toan: $maThanhToan');
     print('💳 [VNPAY] bankCode: $bankCode');
 
     try {
@@ -112,7 +112,7 @@ class VNPayService {
       final url = Uri.parse('$_baseUrl/vnpay/checkout');
       
       final requestBody = {
-        'ma_don_hang': maDonHang,
+        'ma_thanh_toan': maThanhToan,
         'bankCode': bankCode,
       };
 

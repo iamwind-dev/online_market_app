@@ -256,15 +256,39 @@ class _IngredientDetailView extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              Text(
-                'Đã bán ${state.soldCount}',
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black,
+              // Hiển thị trạng thái hàng của gian hàng được chọn
+              if (state.selectedSeller != null)
+                Row(
+                  children: [
+                    if (state.selectedSeller!.conHang)
+                      Text(
+                        'Còn ${state.selectedSeller!.soLuongBan} ${state.unit}',
+                        style: const TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'Hết hàng',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-              ),
             ],
           ),
         );
@@ -469,16 +493,34 @@ class _IngredientDetailView extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   
-                  // Đã bán
-                  Text(
-                    'Đã bán ${seller.soldCount}',
-                    style: const TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF8E8E93),
+                  // Trạng thái hàng
+                  if (seller.conHang)
+                    Text(
+                      'Còn ${seller.soLuongBan} ${seller.unit ?? ""}',
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF8E8E93),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'Hết hàng',
+                        style: TextStyle(
+                          fontFamily: 'Roboto',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red,
+                        ),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -957,53 +999,68 @@ class _IngredientDetailView extends StatelessWidget {
               ),
               
               const SizedBox(width: 10),
+              // Nút thêm vào giỏ hàng
               Expanded(
-                child: GestureDetector(
-                  onTap: () => context.read<IngredientDetailCubit>().addToCart(),
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFF00B40F)),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Thêm vào \ngiỏ hàng',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF00B40F),
-                          height: 1.1,
+                child: BlocBuilder<IngredientDetailCubit, IngredientDetailState>(
+                  builder: (context, state) {
+                    final isOutOfStock = state.selectedSeller != null && !state.selectedSeller!.conHang;
+                    return GestureDetector(
+                      onTap: isOutOfStock ? null : () => context.read<IngredientDetailCubit>().addToCart(),
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isOutOfStock ? Colors.grey : const Color(0xFF00B40F),
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                          color: isOutOfStock ? Colors.grey[200] : null,
+                        ),
+                        child: Center(
+                          child: Text(
+                            isOutOfStock ? 'Hết hàng' : 'Thêm vào \ngiỏ hàng',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isOutOfStock ? Colors.grey : const Color(0xFF00B40F),
+                              height: 1.1,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 10),
+              // Nút mua ngay
               Expanded(
-                child: GestureDetector(
-                  onTap: () => context.read<IngredientDetailCubit>().buyNow(context),
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2F8000),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Mua ngay',
-                        style: TextStyle(
-                          fontFamily: 'Roboto',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                child: BlocBuilder<IngredientDetailCubit, IngredientDetailState>(
+                  builder: (context, state) {
+                    final isOutOfStock = state.selectedSeller != null && !state.selectedSeller!.conHang;
+                    return GestureDetector(
+                      onTap: isOutOfStock ? null : () => context.read<IngredientDetailCubit>().buyNow(context),
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: isOutOfStock ? Colors.grey : const Color(0xFF2F8000),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Center(
+                          child: Text(
+                            isOutOfStock ? 'Hết hàng' : 'Mua ngay',
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
             ],

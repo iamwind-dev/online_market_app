@@ -94,6 +94,19 @@ class _HomeViewState extends State<_HomeView> with AutomaticKeepAliveClientMixin
                       return ChatMessageWidget(
                         message: state.chatMessages[index],
                         onOptionTap: (option) => context.read<HomeCubit>().selectOption(option),
+                        onMenuSelected: (menuText) {
+                          context.read<HomeCubit>().sendMessage(menuText);
+                          // Scroll to bottom after sending
+                          Future.delayed(const Duration(milliseconds: 100), () {
+                            if (_scrollController.hasClients) {
+                              _scrollController.animateTo(
+                                _scrollController.position.maxScrollExtent,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOut,
+                              );
+                            }
+                          });
+                        },
                       );
                     },
                   ),
